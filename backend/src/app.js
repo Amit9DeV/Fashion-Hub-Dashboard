@@ -24,7 +24,8 @@ import staffRoutes from './routes/staffRoutes.js';
 const app = express();
 
 app.use(cors({
-  origin: '*'
+  origin: 'https://fashion-hub-dashboard.vercel.app',
+  credentials: true
 }));
 
 app.use(express.json());
