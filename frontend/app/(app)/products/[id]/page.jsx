@@ -1,0 +1,503 @@
+"use client";
+
+import { useEffect, useState, use } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { formatMoney } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { api } from "@/src/services/api";
+import { ArrowLeft, Box, BarChart3, List, Settings, TrendingUp, PackageSearch, Plus, Image as ImageIcon } from "lucide-react";
+
+export default function ProductDetailPage(props) {
+  const params = use(props.params);
+  const router = useRouter();
+  
+  const [product, setProduct] = useState(null);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Forms
+  const [editingBasic, setEditingBasic] = useState(false);
+  const [basicForm, setBasicForm] = useState({});
+  const [editingVariantId, setEditingVariantId] = useState(null);
+  const [variantForm, setVariantForm] = useState({});
+  const [addingVariant, setAddingVariant] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      api.products.getById(params.id),
+      api.products.getMaster()
+    ])
+    .then(([productData, masterData]) => {
+      setProduct(productData.product);
+      setBrands(masterData.data?.brands || []);
+      setCategories(masterData.data?.categories || []);
+      
+      setBasicForm({
+        name: productData.product.name || "",
+        brandId: productData.product.brandId || "",
+        categoryId: productData.product.categoryId || "",
+        description: productData.product.description || "",
+        status: productData.product.status || "ACTIVE"
+      });
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error(err);
+      router.push("/products");
+    });
+  }, [params.id, router]);
+
+  async function handleUpdateBasic(e) {
+    e.preventDefault();
+    try {
+      const data = await api.products.update(product._id, basicForm);
+      setProduct(prev => ({ ...prev, ...data.product }));
+      setEditingBasic(false);
+    } catch (err) {
+      alert(err.message || "Failed to update product");
+    }
+  }
+
+  function startEditVariant(variant) {
+    setVariantForm({
+      sku: variant.sku,
+      barcode: variant.barcode || "",
+      color: variant.color || "",
+      size: variant.size || "",
+      costPrice: (variant.costPricePaisa / 100).toFixed(2),
+      mrp: (variant.mrpPaisa / 100).toFixed(2),
+      sellingPrice: (variant.sellingPricePaisa / 100).toFixed(2),
+      stock: variant.stock,
+      status: variant.status
+    });
+    setEditingVariantId(variant._id);
+  }
+
+  async function handleUpdateVariant(variantId) {
+    try {
+      const data = await api.products.updateVariant(product._id, variantId, variantForm);
+      // Update local state
+      setProduct(prev => {
+        const variants = prev.variants.map(v => v._id === variantId ? data.variant : v);
+        return { ...prev, variants };
+      });
+      setEditingVariantId(null);
+    } catch (err) {
+      alert(err.message || "Failed to update variant");
+    }
+  }
+
+  async function handleAddVariant(e) {
+    e.preventDefault();
+    setAddingVariant(true);
+    const formData = new FormData(e.target);
+    const payload = {
+      sku: formData.get("sku"),
+      barcode: formData.get("barcode"),
+      color: formData.get("color"),
+      size: formData.get("size"),
+      costPrice: formData.get("costPrice"),
+      mrp: formData.get("mrp"),
+      sellingPrice: formData.get("sellingPrice"),
+      stock: formData.get("stock"),
+    };
+
+    try {
+      const data = await api.products.addVariant(product._id, payload);
+      setProduct(prev => ({
+        ...prev,
+        variants: [...(prev.variants || []), data.variant]
+      }));
+      e.target.reset();
+    } catch (err) {
+      alert(err.message || "Failed to add variant");
+    } finally {
+      setAddingVariant(false);
+    }
+  }
+
+  async function handleDeleteProduct() {
+    if (!confirm("Are you sure you want to delete this product? All variants will also be deleted. This cannot be undone.")) return;
+    try {
+      await api.products.delete(product._id);
+      router.push("/products");
+    } catch (err) {
+      alert(err.message || "Failed to delete product");
+    }
+  }
+
+  async function handleDeleteVariant(variantId) {
+    if (!confirm("Are you sure you want to delete this variant? This cannot be undone.")) return;
+    try {
+      await api.products.deleteVariant(product._id, variantId);
+      setProduct(prev => ({
+        ...prev,
+        variants: prev.variants.filter(v => v._id !== variantId)
+      }));
+    } catch (err) {
+      alert(err.message || "Failed to delete variant");
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#c9963e]"></div>
+      </div>
+    );
+  }
+
+  if (!product) return null;
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Header */}
+      <div>
+        <Link href="/products" className="inline-flex items-center text-xs font-semibold uppercase tracking-widest text-[#81796d] hover:text-[#0b0b0b] transition-colors mb-4">
+          <ArrowLeft size={14} className="mr-2" /> Back to Catalog
+        </Link>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end justify-between border-b border-[#dfd8cc] pb-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${product.status === 'ACTIVE' ? 'bg-[#e6f4ea] text-[#1e8e3e]' : product.status === 'DRAFT' ? 'bg-gray-100 text-gray-600' : 'bg-[#fce8e6] text-[#d93025]'}`}>
+                {product.status}
+              </span>
+              <p className="text-sm font-medium text-[#706a61]">{product.brandSnapshot || "No Brand"}</p>
+            </div>
+            <h2 className="text-3xl font-semibold tracking-tight text-[#0b0b0b]">{product.name}</h2>
+            <p className="text-sm text-[#706a61] mt-1">{product.categorySnapshot}</p>
+          </div>
+          <div className="flex gap-3">
+             <Button variant="outline" onClick={() => setEditingBasic(!editingBasic)}>
+              {editingBasic ? "Cancel Edit" : "Edit Details"}
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteProduct} className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100">
+              Delete Product
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-6 border-b border-[#dfd8cc] overflow-x-auto">
+        <button 
+          className={`pb-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'border-[#0b0b0b] text-[#0b0b0b]' : 'border-transparent text-[#81796d] hover:text-[#0b0b0b]'}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          <Settings size={16} /> Overview
+        </button>
+        <button 
+          className={`pb-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'variants' ? 'border-[#0b0b0b] text-[#0b0b0b]' : 'border-transparent text-[#81796d] hover:text-[#0b0b0b]'}`}
+          onClick={() => setActiveTab('variants')}
+        >
+          <List size={16} /> Variants <span className="ml-1 rounded-full bg-[#f0ede7] px-2 py-0.5 text-[10px] text-[#5f584e]">{product.variants?.length || 0}</span>
+        </button>
+        <button 
+          className={`pb-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'inventory' ? 'border-[#0b0b0b] text-[#0b0b0b]' : 'border-transparent text-[#81796d] hover:text-[#0b0b0b]'}`}
+          onClick={() => setActiveTab('inventory')}
+        >
+          <Box size={16} /> Inventory Log
+        </button>
+        <button 
+          className={`pb-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'sales' ? 'border-[#0b0b0b] text-[#0b0b0b]' : 'border-transparent text-[#81796d] hover:text-[#0b0b0b]'}`}
+          onClick={() => setActiveTab('sales')}
+        >
+          <TrendingUp size={16} /> Sales History
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="pt-2">
+        
+        {/* OVERVIEW TAB */}
+        {activeTab === 'overview' && (
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="md:col-span-2 space-y-6">
+              {editingBasic ? (
+                <form onSubmit={handleUpdateBasic} className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
+                  <h3 className="font-semibold text-lg">Edit Master Details</h3>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Product Name</label>
+                      <Input value={basicForm.name} onChange={(e) => setBasicForm({...basicForm, name: e.target.value})} required className="h-11" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Brand</label>
+                      <select 
+                        className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
+                        value={basicForm.brandId} 
+                        onChange={(e) => setBasicForm({...basicForm, brandId: e.target.value})}
+                      >
+                        <option value="">Select Brand</option>
+                        {brands.map(b => (
+                          <option key={b._id} value={b._id}>{b.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Category</label>
+                      <select 
+                        className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
+                        value={basicForm.categoryId} 
+                        onChange={(e) => setBasicForm({...basicForm, categoryId: e.target.value})}
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map(c => (
+                          <option key={c._id} value={c._id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Description</label>
+                      <textarea 
+                        className="w-full min-h-24 rounded-md border bg-white p-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
+                        value={basicForm.description} 
+                        onChange={(e) => setBasicForm({...basicForm, description: e.target.value})} 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Status</label>
+                      <select 
+                        className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
+                        value={basicForm.status} 
+                        onChange={(e) => setBasicForm({...basicForm, status: e.target.value})}
+                      >
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="DRAFT">DRAFT</option>
+                        <option value="ARCHIVED">ARCHIVED</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end border-t pt-5">
+                    <Button type="submit" variant="gold" className="px-8">Save Details</Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="rounded-xl border bg-white p-6 shadow-sm space-y-6">
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-[#81796d]">Description</h3>
+                    <p className="mt-2 text-sm text-[#0b0b0b] leading-relaxed">
+                      {product.description || <span className="italic text-gray-400">No description provided.</span>}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6 pt-4 border-t">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[#81796d]">Brand</p>
+                      <p className="mt-1 font-medium">{product.brandSnapshot || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[#81796d]">Category</p>
+                      <p className="mt-1 font-medium">{product.categorySnapshot || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[#81796d]">Date Created</p>
+                      <p className="mt-1 font-medium">{new Date(product.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[#81796d]">System ID</p>
+                      <p className="mt-1 font-mono text-xs text-gray-500">{product._id}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-6">
+              <div className="rounded-xl border bg-white p-6 shadow-sm">
+                <h3 className="font-semibold text-lg border-b pb-4 mb-4">Product Images</h3>
+                <div className="aspect-square bg-[#f5f4f0] rounded-lg border border-dashed border-[#c2bcaf] flex flex-col items-center justify-center text-[#81796d] gap-2">
+                  <ImageIcon size={32} />
+                  <p className="text-sm font-medium">No images uploaded</p>
+                  <Button variant="outline" size="sm" className="mt-2 text-xs h-8">Upload Image</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VARIANTS TAB */}
+        {activeTab === 'variants' && (
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-left text-sm">
+                  <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-[0.12em] text-[#81796d] border-b">
+                    <tr>
+                      <th className="px-5 py-4 font-semibold">SKU / Barcode</th>
+                      <th className="px-5 py-4 font-semibold">Color / Size</th>
+                      <th className="px-5 py-4 font-semibold text-right">Cost (₹)</th>
+                      <th className="px-5 py-4 font-semibold text-right">MRP (₹)</th>
+                      <th className="px-5 py-4 font-semibold text-right">Selling (₹)</th>
+                      <th className="px-5 py-4 font-semibold text-right">Profit</th>
+                      <th className="px-5 py-4 font-semibold text-right">Stock</th>
+                      <th className="px-5 py-4 font-semibold text-center">Status</th>
+                      <th className="px-5 py-4 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f0ede7]">
+                    {(product.variants || []).map((variant) => {
+                      const cost = variant.costPricePaisa || 0;
+                      const selling = variant.sellingPricePaisa || 0;
+                      const profitPaisa = selling - cost;
+                      const profitMargin = selling > 0 ? ((profitPaisa / selling) * 100).toFixed(1) : 0;
+                      
+                      return editingVariantId === variant._id ? (
+                        <tr key={variant._id} className="bg-[#fdfcfb]">
+                          <td className="px-5 py-3 space-y-1.5 min-w-[160px]">
+                            <Input value={variantForm.sku} onChange={(e) => setVariantForm({...variantForm, sku: e.target.value})} placeholder="SKU" className="h-8 text-xs font-mono" />
+                            <Input value={variantForm.barcode} onChange={(e) => setVariantForm({...variantForm, barcode: e.target.value})} placeholder="Barcode" className="h-8 text-xs font-mono" />
+                          </td>
+                          <td className="px-5 py-3 space-y-1.5 min-w-[100px]">
+                            <Input value={variantForm.color} onChange={(e) => setVariantForm({...variantForm, color: e.target.value})} placeholder="Color" className="h-8 text-xs" />
+                            <Input value={variantForm.size} onChange={(e) => setVariantForm({...variantForm, size: e.target.value})} placeholder="Size" className="h-8 text-xs font-bold" />
+                          </td>
+                          <td className="px-5 py-3 min-w-[100px]">
+                            <Input type="number" step="0.01" value={variantForm.costPrice} onChange={(e) => setVariantForm({...variantForm, costPrice: e.target.value})} className="h-8 text-xs text-right" />
+                          </td>
+                          <td className="px-5 py-3 min-w-[100px]">
+                            <Input type="number" step="0.01" value={variantForm.mrp} onChange={(e) => setVariantForm({...variantForm, mrp: e.target.value})} className="h-8 text-xs text-right" />
+                          </td>
+                          <td className="px-5 py-3 min-w-[100px]">
+                            <Input type="number" step="0.01" value={variantForm.sellingPrice} onChange={(e) => setVariantForm({...variantForm, sellingPrice: e.target.value})} className="h-8 text-xs text-right text-[#c9963e] font-bold" />
+                          </td>
+                          <td className="px-5 py-3 text-right text-xs text-gray-400 italic">Auto</td>
+                          <td className="px-5 py-3 min-w-[90px]">
+                            <Input type="number" value={variantForm.stock} onChange={(e) => setVariantForm({...variantForm, stock: e.target.value})} className="h-8 text-xs text-right" />
+                          </td>
+                          <td className="px-5 py-3 min-w-[110px]">
+                            <select 
+                              className="w-full h-8 rounded border bg-white px-2 text-[10px] font-bold"
+                              value={variantForm.status} 
+                              onChange={(e) => setVariantForm({...variantForm, status: e.target.value})}
+                            >
+                              <option value="ACTIVE">ACTIVE</option>
+                              <option value="INACTIVE">INACTIVE</option>
+                            </select>
+                          </td>
+                          <td className="px-5 py-3 text-right space-x-2 whitespace-nowrap">
+                            <Button size="sm" variant="gold" className="h-8 px-3 text-xs" onClick={() => handleUpdateVariant(variant._id)}>Save</Button>
+                            <Button size="sm" variant="outline" className="h-8 px-3 text-xs text-red-600 border-red-200 hover:bg-red-50" onClick={() => setEditingVariantId(null)}>Cancel</Button>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={variant._id} className="hover:bg-[#faf9f6] transition-colors">
+                          <td className="px-5 py-3.5">
+                            <div className="font-mono text-xs font-bold text-[#0b0b0b]">{variant.sku}</div>
+                            <div className="text-[10px] text-[#81796d] mt-1 flex items-center gap-1">
+                              <BarChart3 size={10} /> {variant.barcode || "No Barcode"}
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <div className="font-medium">{variant.color || "-"}</div>
+                            <div className="text-xs font-bold mt-0.5">{variant.size || "-"}</div>
+                          </td>
+                          <td className="px-5 py-3.5 text-right font-medium text-[#706a61]">
+                            {formatMoney(variant.costPricePaisa || 0)}
+                          </td>
+                          <td className="px-5 py-3.5 text-right font-medium text-[#706a61] line-through text-xs">
+                            {variant.mrpPaisa ? formatMoney(variant.mrpPaisa) : "-"}
+                          </td>
+                          <td className="px-5 py-3.5 text-right font-bold text-[#c9963e]">
+                            {formatMoney(variant.sellingPricePaisa || 0)}
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <div className="font-semibold text-[#1e8e3e]">{formatMoney(profitPaisa)}</div>
+                            <div className="text-[10px] text-gray-500">{profitMargin}% margin</div>
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <span className={`font-bold ${variant.stock <= variant.reorderLevel ? 'text-[#d93025]' : 'text-[#0b0b0b]'}`}>
+                              {variant.stock}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-center">
+                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${variant.status === 'ACTIVE' ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 'bg-[#fce8e6] text-[#d93025]'}`}>
+                              {variant.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-right flex justify-end gap-2">
+                            <Button size="sm" variant="outline" className="h-7 px-3 text-[10px]" onClick={() => startEditVariant(variant)}>Edit</Button>
+                            <Button size="sm" variant="destructive" className="h-7 px-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100" onClick={() => handleDeleteVariant(variant._id)}>Delete</Button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+                {(!product.variants || product.variants.length === 0) && (
+                  <div className="text-center py-12 text-[#706a61]">
+                    <PackageSearch className="mx-auto text-[#c2bcaf] mb-3" size={32} />
+                    <p>No variants added yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Add Variant */}
+            <div className="rounded-xl border bg-[#faf9f6] p-6 shadow-sm border-dashed">
+              <h3 className="mb-5 font-semibold flex items-center gap-2"><Plus size={16} className="text-[#c9963e]"/> Add New Variant</h3>
+              <form onSubmit={handleAddVariant} className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 items-end">
+                <div className="space-y-1.5 lg:col-span-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#81796d]">SKU</label>
+                  <Input name="sku" required className="h-9 text-xs font-mono" placeholder="USP-BLK-M" />
+                </div>
+                <div className="space-y-1.5 lg:col-span-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#81796d]">Color</label>
+                  <Input name="color" className="h-9 text-xs" placeholder="Black" />
+                </div>
+                <div className="space-y-1.5 lg:col-span-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#81796d]">Size</label>
+                  <Input name="size" className="h-9 text-xs font-bold" placeholder="M" />
+                </div>
+                <div className="space-y-1.5 lg:col-span-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#81796d]">Cost</label>
+                  <Input name="costPrice" type="number" step="0.01" className="h-9 text-xs" placeholder="0.00" />
+                </div>
+                <div className="space-y-1.5 lg:col-span-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#81796d]">Selling</label>
+                  <Input name="sellingPrice" type="number" step="0.01" required className="h-9 text-xs border-[#c9963e]" placeholder="0.00" />
+                </div>
+                <div className="space-y-1.5 lg:col-span-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#81796d]">Op. Stock</label>
+                  <Input name="stock" type="number" className="h-9 text-xs" placeholder="0" defaultValue="0" />
+                </div>
+                <div className="lg:col-span-1">
+                  <Button variant="gold" type="submit" disabled={addingVariant} className="w-full h-9 text-xs">
+                    {addingVariant ? "..." : "Add"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* INVENTORY TAB */}
+        {activeTab === 'inventory' && (
+          <div className="rounded-xl border bg-white p-12 text-center shadow-sm">
+            <Box className="mx-auto text-[#dfd8cc] mb-4" size={48} />
+            <h3 className="text-xl font-semibold mb-2">Inventory Movements</h3>
+            <p className="text-[#706a61] max-w-md mx-auto">
+              This detailed ledger tracks every stock change (Purchases, Sales, Returns, Manual Adjustments). Coming soon in the next phase!
+            </p>
+          </div>
+        )}
+
+        {/* SALES TAB */}
+        {activeTab === 'sales' && (
+          <div className="rounded-xl border bg-white p-12 text-center shadow-sm">
+            <TrendingUp className="mx-auto text-[#dfd8cc] mb-4" size={48} />
+            <h3 className="text-xl font-semibold mb-2">Sales History</h3>
+            <p className="text-[#706a61] max-w-md mx-auto">
+              View historic sales trends and top-performing variants for this product. Coming soon in the next phase!
+            </p>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}

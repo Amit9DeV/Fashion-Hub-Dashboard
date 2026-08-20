@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:root {
+  --fh-black: #0b0b0b;
+  --fh-charcoal: #151515;
+  --fh-gold: #c9963e;
+  --fh-light-gold: #d8b46a;
+  --fh-warm-white: #faf9f6;
+  --fh-border: #e8e3da;
+}
+
+* { border-color: var(--fh-border); }
+
+body {
+  background: var(--fh-warm-white);
+  color: var(--fh-black);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+::selection { background: var(--fh-light-gold); color: var(--fh-black); }
+
+.font-financial { font-variant-numeric: tabular-nums; }
+.gold-rule { background: linear-gradient(90deg, transparent, var(--fh-gold), transparent); }
+
+/* Invoice Print Mode */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .invoice-paper {
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+}

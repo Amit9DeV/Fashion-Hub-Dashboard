@@ -1,0 +1,152 @@
+.fh-invoice-container {
+  width: 210mm;
+  min-height: 297mm;
+  background-color: #080808;
+  color: #FFFFFF;
+  padding: 15mm;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.invoice-content {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Borders */
+.fh-outer-border {
+  position: absolute;
+  top: 6mm;
+  left: 6mm;
+  right: 6mm;
+  bottom: 6mm;
+  border: 1px solid #C99532;
+  pointer-events: none;
+}
+
+.fh-inner-border {
+  position: absolute;
+  top: 8mm;
+  left: 8mm;
+  right: 8mm;
+  bottom: 8mm;
+  border: 1px solid rgba(201, 149, 50, 0.4);
+  pointer-events: none;
+}
+
+/* Corners */
+.fh-corner {
+  position: absolute;
+  width: 12mm;
+  height: 12mm;
+  border: 2px solid #D8B15A;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.fh-corner::after {
+  content: '';
+  position: absolute;
+  width: 4mm;
+  height: 4mm;
+  background: #080808;
+  border: 1px solid #C99532;
+}
+
+.fh-corner-tl {
+  top: 4mm;
+  left: 4mm;
+  border-right: none;
+  border-bottom: none;
+}
+.fh-corner-tl::after { top: 2mm; left: 2mm; }
+
+.fh-corner-tr {
+  top: 4mm;
+  right: 4mm;
+  border-left: none;
+  border-bottom: none;
+}
+.fh-corner-tr::after { top: 2mm; right: 2mm; }
+
+.fh-corner-bl {
+  bottom: 4mm;
+  left: 4mm;
+  border-right: none;
+  border-top: none;
+}
+.fh-corner-bl::after { bottom: 2mm; left: 2mm; }
+
+.fh-corner-br {
+  bottom: 4mm;
+  right: 4mm;
+  border-left: none;
+  border-top: none;
+}
+.fh-corner-br::after { bottom: 2mm; right: 2mm; }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: white !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+  }
+  
+  .print\:m-0 {
+    margin: 0 !important;
+  }
+  
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  
+  /* Ensure background and colors are printed exactly */
+  .fh-invoice-container {
+    background-color: #080808 !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    position: relative !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  /* Force borders in print */
+  .fh-outer-border { border-color: #C99532 !important; }
+  .fh-inner-border { border-color: rgba(201, 149, 50, 0.4) !important; }
+  .fh-corner { border-color: #D8B15A !important; }
+  .fh-corner::after {
+    background: #080808 !important;
+    border-color: #C99532 !important;
+  }
+  
+  /* Force text colors */
+  .text-\[\#C99532\] { color: #C99532 !important; }
+  .text-white { color: #FFFFFF !important; }
+  .text-\[\#D6D6D6\] { color: #D6D6D6 !important; }
+  .text-\[\#080808\] { color: #080808 !important; }
+  .text-black { color: #000000 !important; }
+  .bg-\[\#C99532\] { background-color: #C99532 !important; }
+  .bg-\[\#000000\] { background-color: #000000 !important; }
+  .border-\[\#C99532\] { border-color: #C99532 !important; }
+}
