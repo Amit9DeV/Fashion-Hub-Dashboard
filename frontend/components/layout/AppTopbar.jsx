@@ -3,73 +3,126 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search, Menu, X, LayoutDashboard, ReceiptText, ClipboardList, Shirt, Boxes, UsersRound, RotateCcw, BarChart3, MessageCircle, PackageSearch, Settings } from "lucide-react";
+import { Bell, Search, Menu, X, LayoutDashboard, ReceiptText, ClipboardList, Shirt, Boxes, UsersRound, RotateCcw, BarChart3, MessageCircle, PackageSearch, Settings, ArrowRight } from "lucide-react";
 import { SignOutButton } from "@/components/layout/SignOutButton";
-import { can } from "@/lib/permissions";
+import { BrandMark } from "@/components/layout/BrandMark";
 
 const nav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard:view" },
-  { label: "Billing", href: "/billing", icon: ReceiptText, permission: "billing:use" },
-  { label: "Orders", href: "/orders", icon: ClipboardList, permission: "orders:view" },
-  { label: "Products", href: "/products", icon: Shirt, permission: "products:view" },
-  { label: "Inventory", href: "/inventory", icon: Boxes, permission: "inventory:view" },
-  { label: "Customers", href: "/customers", icon: UsersRound, permission: "customers:view" },
-  { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw, permission: "orders:view" },
-  { label: "Reports", href: "/reports", icon: BarChart3, permission: "dashboard:view" },
-  { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle, permission: "orders:view" },
-  { label: "Staff", href: "/staff", icon: PackageSearch, permission: "*" },
-  { label: "Settings", href: "/settings", icon: Settings, permission: "*" },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Billing", href: "/billing", icon: ReceiptText },
+  { label: "Orders", href: "/orders", icon: ClipboardList },
+  { label: "Products", href: "/products", icon: Shirt },
+  { label: "Inventory", href: "/inventory", icon: Boxes },
+  { label: "Customers", href: "/customers", icon: UsersRound },
+  { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw },
+  { label: "Reports", href: "/reports", icon: BarChart3 },
+  { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
+  { label: "Staff", href: "/staff", icon: PackageSearch },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
-const titles = { "/dashboard": "Dashboard", "/billing": "Billing", "/orders": "Orders", "/products": "Products", "/inventory": "Inventory", "/customers": "Customers", "/returns": "Returns", "/reports": "Reports", "/whatsapp": "WhatsApp", "/settings": "Settings", "/staff": "Staff" };
+const titles = {
+  "/dashboard": "Dashboard", "/billing": "Billing", "/orders": "Orders",
+  "/products": "Products", "/inventory": "Inventory", "/customers": "Customers",
+  "/returns": "Returns", "/reports": "Reports", "/whatsapp": "WhatsApp",
+  "/settings": "Settings", "/staff": "Staff",
+};
 
-export function AppTopbar({ user }) {
+export function AppTopbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pageTitle = Object.entries(titles).find(([k]) => pathname === k || pathname.startsWith(k + '/'))?.[1] || "Fashion Hub";
 
   return (
     <>
-      <header className="flex min-h-20 items-center justify-between border-b border-[#e8e3da] bg-[#faf9f6] px-5 sm:px-8 relative z-30">
+      {/* Main Header */}
+      <header style={{ background: '#faf9f6', borderBottom: '1px solid #e8e3da', minHeight: 72 }} className="flex items-center justify-between px-7 sm:px-10 relative z-30">
+        {/* Left: mobile menu + page identity */}
         <div className="flex items-center gap-3">
-          <button 
-            className="lg:hidden p-2 -ml-2 rounded-md hover:bg-[#eee9df] text-[#4b4842]"
+          <button
+            className="lg:hidden p-2 -ml-2 rounded text-[#4b4842] hover:bg-[#eee9df] transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileMenuOpen ? <X size={19} /> : <Menu size={19} />}
           </button>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b7740]">Fashion Hub</p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">{titles[pathname] || "Fashion Hub"}</h1>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', color: '#9b7740', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
+              Fashion Hub
+            </p>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0b0b0b', letterSpacing: '-0.02em', fontFamily: "'Playfair Display', Georgia, serif", lineHeight: 1.1, marginTop: 1 }}>
+              {pageTitle}
+            </h1>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="hidden items-center gap-2 rounded-md border bg-white px-3 py-2 text-sm text-[#837d73] xl:flex"><Search size={16} /> Search</div>
-          <button aria-label="Notifications" className="grid size-9 place-items-center rounded-md text-[#4b4842] hover:bg-[#eee9df]"><Bell size={18} /></button>
-          <div className="hidden border-l border-[#ded8cd] pl-4 sm:block"><p className="text-sm font-medium">{user.name}</p><p className="text-[10px] font-semibold tracking-[0.12em] text-[#8d6d39]">{user.role}</p></div>
-          <SignOutButton />
+
+        {/* Right: search + actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Search */}
+          <div className="hidden items-center gap-2 xl:flex" style={{ border: '1px solid #e2ddd5', background: '#fff', borderRadius: 4, padding: '7px 14px' }}>
+            <Search size={14} style={{ color: '#9c9489' }} />
+            <span style={{ fontSize: 12, color: '#9c9489', letterSpacing: '0.01em' }}>Search</span>
+          </div>
+
+          {/* Bell */}
+          <button
+            aria-label="Notifications"
+            style={{ width: 36, height: 36, display: 'grid', placeItems: 'center', borderRadius: 4, color: '#5f584e' }}
+            className="hover:bg-[#eee9df] transition-colors"
+          >
+            <Bell size={17} strokeWidth={1.6} />
+          </button>
+
+          {/* New Sale CTA */}
+          <Link
+            href="/billing"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: '#0b0b0b', color: '#d8b46a',
+              padding: '9px 18px', borderRadius: 3,
+              fontSize: 12, fontWeight: 600, letterSpacing: '0.04em',
+              fontFamily: "'Inter', sans-serif", textDecoration: 'none',
+              border: '1px solid #2a2520', whiteSpace: 'nowrap',
+              transition: 'background 0.15s ease',
+            }}
+          >
+            New sale <ArrowRight size={13} />
+          </Link>
+
+          {/* Sign out */}
+          <div className="border-l border-[#e8e3da] pl-2 ml-1">
+            <SignOutButton />
+          </div>
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile menu drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 top-20 z-40 bg-black/50 lg:hidden" onClick={() => setMobileMenuOpen(false)}>
-          <div 
-            className="absolute left-0 top-0 h-full w-64 bg-[#0b0b0b] px-4 py-6 overflow-y-auto shadow-2xl"
+        <div
+          className="fixed inset-0 top-[72px] z-40 bg-black/60 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: 240, background: '#0b0b0b', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}
           >
-            <nav className="space-y-1">
-              {nav.filter((item) => item.permission === "*" ? user.role === "ADMIN" : can(user, item.permission)).map((item) => {
+            <div className="px-5 py-6">
+              <BrandMark />
+            </div>
+            <div className="gold-rule mx-5" />
+            <nav className="px-3 py-4 space-y-0.5">
+              {nav.map((item) => {
                 const Icon = item.icon;
-                const active = item.href === pathname;
-                const content = <><Icon size={18} strokeWidth={1.75} /><span>{item.label}</span>{!item.href && <span className="ml-auto text-[9px] uppercase tracking-wider text-[#958a78]">Soon</span>}</>;
-                const className = `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition ${active ? "border-l-2 border-[#c9963e] bg-[#202020] text-white" : "text-[#c8c1b6] hover:bg-[#1a1a1a] hover:text-white"}`;
-                return item.href ? (
-                  <Link key={item.label} href={item.href} className={className} onClick={() => setMobileMenuOpen(false)}>
-                    {content}
+                const active = pathname === item.href || pathname.startsWith(item.href + '/');
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`nav-item ${active ? 'active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon size={15} strokeWidth={1.6} style={{ flexShrink: 0 }} />
+                    <span>{item.label}</span>
                   </Link>
-                ) : (
-                  <div key={item.label} className={`${className} cursor-default opacity-65`}>{content}</div>
                 );
               })}
             </nav>

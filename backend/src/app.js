@@ -3,11 +3,7 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 
-import connectToDatabase from "./config/db.js";
-
-import authRoutes from "./routes/authRoutes.js";
 import { requestLogger } from "./middleware/logger.js";
 import productRoutes from "./routes/productRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
@@ -24,18 +20,34 @@ import staffRoutes from "./routes/staffRoutes.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://fashion-hub-dashboard.vercel.app",
+]
+  .filter(Boolean)
+  .map((origin) => origin.replace(/\/$/, ""));
+
 app.use(
   cors({
-    origin: "https://fashion-hub-dashboard.vercel.app",
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
 app.use(express.json());
-app.use(cookieParser());
 app.use(requestLogger);
 
-app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/sales", salesRoutes);
@@ -51,6 +63,12 @@ app.use("/api/staff", staffRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "Backend is running" });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (res.headersSent) return next(err);
+  return res.status(500).json({ success: false, message: err.message || "Server error" });
 });
 
 export default app;

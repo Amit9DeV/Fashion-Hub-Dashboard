@@ -1,3 +1,4 @@
+import connectToDatabase from "../config/db.js";
 import Order from "../models/Order.js";
 
 // @route   GET /api/reports/sales
@@ -5,6 +6,7 @@ import Order from "../models/Order.js";
 // @access  Private
 export const getSalesReport = async (req, res) => {
   try {
+    await connectToDatabase();
     const { startDate, endDate } = req.query;
     
     // Default to last 30 days if no dates provided

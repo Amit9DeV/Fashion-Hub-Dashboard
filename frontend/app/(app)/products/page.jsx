@@ -1,19 +1,14 @@
 import Link from "next/link";
 import { Plus, Shirt, Image as ImageIcon, Search } from "lucide-react";
-import { redirect } from "next/navigation";
-import { can, getCurrentUser } from "@/lib/auth";
 import { formatMoney } from "@/lib/utils";
+import { apiBase } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const user = await getCurrentUser();
-  if (!can(user, "products:view")) redirect("/dashboard");
-  
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/products/all`, { 
+  const res = await fetch(`${apiBase()}/products/all`, { 
     cache: 'no-store',
-    headers: { 'Cookie': `fashion_hub_session=${user.token || ""}` }
   });
   
   const payload = await res.json().catch(() => ({}));
@@ -23,17 +18,20 @@ export default async function ProductsPage() {
     <div className="space-y-7 pb-10">
       <section className="flex flex-col justify-between gap-4 border-b border-[#dfd8cc] pb-6 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Product Catalog</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight">Manage your items</h2>
+          <p className="eyebrow flex items-center gap-2" style={{ color: '#8a5a10' }}>
+            <span style={{ width: 16, height: 1, background: '#8a5a10', display: 'inline-block' }} />
+            Product Catalog
+          </p>
+          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+            Manage your items
+          </h2>
         </div>
         <div className="flex gap-3">
-          {can(user, "products:edit") && (
-            <Button variant="gold" asChild>
-              <Link href="/products/new">
-                Add Product <Plus size={17} className="ml-2" />
-              </Link>
-            </Button>
-          )}
+          <Button variant="gold" asChild>
+            <Link href="/products/new">
+              Add Product <Plus size={17} className="ml-2" />
+            </Link>
+          </Button>
         </div>
       </section>
 
@@ -75,11 +73,13 @@ export default async function ProductsPage() {
                   let stockLabel = 'OUT OF STOCK';
                   
                   if (product.totalStock > 10) {
-                    stockStatusStyle = 'bg-[#e6f4ea] text-[#1e8e3e]';
+                    stockStatusStyle = 'bg-[#f0f9f4] text-[#1a6b3a]';
                     stockLabel = 'IN STOCK';
                   } else if (product.totalStock > 0) {
-                    stockStatusStyle = 'bg-[#fff2e6] text-[#b86111]';
+                    stockStatusStyle = 'bg-[#fdf8f0] text-[#8a5a10]';
                     stockLabel = 'LOW STOCK';
+                  } else {
+                    stockStatusStyle = 'bg-[#fef0f0] text-[#8a1a1a]';
                   }
 
                   return (
@@ -115,7 +115,7 @@ export default async function ProductsPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${product.status === 'ACTIVE' ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 'bg-[#fce8e6] text-[#d93025]'}`}>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${product.status === 'ACTIVE' ? 'bg-[#f0f9f4] text-[#1a6b3a]' : 'bg-[#fef0f0] text-[#8a1a1a]'}`}>
                           {product.status}
                         </span>
                       </td>
@@ -133,11 +133,9 @@ export default async function ProductsPage() {
               </div>
               <h3 className="font-semibold text-lg">No products found</h3>
               <p className="mt-1 text-sm text-[#706a61] max-w-xs mx-auto">Start building your catalog to manage inventory, track variants, and process sales.</p>
-              {can(user, "products:edit") && (
-                <Button variant="gold" asChild className="mt-6">
-                  <Link href="/products/new">Add First Product</Link>
-                </Button>
-              )}
+              <Button variant="gold" asChild className="mt-6">
+                <Link href="/products/new">Add First Product</Link>
+              </Button>
             </div>
           </div>
         )}

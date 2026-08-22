@@ -1,12 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
   --fh-black: #0b0b0b;
   --fh-charcoal: #151515;
+  --fh-charcoal-active: #1c1c1c;
   --fh-gold: #c9963e;
   --fh-light-gold: #d8b46a;
   --fh-warm-white: #faf9f6;
   --fh-border: #e8e3da;
+  --fh-muted: #81796d;
+  --fh-label: #7b7367;
+  --fh-nav-inactive: #9c9489;
 }
 
 * { border-color: var(--fh-border); }
@@ -14,13 +19,141 @@
 body {
   background: var(--fh-warm-white);
   color: var(--fh-black);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, .font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 ::selection { background: var(--fh-light-gold); color: var(--fh-black); }
 
-.font-financial { font-variant-numeric: tabular-nums; }
-.gold-rule { background: linear-gradient(90deg, transparent, var(--fh-gold), transparent); }
+/* Tabular numerics for financial values */
+.font-financial {
+  font-variant-numeric: tabular-nums;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Gold horizontal rule */
+.gold-rule {
+  background: linear-gradient(90deg, transparent, #6f552d 20%, #c9963e 50%, #6f552d 80%, transparent);
+  height: 1px;
+}
+
+/* Premium nav item */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fh-nav-inactive);
+  transition: color 0.15s ease, background 0.15s ease;
+  letter-spacing: 0.01em;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.nav-item:hover {
+  color: #e2d8ca;
+  background: #161616;
+}
+
+.nav-item.active {
+  background: var(--fh-charcoal-active);
+  color: #ffffff;
+  border-left-color: #f0ebe2;
+  font-weight: 500;
+}
+
+/* KPI metric card */
+.metric-card {
+  background: #ffffff;
+  border: 1px solid var(--fh-border);
+  border-radius: 4px;
+  padding: 18px 20px 20px;
+  position: relative;
+}
+
+.metric-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fh-label);
+  font-family: 'Inter', sans-serif;
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--fh-black);
+  margin-top: 14px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Inter', sans-serif;
+}
+
+.metric-icon {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  color: var(--fh-gold);
+  opacity: 0.85;
+}
+
+/* Content card */
+.content-card {
+  background: #ffffff;
+  border: 1px solid var(--fh-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.card-eyebrow {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fh-gold);
+  font-family: 'Inter', sans-serif;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fh-black);
+  margin-top: 3px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Eyebrow text style */
+.eyebrow {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--fh-gold);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Page headline */
+.page-headline {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.03;
+  color: var(--fh-black);
+  font-family: 'Playfair Display', Georgia, serif;
+}
 
 /* Invoice Print Mode */
 @page {
@@ -29,17 +162,8 @@ body {
 }
 
 @media print {
-  body {
-    background: white !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-  .invoice-paper {
-    box-shadow: none !important;
-    margin: 0 !important;
-  }
+  body { background: white !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .invoice-paper { box-shadow: none !important; margin: 0 !important; }
 }

@@ -1,17 +1,12 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { apiBase } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function StaffPage() {
-  const user = await getCurrentUser();
-  if (user.role !== "ADMIN") redirect("/dashboard");
-
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/staff`, { 
+  const res = await fetch(`${apiBase()}/staff`, { 
     cache: 'no-store',
-    headers: { 'Cookie': `fashion_hub_session=${user.token || ""}` }
   });
   
   const payload = await res.json().catch(() => ({}));
@@ -21,8 +16,13 @@ export default async function StaffPage() {
     <div className="space-y-7">
       <section className="flex flex-col justify-between gap-4 border-b border-[#dfd8cc] pb-6 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Team</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight">Staff Members</h2>
+          <p className="eyebrow flex items-center gap-2" style={{ color: '#1a3a7a' }}>
+            <span style={{ width: 16, height: 1, background: '#1a3a7a', display: 'inline-block' }} />
+            Team
+          </p>
+          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+            Staff Members
+          </h2>
         </div>
         <Button variant="gold" disabled>
           Add Staff (Soon)
@@ -56,7 +56,7 @@ export default async function StaffPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${member.active ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 'bg-[#fce8e6] text-[#d93025]'}`}>
+                    <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${member.active ? 'bg-[#f0f9f4] text-[#1a6b3a]' : 'bg-[#fef0f0] text-[#8a1a1a]'}`}>
                       {member.active ? "Active" : "Inactive"}
                     </span>
                   </td>

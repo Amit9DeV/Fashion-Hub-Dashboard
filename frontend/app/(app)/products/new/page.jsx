@@ -31,8 +31,8 @@ export default function NewProductWizard() {
 
   useEffect(() => {
     api.products.getMaster().then(res => {
-      setBrands(res.data?.brands || []);
-      setCategories(res.data?.categories || []);
+      setBrands(res.brands || []);
+      setCategories(res.categories || []);
     }).catch(console.error);
   }, []);
 
@@ -187,9 +187,26 @@ export default function NewProductWizard() {
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Brand</label>
                 <select 
                   className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
-                  value={basic.brandId} onChange={e => setBasic({...basic, brandId: e.target.value})}
+                  value={basic.brandId} onChange={async e => {
+                    const val = e.target.value;
+                    if (val === "ADD_NEW") {
+                      const name = window.prompt("Enter new brand name:");
+                      if (name) {
+                        try {
+                          const res = await api.products.createBrand(name);
+                          setBrands([...brands, res.brand]);
+                          setBasic({...basic, brandId: res.brand._id});
+                        } catch (err) {
+                          alert(err.message || "Failed to create brand");
+                        }
+                      }
+                      return;
+                    }
+                    setBasic({...basic, brandId: val});
+                  }}
                 >
                   <option value="">Select Brand</option>
+                  <option value="ADD_NEW">+ Add New Brand</option>
                   {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                 </select>
               </div>
@@ -197,9 +214,26 @@ export default function NewProductWizard() {
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Category</label>
                 <select 
                   className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
-                  value={basic.categoryId} onChange={e => setBasic({...basic, categoryId: e.target.value})}
+                  value={basic.categoryId} onChange={async e => {
+                    const val = e.target.value;
+                    if (val === "ADD_NEW") {
+                      const name = window.prompt("Enter new category name:");
+                      if (name) {
+                        try {
+                          const res = await api.products.createCategory(name);
+                          setCategories([...categories, res.category]);
+                          setBasic({...basic, categoryId: res.category._id});
+                        } catch (err) {
+                          alert(err.message || "Failed to create category");
+                        }
+                      }
+                      return;
+                    }
+                    setBasic({...basic, categoryId: val});
+                  }}
                 >
                   <option value="">Select Category</option>
+                  <option value="ADD_NEW">+ Add New Category</option>
                   {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                 </select>
               </div>

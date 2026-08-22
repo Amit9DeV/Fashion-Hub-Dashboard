@@ -1,19 +1,14 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { FileText, MessageCircle } from "lucide-react";
-import { getCurrentUser, can } from "@/lib/auth";
 import { formatDate, formatMoney } from "@/lib/utils";
+import { apiBase } from "@/lib/backend";
 import DeleteOrderButton from "@/components/orders/DeleteOrderButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
-  const user = await getCurrentUser();
-  if (!can(user, "orders:view")) redirect("/billing");
-  
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders`, { 
+  const res = await fetch(`${apiBase()}/orders`, { 
     cache: 'no-store',
-    headers: { 'Cookie': `fashion_hub_session=${user.token || ""}` }
   });
   
   const payload = await res.json().catch(() => ({}));
@@ -26,9 +21,14 @@ export default async function OrdersPage() {
     <div className="overflow-hidden rounded-md border bg-white">
       <div className="flex items-end justify-between border-b px-5 py-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9b7740]">Immutable sales ledger</p>
-          <h2 className="mt-1 text-xl font-semibold">Completed orders</h2>
-          <p className="mt-1 text-sm text-[#756e64]">Sales ledger with historical records.</p>
+          <p className="eyebrow flex items-center gap-2">
+            <span style={{ width: 16, height: 1, background: '#5a2a7a', display: 'inline-block' }} />
+            Immutable sales ledger
+          </p>
+          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+            Completed orders
+          </h2>
+          <p className="mt-1 text-sm text-[#756e64]" style={{ fontFamily: "'Inter', sans-serif" }}>Sales ledger with historical records.</p>
         </div>
         <span className="hidden rounded-full bg-[#f0ede7] px-3 py-1 text-xs font-semibold text-[#5f584e] sm:block">{orders.length} recent</span>
       </div>
@@ -56,7 +56,7 @@ export default async function OrdersPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <FileText size={15} className="text-[#9b7740]" />
-                        <a href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/invoices/${invoice?._id}/pdf`} target="_blank" className="font-mono text-xs font-semibold hover:text-[#9b7740]">{order.invoiceNumber}</a>
+                        <a href={`${apiBase()}/invoices/${invoice?._id}/pdf`} target="_blank" rel="noreferrer" className="font-mono text-xs font-semibold hover:text-[#9b7740]">{order.invoiceNumber}</a>
                       </div>
                     </td>
                     <td className="px-5 py-3.5">

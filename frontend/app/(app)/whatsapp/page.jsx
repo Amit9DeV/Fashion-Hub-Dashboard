@@ -43,9 +43,9 @@ export default function WhatsAppPage() {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case "SENT": return "bg-[#e6f4ea] text-[#1e8e3e]";
-      case "FAILED": return "bg-[#fce8e6] text-[#d93025]";
-      case "QUEUED": return "bg-[#fff2e6] text-[#8a531e]";
+      case "SENT": return "bg-[#f0f9f4] text-[#1a6b3a]";
+      case "FAILED": return "bg-[#fef0f0] text-[#8a1a1a]";
+      case "QUEUED": return "bg-[#fdf8f0] text-[#8a5a10]";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -54,8 +54,13 @@ export default function WhatsAppPage() {
     <div className="space-y-7 pb-10">
       <div className="flex items-end justify-between border-b border-[#dfd8cc] pb-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Customer Communications</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight">WhatsApp Invoices</h2>
+          <p className="eyebrow flex items-center gap-2" style={{ color: '#1a3a7a' }}>
+            <span style={{ width: 16, height: 1, background: '#1a3a7a', display: 'inline-block' }} />
+            Customer Communications
+          </p>
+          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+            WhatsApp Invoices
+          </h2>
         </div>
         <Button variant="outline" onClick={fetchMessages} disabled={loading}>
           <RefreshCcw size={16} className={`mr-2 ${loading ? "animate-spin" : ""}`} />

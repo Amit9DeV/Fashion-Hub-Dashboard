@@ -1,42 +1,34 @@
-const API_URL = "https://fashion-hub-dashboard.onrender.com/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://fashion-hub-dashboard.onrender.com/api";
 
 async function fetchAPI(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
-  const config = {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    // Allows sending and receiving HTTP-only cookies
-    credentials: "omit", // Wait, we use cookies? Actually, 'include' if cross-origin cookies.
+  const headers = {
+    ...options.headers,
   };
 
-  // For cross-origin cookie support
-  config.credentials = "include";
+  if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
 
-  const response = await fetch(url, config);
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new Error(data.message || data.error || "API request failed");
   }
 
-  return data.data || data; // Return standardized backend payload {success: true, data: {}}
+  return data.data !== undefined ? data.data : data;
 }
 
 export const api = {
-  auth: {
-    login: (credentials) =>
-      fetchAPI("/auth/login", {
-        method: "POST",
-        body: JSON.stringify(credentials),
-      }),
-    logout: () => fetchAPI("/auth/logout", { method: "POST" }),
-    me: () => fetchAPI("/auth/me"),
-  },
   products: {
     getMaster: () => fetchAPI("/products/master"),
+    createBrand: (name) => fetchAPI("/products/brands", { method: "POST", body: JSON.stringify({ name }) }),
+    createCategory: (name) => fetchAPI("/products/categories", { method: "POST", body: JSON.stringify({ name }) }),
     search: (query) => fetchAPI(`/products?query=${encodeURIComponent(query)}`),
     getAll: () => fetchAPI("/products/all"),
     getById: (id) => fetchAPI(`/products/${id}`),
@@ -75,6 +67,7 @@ export const api = {
     getPdfUrl: (invoiceId) => `${API_URL}/invoices/${invoiceId}/pdf`,
   },
   settings: {
+    get: () => fetchAPI("/settings"),
     update: (data) =>
       fetchAPI("/settings", { method: "POST", body: JSON.stringify(data) }),
   },

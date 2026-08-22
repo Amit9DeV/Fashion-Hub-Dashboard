@@ -18,11 +18,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/settings`, { credentials: "omit" })
-      // actually api.js is better if we add get to it, but fetch is fine
-      .then(res => res.json())
-      .then(payload => {
-        if (payload.data?.settings) setSettings(payload.data.settings);
+    api.settings.get()
+      .then((payload) => {
+        if (payload?.settings) setSettings(payload.settings);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -47,8 +45,13 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-7">
       <section className="border-b border-[#dfd8cc] pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Configuration</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">System Settings</h2>
+        <p className="eyebrow flex items-center gap-2" style={{ color: '#1a3a7a' }}>
+          <span style={{ width: 16, height: 1, background: '#1a3a7a', display: 'inline-block' }} />
+          Configuration
+        </p>
+        <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+          System Settings
+        </h2>
       </section>
 
       <form onSubmit={handleSubmit} className="space-y-6 rounded-md border bg-white p-6">

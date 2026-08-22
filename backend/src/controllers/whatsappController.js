@@ -1,3 +1,4 @@
+import connectToDatabase from "../config/db.js";
 import WhatsappMessage from "../models/WhatsappMessage.js";
 import { deliverQueuedInvoice } from "../services/whatsapp/InvoiceWhatsAppService.js";
 
@@ -6,6 +7,7 @@ import { deliverQueuedInvoice } from "../services/whatsapp/InvoiceWhatsAppServic
 // @access  Private
 export const getMessages = async (req, res) => {
   try {
+    await connectToDatabase();
     const messages = await WhatsappMessage.find().sort({ createdAt: -1 }).limit(100);
     res.json({ success: true, data: messages });
   } catch (error) {
@@ -18,6 +20,7 @@ export const getMessages = async (req, res) => {
 // @access  Private
 export const retryMessage = async (req, res) => {
   try {
+    await connectToDatabase();
     const message = await WhatsappMessage.findById(req.params.id);
     if (!message) {
       return res.status(404).json({ success: false, error: "Message not found" });

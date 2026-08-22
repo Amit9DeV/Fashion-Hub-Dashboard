@@ -29,6 +29,9 @@ export const processSale = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: "Could not complete the sale." });
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Could not complete the sale.",
+    });
   }
 };

@@ -135,8 +135,13 @@ export default function ReturnsPage() {
   return (
     <div className="space-y-7 pb-10">
       <div className="border-b border-[#dfd8cc] pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Reverse Logistics</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">Returns & Exchanges</h2>
+        <p className="eyebrow flex items-center gap-2" style={{ color: '#5a2a7a' }}>
+          <span style={{ width: 16, height: 1, background: '#5a2a7a', display: 'inline-block' }} />
+          Reverse Logistics
+        </p>
+        <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+          Returns & Exchanges
+        </h2>
       </div>
 
       <div className="grid gap-7 lg:grid-cols-2">
@@ -262,7 +267,7 @@ export default function ReturnsPage() {
                         <p className="text-xs text-[#706a61] mt-0.5">Inv: {ret.invoiceNumber}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-financial font-semibold text-[#8a2f20]">-{formatMoney(ret.totalRefundPaisa)}</p>
+                        <p className="font-financial font-semibold text-[#8a1a1a]">-{formatMoney(ret.totalRefundPaisa)}</p>
                         <p className="text-[10px] text-[#706a61] mt-0.5">{formatDate(ret.createdAt)}</p>
                       </div>
                     </div>

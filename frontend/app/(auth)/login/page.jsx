@@ -4,7 +4,6 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { BrandMark } from "@/components/layout/BrandMark";
-import { api } from "@/src/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,11 +23,6 @@ function LoginForm() {
     event.preventDefault();
     setBusy(true); setError("");
     try {
-      const response = await api.auth.login({ email, password });
-      const actionResult = await import("./actions").then(m => m.syncSession(response));
-      if (actionResult && !actionResult.success) {
-        throw new Error(`Session Error: ${actionResult.error}`);
-      }
       router.replace(params.get("next") || "/dashboard");
       router.refresh();
     } catch (err) {

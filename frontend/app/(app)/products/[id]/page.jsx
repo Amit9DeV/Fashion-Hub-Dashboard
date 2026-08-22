@@ -34,8 +34,8 @@ export default function ProductDetailPage(props) {
     ])
     .then(([productData, masterData]) => {
       setProduct(productData.product);
-      setBrands(masterData.data?.brands || []);
-      setCategories(masterData.data?.categories || []);
+      setBrands(masterData.brands || []);
+      setCategories(masterData.categories || []);
       
       setBasicForm({
         name: productData.product.name || "",

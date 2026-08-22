@@ -69,8 +69,13 @@ export default function ReportsPage() {
     <div className="space-y-7 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#dfd8cc] pb-6 gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Analytics</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight">Store Reports</h2>
+          <p className="eyebrow flex items-center gap-2" style={{ color: '#1a6b3a' }}>
+            <span style={{ width: 16, height: 1, background: '#1a6b3a', display: 'inline-block' }} />
+            Analytics
+          </p>
+          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+            Store Reports
+          </h2>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <form onSubmit={handleFilter} className="flex flex-wrap items-center gap-2">
@@ -126,7 +131,7 @@ export default function ReportsPage() {
                       dx={-10}
                     />
                     <Tooltip content={<CustomTooltip isMoney={true} />} />
-                    <Line type="monotone" dataKey="revenuePaisa" name="Revenue" stroke="#c9963e" strokeWidth={3} dot={{ r: 3, fill: "#c9963e" }} activeDot={{ r: 5 }} />
+                    <Line type="monotone" dataKey="revenuePaisa" name="Revenue" stroke="#1a3a7a" strokeWidth={3} dot={{ r: 3, fill: "#1a3a7a" }} activeDot={{ r: 5 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -141,7 +146,7 @@ export default function ReportsPage() {
                 <div className="space-y-4">
                   {report.paymentSplit.map((method, idx) => {
                     const total = report.paymentSplit.reduce((s, m) => s + m.totalPaisa, 0);
-                    const pct = Math.round((method.totalPaisa / total) * 100);
+                    const pct = total > 0 ? Math.round((method.totalPaisa / total) * 100) : 0;
                     return (
                       <div key={idx}>
                         <div className="flex justify-between text-sm mb-1">
@@ -149,7 +154,7 @@ export default function ReportsPage() {
                           <span className="font-financial font-semibold">{formatMoney(method.totalPaisa)}</span>
                         </div>
                         <div className="h-2 w-full bg-[#f0ede7] rounded-full overflow-hidden">
-                          <div className="h-full bg-[#9b7740]" style={{ width: `${pct}%` }} />
+                          <div className="h-full bg-[#1a3a7a]" style={{ width: `${pct}%` }} />
                         </div>
                         <p className="text-[10px] text-right text-[#706a61] mt-1">{pct}% of total</p>
                       </div>
@@ -187,7 +192,7 @@ export default function ReportsPage() {
                     dx={10}
                   />
                   <Tooltip content={<CustomTooltip isMoney={true} />} />
-                  <Bar yAxisId="left" dataKey="revenuePaisa" name="Revenue" fill="#0b0b0b" radius={[4, 4, 0, 0]} barSize={40} />
+                  <Bar yAxisId="left" dataKey="revenuePaisa" name="Revenue" fill="#1a5a5a" radius={[4, 4, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

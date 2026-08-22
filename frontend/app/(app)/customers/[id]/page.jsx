@@ -1,18 +1,13 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser, can } from "@/lib/auth";
 import { formatMoney, formatDate } from "@/lib/utils";
+import { apiBase } from "@/lib/backend";
 import { FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomerDetailPage(props) {
   const params = await props.params;
-  const user = await getCurrentUser();
-  if (!can(user, "customers:view")) redirect("/dashboard");
-
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/customers/${params.id}`, { 
+  const res = await fetch(`${apiBase()}/customers/${params.id}`, { 
     cache: 'no-store',
-    headers: { 'Cookie': `fashion_hub_session=${user.token || ""}` }
   });
   
   const payload = await res.json().catch(() => ({}));

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import connectToDatabase from "../config/db.js";
 import Return from "../models/Return.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
@@ -9,6 +10,7 @@ import InventoryMovement from "../models/InventoryMovement.js";
 // @desc    Process a new return
 // @access  Private
 export const processReturn = async (req, res) => {
+  await connectToDatabase();
   const session = await mongoose.startSession();
   session.startTransaction();
   
@@ -117,6 +119,7 @@ export const processReturn = async (req, res) => {
 // @access  Private
 export const getReturns = async (req, res) => {
   try {
+    await connectToDatabase();
     const returns = await Return.find().sort({ createdAt: -1 });
     res.json({ success: true, data: returns });
   } catch (error) {
@@ -129,6 +132,7 @@ export const getReturns = async (req, res) => {
 // @access  Private
 export const getReturnById = async (req, res) => {
   try {
+    await connectToDatabase();
     const returnDoc = await Return.findById(req.params.id);
     if (!returnDoc) return res.status(404).json({ success: false, error: "Return not found" });
     res.json({ success: true, data: returnDoc });

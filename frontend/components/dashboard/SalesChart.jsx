@@ -1,48 +1,65 @@
 "use client";
 
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: '#ffffff', border: '1px solid #e8e3da',
+      borderRadius: 3, padding: '8px 14px', boxShadow: 'none',
+    }}>
+      <p style={{ fontSize: 10, color: '#81796d', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4, fontFamily: "'Inter', sans-serif" }}>{label}</p>
+      <p style={{ fontSize: 14, fontWeight: 700, color: '#0b0b0b', fontVariantNumeric: 'tabular-nums', fontFamily: "'Inter', sans-serif" }}>
+        ₹{Number(payload[0].value).toLocaleString('en-IN')}
+      </p>
+    </div>
+  );
+}
 
 export function SalesChart({ data }) {
+  if (!data?.length) {
+    return (
+      <div style={{ height: 240, display: 'grid', placeItems: 'center' }}>
+        <p style={{ fontSize: 12, color: '#9c9489', fontFamily: "'Inter', sans-serif" }}>No data yet</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-[250px] w-full text-xs">
+    <div style={{ height: 240, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#c9963e" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#c9963e" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <XAxis 
-            dataKey="date" 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: '#81796d', fontSize: 10 }} 
-            dy={10} 
-            minTickGap={20}
+        <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+          <CartesianGrid
+            vertical={false}
+            stroke="#eeebe4"
+            strokeDasharray="4 4"
           />
-          <YAxis 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: '#81796d', fontSize: 10 }} 
-            tickFormatter={(value) => `₹${value}`} 
+          <XAxis
+            dataKey="date"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#9c9489', fontSize: 9, fontFamily: "'Inter', sans-serif", letterSpacing: '0.04em' }}
+            dy={10}
+            minTickGap={28}
           />
-          <CartesianGrid vertical={false} stroke="#f0ede7" strokeDasharray="3 3" />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #dfd8cc', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-            itemStyle={{ color: '#080909', fontWeight: 600 }}
-            formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
-            labelStyle={{ color: '#706a61', fontSize: '12px', marginBottom: '4px' }}
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#9c9489', fontSize: 9, fontFamily: "'Inter', sans-serif" }}
+            tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+            width={42}
           />
-          <Area 
-            type="monotone" 
-            dataKey="revenue" 
-            stroke="#c9963e" 
-            strokeWidth={2}
-            fillOpacity={1} 
-            fill="url(#colorRevenue)" 
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e8e3da', strokeWidth: 1, strokeDasharray: '3 3' }} />
+          <Line
+            type="monotone"
+            dataKey="revenue"
+            stroke="#1a6b3a"
+            strokeWidth={1.5}
+            dot={false}
+            activeDot={{ r: 3, fill: '#1a6b3a', stroke: '#fff', strokeWidth: 2 }}
           />
-        </AreaChart>
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );

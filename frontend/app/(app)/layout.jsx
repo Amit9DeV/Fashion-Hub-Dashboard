@@ -1,13 +1,16 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
 
-export default async function AppLayout({ children }) {
-  const user = await getCurrentUser();
-  if (user && user.error) {
-    redirect(`/login?error=${encodeURIComponent(user.error)}`);
-  }
-  if (!user) redirect("/login");
-  return <div className="flex min-h-screen"><AppSidebar user={user} /><div className="min-w-0 flex-1"><AppTopbar user={user} /><main className="p-5 sm:p-8">{children}</main></div></div>;
+export default function AppLayout({ children }) {
+  return (
+    <div className="flex min-h-screen" style={{ background: '#faf9f6' }}>
+      <AppSidebar />
+      <div className="min-w-0 flex-1 flex flex-col">
+        <AppTopbar />
+        <main style={{ flex: 1, padding: '36px 40px 48px', maxWidth: 1400 }}>
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 }
