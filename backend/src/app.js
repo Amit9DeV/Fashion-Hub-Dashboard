@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import connectToDatabase from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
+import { requestLogger } from "./middleware/logger.js";
 import productRoutes from "./routes/productRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import salesRoutes from "./routes/salesRoutes.js";
@@ -32,6 +33,7 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(requestLogger);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
