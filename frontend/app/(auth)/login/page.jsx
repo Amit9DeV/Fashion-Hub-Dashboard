@@ -25,7 +25,10 @@ function LoginForm() {
     setBusy(true); setError("");
     try {
       const response = await api.auth.login({ email, password });
-      await import("./actions").then(m => m.syncSession(response));
+      const actionResult = await import("./actions").then(m => m.syncSession(response));
+      if (actionResult && !actionResult.success) {
+        throw new Error(`Session Error: ${actionResult.error}`);
+      }
       router.replace(params.get("next") || "/dashboard");
       router.refresh();
     } catch (err) {
