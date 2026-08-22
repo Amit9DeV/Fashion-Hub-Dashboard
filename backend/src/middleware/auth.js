@@ -37,8 +37,8 @@ export function createSession(res, user) {
 
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 12 * 60 * 60 * 1000, // 12 hours in ms
   });
@@ -49,8 +49,8 @@ export function createSession(res, user) {
 export function clearSession(res) {
   res.cookie(COOKIE_NAME, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 0,
   });

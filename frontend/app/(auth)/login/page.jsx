@@ -24,7 +24,8 @@ function LoginForm() {
     event.preventDefault();
     setBusy(true); setError("");
     try {
-      await api.auth.login({ email, password });
+      const response = await api.auth.login({ email, password });
+      await import("./actions").then(m => m.syncSession(response));
       router.replace(params.get("next") || "/dashboard");
       router.refresh();
     } catch (err) {
