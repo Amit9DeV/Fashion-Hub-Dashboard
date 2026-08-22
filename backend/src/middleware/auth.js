@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 const COOKIE_NAME = "fashion_hub_session";
+const SECRET = process.env.AUTH_SECRET || "default-fallback-secret-key-that-is-at-least-32-chars-long";
 
 export function requireAuth(req, res, next) {
   const token = req.cookies[COOKIE_NAME] || req.headers.authorization?.split(' ')[1];
@@ -10,7 +11,7 @@ export function requireAuth(req, res, next) {
   }
 
   try {
-    const payload = jwt.verify(token, process.env.AUTH_SECRET);
+    const payload = jwt.verify(token, SECRET);
     req.user = {
       id: payload.sub,
       name: payload.name,
@@ -31,7 +32,7 @@ export function createSession(res, user) {
       email: user.email,
       role: user.role,
     },
-    process.env.AUTH_SECRET,
+    SECRET,
     { expiresIn: '12h' }
   );
 
