@@ -18,7 +18,6 @@ export async function createSession(user) {
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject((user._id || user.id).toString())
-    .setIssuedAt()
     .setExpirationTime("12h")
     .sign(sessionSecret());
 
@@ -43,7 +42,7 @@ export async function getCurrentUser() {
   if (!token) return { error: "No token found" };
 
   try {
-    const { payload } = await jwtVerify(token, sessionSecret());
+    const { payload } = await jwtVerify(token, sessionSecret(), { clockTolerance: 60 });
     return {
       id: payload.sub,
       name: payload.name,
