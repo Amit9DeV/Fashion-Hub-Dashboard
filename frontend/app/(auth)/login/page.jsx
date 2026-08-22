@@ -17,7 +17,7 @@ function LoginForm() {
   const params = useSearchParams();
   const [email, setEmail] = useState("admin@fashionhub.local");
   const [password, setPassword] = useState("FashionHub@123");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(params.get("error") || "");
   const [busy, setBusy] = useState(false);
 
   async function submit(event) {

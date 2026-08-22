@@ -40,7 +40,7 @@ export async function clearSession() {
 export async function getCurrentUser() {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return null;
+  if (!token) return { error: "No token found" };
 
   try {
     const { payload } = await jwtVerify(token, sessionSecret());
@@ -51,7 +51,7 @@ export async function getCurrentUser() {
       role: payload.role,
       token: token,
     };
-  } catch {
-    return null;
+  } catch (err) {
+    return { error: err.message || "JWT Verify failed" };
   }
 }
