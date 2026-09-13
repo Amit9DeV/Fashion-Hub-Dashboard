@@ -45,6 +45,18 @@ export const deleteOrder = async (req, res) => {
       }
     }
 
+    // Revert customer stats
+    if (order.customerId) {
+      await import("../models/Customer.js").then(async ({ default: Customer }) => {
+        await Customer.findByIdAndUpdate(order.customerId, {
+          $inc: {
+            "stats.totalOrders": -1,
+            "stats.totalSpentPaisa": -(order.totalPaisa || 0)
+          }
+        });
+      });
+    }
+
     await Order.findByIdAndDelete(id);
     await Invoice.deleteMany({ orderId: id });
     await WhatsappMessage.deleteMany({ orderId: id });

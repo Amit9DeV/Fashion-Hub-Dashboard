@@ -1,6 +1,20 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://fashion-hub-dashboard.onrender.com/api";
+const API_URL ="https://fashion-hub-dashboard.onrender.com/api";
+// const API_URL = "http://localhost:5000/api";
+const activeRequests = new Map();
 
 async function fetchAPI(endpoint, options = {}) {
+  const isGet = !options.method || options.method === "GET";
+  
+  // Automatically cancel previous duplicate GET requests
+  if (isGet) {
+    if (activeRequests.has(endpoint)) {
+      activeRequests.get(endpoint).abort();
+    }
+    const controller = new AbortController();
+    activeRequests.set(endpoint, controller);
+    options.signal = controller.signal;
+  }
+
   const url = `${API_URL}${endpoint}`;
   const headers = {
     ...options.headers,
@@ -10,25 +24,45 @@ async function fetchAPI(endpoint, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    throw new Error(data.message || data.error || "API request failed");
+    if (!response.ok) {
+      throw new Error(data.message || data.error || "API request failed");
+    }
+
+    return data.data !== undefined ? data.data : data;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      // Return a never-resolving promise to stop React state updates
+      return new Promise(() => {});
+    }
+    throw error;
+  } finally {
+    if (isGet && activeRequests.get(endpoint) === options.signal) {
+      activeRequests.delete(endpoint);
+    }
   }
-
-  return data.data !== undefined ? data.data : data;
 }
 
 export const api = {
   products: {
     getMaster: () => fetchAPI("/products/master"),
-    createBrand: (name) => fetchAPI("/products/brands", { method: "POST", body: JSON.stringify({ name }) }),
-    createCategory: (name) => fetchAPI("/products/categories", { method: "POST", body: JSON.stringify({ name }) }),
+    createBrand: (name) =>
+      fetchAPI("/products/brands", {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      }),
+    createCategory: (name) =>
+      fetchAPI("/products/categories", {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      }),
     search: (query) => fetchAPI(`/products?query=${encodeURIComponent(query)}`),
     getAll: () => fetchAPI("/products/all"),
     getById: (id) => fetchAPI(`/products/${id}`),
@@ -58,6 +92,7 @@ export const api = {
       fetchAPI(`/customers?query=${encodeURIComponent(query)}`),
     getAll: () => fetchAPI("/customers/all"),
     getById: (id) => fetchAPI(`/customers/${id}`),
+    delete: (id) => fetchAPI(`/customers/${id}`, { method: "DELETE" }),
   },
   sales: {
     complete: (saleData) =>
@@ -92,5 +127,10 @@ export const api = {
   whatsapp: {
     getMessages: () => fetchAPI("/whatsapp/messages"),
     retry: (id) => fetchAPI(`/whatsapp/retry/${id}`, { method: "POST" }),
+  },
+  expenses: {
+    getAll: (queryString = "") => fetchAPI(`/expenses${queryString ? `?${queryString}` : ""}`),
+    create: (data) => fetchAPI("/expenses", { method: "POST", body: JSON.stringify(data) }),
+    delete: (id) => fetchAPI(`/expenses/${id}`, { method: "DELETE" }),
   },
 };

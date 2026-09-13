@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Boxes, ClipboardList, LayoutDashboard, MessageCircle, PackageSearch, ReceiptText, RotateCcw, Settings, Shirt, UsersRound } from "lucide-react";
+import { BarChart3, Boxes, ClipboardList, LayoutDashboard, MessageCircle, PackageSearch, Receipt, ReceiptText, RotateCcw, Settings, Shirt, Tags, UsersRound } from "lucide-react";
 import { BrandMark } from "@/components/layout/BrandMark";
 
 const nav = [
@@ -10,7 +10,9 @@ const nav = [
   { label: "Billing", href: "/billing", icon: ReceiptText },
   { label: "Orders", href: "/orders", icon: ClipboardList },
   { label: "Products", href: "/products", icon: Shirt },
+  { label: "Pricing", href: "/pricing", icon: Tags },
   { label: "Inventory", href: "/inventory", icon: Boxes },
+  { label: "Expenses", href: "/expenses", icon: Receipt },
   { label: "Customers", href: "/customers", icon: UsersRound },
   { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw },
   { label: "Reports", href: "/reports", icon: BarChart3 },

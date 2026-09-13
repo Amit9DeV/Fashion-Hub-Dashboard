@@ -14,6 +14,7 @@ export default async function DashboardPage() {
     totalSales = 0,
     totalOrders = 0,
     newCustomers = 0,
+    totalCustomers = 0,
     paymentSummary = { UPI: 0, CASH: 0, CARD: 0 },
     recentSales = [],
     inventoryAttention = { outOfStock: [], lowStock: [], outOfStockCount: 0, lowStockCount: 0 },
@@ -59,7 +60,7 @@ export default async function DashboardPage() {
         <MetricCard label="Today's Sales" value={formatMoney(today.sales)} icon={Banknote} theme={{ bg: '#f0f4fc', text: '#1a3a7a', border: '#1a3a7a' }} />
         <MetricCard label="Today's Orders" value={today.orders.toString()} icon={Package} theme={{ bg: '#fdf8f0', text: '#8a5a10', border: '#c9963e' }} />
         <MetricCard label="Total Orders" value={totalOrders.toLocaleString('en-IN')} icon={ClipboardList} theme={{ bg: '#f5f0fa', text: '#5a2a7a', border: '#5a2a7a' }} />
-        <MetricCard label="New Customers" value={newCustomers.toString()} icon={UsersRound} theme={{ bg: '#f0f8f8', text: '#1a5a5a', border: '#1a5a5a' }} />
+        <MetricCard label="Total Customers" value={totalCustomers.toString()} icon={UsersRound} theme={{ bg: '#f0f8f8', text: '#1a5a5a', border: '#1a5a5a' }} />
         <MetricCard
           label="Low Stock"
           value={inventoryAttention.lowStockCount.toString()}

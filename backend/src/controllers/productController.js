@@ -198,7 +198,7 @@ export const createProduct = async (req, res) => {
         sku: v.sku,
         color: v.color,
         size: v.size,
-        barcode: v.barcode,
+        barcode: v.barcode || undefined,
         costPricePaisa: Math.round((parseFloat(v.costPrice) || 0) * 100),
         mrpPaisa: Math.round((parseFloat(v.mrp) || 0) * 100),
         sellingPricePaisa: Math.round((parseFloat(v.sellingPrice) || 0) * 100),
@@ -214,12 +214,17 @@ export const createProduct = async (req, res) => {
       const movements = insertedVariants
         .filter((v) => v.stock > 0)
         .map((v) => ({
+          productId: product._id,
           variantId: v._id,
+          skuSnapshot: v.sku,
+          productNameSnapshot: product.name,
           type: "PURCHASE",
-          quantityChanged: v.stock,
-          balance: v.stock,
+          quantityDelta: v.stock,
+          referenceType: "Product",
+          referenceId: product._id,
           reason: "Initial Stock",
-          staffId: req.user.id,
+          performedBy: { id: req.user.id, name: req.user.name || "Admin" },
+          occurredAt: new Date(),
         }));
 
       if (movements.length > 0) {
@@ -306,6 +311,9 @@ export const addVariant = async (req, res) => {
   session.startTransaction();
 
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+
     const { sku, color, size, sellingPrice, costPrice, mrp, barcode, stock } =
       req.body;
 
@@ -314,7 +322,7 @@ export const addVariant = async (req, res) => {
       sku,
       color,
       size,
-      barcode,
+      barcode: barcode || undefined,
       costPricePaisa: Math.round((parseFloat(costPrice) || 0) * 100),
       mrpPaisa: Math.round((parseFloat(mrp) || 0) * 100),
       sellingPricePaisa: Math.round((parseFloat(sellingPrice) || 0) * 100),
@@ -328,12 +336,17 @@ export const addVariant = async (req, res) => {
       await InventoryMovement.create(
         [
           {
+            productId: product._id,
             variantId: variant._id,
+            skuSnapshot: variant.sku,
+            productNameSnapshot: product.name,
             type: "PURCHASE",
-            quantityChanged: variant.stock,
-            balance: variant.stock,
+            quantityDelta: variant.stock,
+            referenceType: "ProductVariant",
+            referenceId: variant._id,
             reason: "Variant Creation",
-            staffId: req.user.id,
+            performedBy: { id: req.user.id, name: req.user.name || "Admin" },
+            occurredAt: new Date(),
           },
         ],
         { session },
@@ -377,7 +390,7 @@ export const updateVariant = async (req, res) => {
     if (sku !== undefined) updates.sku = sku;
     if (color !== undefined) updates.color = color;
     if (size !== undefined) updates.size = size;
-    if (barcode !== undefined) updates.barcode = barcode;
+    if (barcode !== undefined) updates.barcode = barcode || undefined;
     if (status !== undefined) updates.status = status;
     if (sellingPrice !== undefined)
       updates.sellingPricePaisa = Math.round(

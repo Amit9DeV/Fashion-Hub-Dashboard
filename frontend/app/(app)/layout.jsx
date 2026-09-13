@@ -7,7 +7,7 @@ export default function AppLayout({ children }) {
       <AppSidebar />
       <div className="min-w-0 flex-1 flex flex-col">
         <AppTopbar />
-        <main style={{ flex: 1, padding: '36px 40px 48px', maxWidth: 1400 }}>
+        <main className="flex-1 p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8 mx-auto w-full max-w-[1400px]">
           {children}
         </main>
       </div>

@@ -285,7 +285,7 @@ export default function ProductDetailPage(props) {
                       {product.description || <span className="italic text-gray-400">No description provided.</span>}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-6 pt-4 border-t">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-widest text-[#81796d]">Brand</p>
                       <p className="mt-1 font-medium">{product.brandSnapshot || "-"}</p>

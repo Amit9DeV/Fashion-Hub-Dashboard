@@ -11,6 +11,7 @@ import InventoryMovement from "../../models/InventoryMovement.js";
 import AuditLog from "../../models/AuditLog.js";
 import WhatsappMessage from "../../models/WhatsappMessage.js";
 import Counter from "../../models/Counter.js";
+import Settings from "../../models/Settings.js";
 import { calculateSale, compactCart, fiscalYearCode } from "../../services/sales/calculator.js";
 import { STORE_SNAPSHOT } from "../../utils/store.js";
 
@@ -22,6 +23,7 @@ export const saleInputSchema = z.object({
     variantId: objectId,
     quantity: z.number().int().positive().max(99),
     overriddenPricePaisa: z.number().int().positive().optional(),
+    overriddenMrpPaisa: z.number().int().positive().optional(),
     overriddenName: z.string().trim().max(200).optional(),
   })).min(1).max(100),
   customer: z.object({
@@ -40,6 +42,7 @@ export const saleInputSchema = z.object({
   })).min(1).max(4),
   notes: z.string().trim().max(1000).optional(),
   idempotencyKey: z.string().trim().min(10).max(100),
+  completedAt: z.string().datetime().optional(),
 });
 
 function cleanPhone(value) {
@@ -72,7 +75,7 @@ async function resolveCustomer(input, user, session, now) {
 
   const mobile = cleanPhone(input.mobile);
   const whatsappNumber = cleanPhone(input.whatsappNumber) || mobile;
-  if (!mobile && !whatsappNumber) return null;
+  if (!input.name && !mobile && !whatsappNumber) return null;
 
   customer = mobile ? await Customer.findOne({ mobile }).session(session) : null;
   if (customer) {
@@ -136,7 +139,10 @@ export async function completeSale(rawInput, user) {
     const runBlock = isStandalone ? (cb) => cb() : (cb, opts) => session.withTransaction(cb, opts);
 
     await runBlock(async () => {
-      const now = new Date();
+      const now = input.completedAt ? new Date(input.completedAt) : new Date();
+      const settings = await Settings.findOne().session(session);
+      const globalTaxRate = settings?.taxRate ?? 0;
+
       const compactedItems = compactCart(input.items);
       const saleLines = [];
 
@@ -170,7 +176,7 @@ export async function completeSale(rawInput, user) {
           size: variant.size,
           quantity: requestedItem.quantity,
           unitPricePaisa: requestedItem.overriddenPricePaisa || variant.sellingPricePaisa,
-          taxRate: product.taxRate,
+          taxRate: globalTaxRate,
         });
       }
 
@@ -184,6 +190,14 @@ export async function completeSale(rawInput, user) {
       const numbers = await nextSaleNumbers(session, now);
 
       for (const item of totals.items) {
+        const variantUpdate = { $inc: { stock: -item.quantity } };
+        // Automatically update master pricing if overridden during billing
+        const originalItem = compactedItems.find(reqItem => reqItem.variantId === item.variantId.toString());
+        if (originalItem) {
+          if (originalItem.overriddenPricePaisa !== undefined) variantUpdate.$set = { ...variantUpdate.$set, sellingPricePaisa: originalItem.overriddenPricePaisa };
+          if (originalItem.overriddenMrpPaisa !== undefined) variantUpdate.$set = { ...variantUpdate.$set, mrpPaisa: originalItem.overriddenMrpPaisa };
+        }
+
         const updateResult = await ProductVariant.updateOne(
           {
             _id: item.variantId,
@@ -191,7 +205,7 @@ export async function completeSale(rawInput, user) {
             stock: { $gte: item.quantity },
             status: "ACTIVE"
           },
-          { $inc: { stock: -item.quantity } },
+          variantUpdate,
           { session }
         );
         if (updateResult.modifiedCount !== 1) {

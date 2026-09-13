@@ -7,6 +7,7 @@ import Order from "../../models/Order.js";
 import Invoice from "../../models/Invoice.js";
 import InventoryMovement from "../../models/InventoryMovement.js";
 import AuditLog from "../../models/AuditLog.js";
+import Settings from "../../models/Settings.js";
 import { calculateSale, compactCart } from "../../services/sales/calculator.js";
 import { saleInputSchema } from "./completeSale.js";
 import { generateInvoicePdf } from "../invoice/InvoicePDFService.js";
@@ -76,13 +77,16 @@ export async function updateSale(orderId, rawInput, user) {
     const runBlock = isStandalone ? (cb) => cb() : (cb, opts) => session.withTransaction(cb, opts);
 
     await runBlock(async () => {
-      const now = new Date();
+      const settings = await Settings.findOne().session(session);
+      const globalTaxRate = settings?.taxRate ?? 0;
       
       const order = await Order.findById(orderId).session(session);
       if (!order) throw new Error("Order not found.");
       
       const invoice = await Invoice.findOne({ orderId: order._id }).session(session);
       if (!invoice) throw new Error("Invoice not found.");
+
+      const now = input.completedAt ? new Date(input.completedAt) : order.completedAt;
 
       // --- 1. REVERSE OLD STOCK & STATS ---
       for (const item of order.items) {
@@ -140,7 +144,7 @@ export async function updateSale(orderId, rawInput, user) {
           size: variant.size,
           quantity: requestedItem.quantity,
           unitPricePaisa: requestedItem.overriddenPricePaisa || variant.sellingPricePaisa,
-          taxRate: product.taxRate,
+          taxRate: globalTaxRate,
         });
       }
 
@@ -209,6 +213,7 @@ export async function updateSale(orderId, rawInput, user) {
             payments: input.payments,
             staffSnapshot: { id: user.id, name: user.name, role: user.role },
             notes: input.notes,
+            completedAt: now,
           }
         },
         { session }
@@ -223,6 +228,7 @@ export async function updateSale(orderId, rawInput, user) {
         taxPaisa: totals.taxPaisa,
         totalPaisa: totals.totalPaisa,
         payments: input.payments,
+        issuedAt: now,
       };
 
       await Invoice.updateOne(

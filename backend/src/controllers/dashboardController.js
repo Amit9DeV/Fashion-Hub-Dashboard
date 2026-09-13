@@ -34,6 +34,7 @@ export const getDashboardStats = async (req, res) => {
     }
 
     const newCustomersCount = await Customer.countDocuments({ createdAt: { $gte: todayStart } });
+    const totalCustomersCount = await Customer.countDocuments();
 
     // 2. Recent Sales
     const recentSales = await Order.find().sort({ completedAt: -1 }).limit(10).lean();
@@ -134,6 +135,7 @@ export const getDashboardStats = async (req, res) => {
         totalSales,
         totalOrders,
         newCustomers: newCustomersCount,
+        totalCustomers: totalCustomersCount,
         paymentSummary,
         recentSales,
         inventoryAttention: {

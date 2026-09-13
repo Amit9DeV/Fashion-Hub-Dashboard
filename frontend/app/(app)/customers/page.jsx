@@ -2,6 +2,7 @@ import Link from "next/link";
 import { UsersRound } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { apiBase } from "@/lib/backend";
+import DeleteCustomerButton from "@/components/customers/DeleteCustomerButton";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function CustomersPage() {
                   <th className="px-5 py-3 font-semibold">Contact</th>
                   <th className="px-5 py-3 font-semibold text-right">Orders</th>
                   <th className="px-5 py-3 font-semibold text-right">Total Spent</th>
+                  <th className="px-5 py-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -54,6 +56,11 @@ export default async function CustomersPage() {
                     <td className="px-5 py-3.5 text-right font-semibold">{customer.stats?.totalOrders || 0}</td>
                     <td className="px-5 py-3.5 text-right font-semibold text-[#1a6b3a] font-financial">
                       {formatMoney(customer.stats?.totalSpentPaisa || 0)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end">
+                        <DeleteCustomerButton customerId={customer._id.toString()} />
+                      </div>
                     </td>
                   </tr>
                 ))}

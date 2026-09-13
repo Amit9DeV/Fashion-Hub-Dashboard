@@ -56,3 +56,23 @@ export const getCustomerById = async (req, res) => {
     return res.status(500).json({ success: false, message: "Could not fetch customer." });
   }
 };
+
+export const deleteCustomer = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const customer = await Customer.findByIdAndDelete(req.params.id);
+    if (!customer) return res.status(404).json({ success: false, message: "Customer not found" });
+    
+    // Also nullify the customerId in their past orders to prevent dangling references,
+    // or just leave it since it's a historical ledger. We'll leave the snapshot but nullify the ID.
+    await Order.updateMany(
+      { customerId: req.params.id },
+      { $unset: { customerId: "" } }
+    );
+    
+    return res.json({ success: true, message: "Customer deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not delete customer." });
+  }
+};
