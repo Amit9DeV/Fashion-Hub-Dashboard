@@ -7,7 +7,8 @@ import {
 } from "recharts";
 import { 
   Calendar, Download, TrendingUp, RefreshCcw, DollarSign, 
-  ReceiptText, Package, AlertCircle, ShoppingBag, ArrowDownRight
+  ReceiptText, Package, AlertCircle, ShoppingBag, ArrowDownRight,
+  Edit2, Save, X
 } from "lucide-react";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -313,37 +314,10 @@ export default function ReportsPage() {
                     {expandedBillId === bill.id && (
                       <tr className="bg-[#fffaf5]">
                         <td colSpan="8" className="px-8 py-5 border-t border-[#f0ede7]">
-                          <div className="rounded border border-[#dfd8cc] bg-white overflow-hidden">
-                            <table className="w-full text-xs text-left">
-                              <thead className="bg-[#f5f2ee] text-[#5f584e]">
-                                <tr>
-                                  <th className="px-4 py-2 font-semibold">Item</th>
-                                  <th className="px-4 py-2 font-semibold text-center">Qty</th>
-                                  <th className="px-4 py-2 font-semibold text-right">Selling Price</th>
-                                  <th className="px-4 py-2 font-semibold text-right">Total Cost</th>
-                                  <th className="px-4 py-2 font-semibold text-right">Total Sales</th>
-                                  <th className="px-4 py-2 font-semibold text-right">Item Profit</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-[#f5f2ee]">
-                                {bill.items.map((item, idx) => {
-                                  const itemProfit = item.totalItemSalesPaisa - item.totalItemCostPaisa;
-                                  return (
-                                    <tr key={idx}>
-                                      <td className="px-4 py-2 font-medium">{item.productName} <span className="text-[#8a847a]">({item.sku})</span></td>
-                                      <td className="px-4 py-2 text-center">{item.quantity}</td>
-                                      <td className="px-4 py-2 text-right font-financial text-[#777169]">{formatMoney(item.sellingPricePaisa)}</td>
-                                      <td className="px-4 py-2 text-right font-financial text-[#777169]">{formatMoney(item.totalItemCostPaisa)}</td>
-                                      <td className="px-4 py-2 text-right font-financial text-[#151515]">{formatMoney(item.totalItemSalesPaisa)}</td>
-                                      <td className={`px-4 py-2 text-right font-financial font-semibold ${itemProfit < 0 ? 'text-[#a53a2d]' : 'text-[#1a6b3a]'}`}>
-                                        {formatMoney(itemProfit)}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
+                          <ExpandedBillDetails 
+                            bill={bill} 
+                            onUpdated={() => fetchReport(startDate, endDate)} 
+                          />
                         </td>
                       </tr>
                     )}
@@ -517,3 +491,156 @@ function KpiCard({ title, value, icon: Icon, color }) {
     </div>
   );
 }
+
+function ExpandedBillDetails({ bill, onUpdated }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    setItems(bill.items.map(i => ({ ...i })));
+  }, [bill, isEditing]);
+
+  const handleItemChange = (idx, field, val) => {
+    const newItems = [...items];
+    if (field === "unitCostPaisa" || field === "sellingPricePaisa") {
+      newItems[idx][field] = Math.round(Number(val) * 100);
+    } else if (field === "quantity") {
+      newItems[idx][field] = parseInt(val) || 0;
+    } else {
+      newItems[idx][field] = val;
+    }
+    setItems(newItems);
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      // Fetch full order to get all fields needed for updateSale
+      const fullOrderResponse = await api.orders.getById(bill.id);
+      const fullOrder = fullOrderResponse.order;
+      
+      const payload = {
+        items: items.map(i => ({
+          productId: i.productId,
+          variantId: i.variantId,
+          quantity: i.quantity,
+          overriddenPricePaisa: i.sellingPricePaisa,
+          overriddenCostPaisa: i.unitCostPaisa || i.costPricePaisa || 0,
+          overriddenName: i.productName
+        })),
+        customer: fullOrder.customerSnapshot || {},
+        discountPaisa: fullOrder.discountPaisa || 0,
+        payments: fullOrder.payments || [],
+        notes: fullOrder.notes,
+        idempotencyKey: fullOrder.idempotencyKey || `edit-${Date.now()}`,
+        completedAt: fullOrder.completedAt
+      };
+      
+      await api.sales.update(bill.id, payload);
+      setIsEditing(false);
+      onUpdated();
+    } catch (e) {
+      alert("Failed to update bill: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded border border-[#dfd8cc] bg-white overflow-hidden">
+      <div className="bg-[#f5f2ee] px-4 py-2 flex justify-between items-center border-b border-[#dfd8cc]">
+        <h4 className="font-bold text-xs text-[#5f584e] uppercase tracking-wider">Bill Items</h4>
+        {!isEditing ? (
+          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="h-7 px-2 text-xs text-[#1a3a7a] hover:bg-[#e6f0ff]">
+            <Edit2 size={12} className="mr-1" /> Edit Items
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} disabled={saving} className="h-7 px-2 text-xs text-[#a53a2d] hover:bg-[#ffe6e6]">
+              <X size={12} className="mr-1" /> Cancel
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={saving} className="h-7 px-2 text-xs bg-[#1a6b3a] hover:bg-[#134d2a] text-white">
+              {saving ? <RefreshCcw size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />} Save
+            </Button>
+          </div>
+        )}
+      </div>
+      <table className="w-full text-xs text-left">
+        <thead className="bg-[#faf9f6] text-[#8a847a]">
+          <tr>
+            <th className="px-4 py-2 font-semibold">Item</th>
+            <th className="px-4 py-2 font-semibold text-center w-20">Qty</th>
+            <th className="px-4 py-2 font-semibold text-right w-28">Cost Price</th>
+            <th className="px-4 py-2 font-semibold text-right w-28">Selling Price</th>
+            <th className="px-4 py-2 font-semibold text-right">Item Profit</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#f5f2ee]">
+          {(isEditing ? items : bill.items).map((item, idx) => {
+            const displayCost = isEditing ? (item.unitCostPaisa || item.costPricePaisa || 0) : (item.totalItemCostPaisa / item.quantity);
+            const itemProfit = isEditing 
+              ? (item.sellingPricePaisa - displayCost) * item.quantity
+              : item.totalItemSalesPaisa - item.totalItemCostPaisa;
+
+            return (
+              <tr key={idx} className={isEditing ? "bg-blue-50/30" : ""}>
+                <td className="px-4 py-2 font-medium">
+                  {isEditing ? (
+                    <Input 
+                      value={item.productName} 
+                      onChange={e => handleItemChange(idx, "productName", e.target.value)}
+                      className="h-7 text-xs bg-white border-[#dfd8cc]" 
+                    />
+                  ) : (
+                    <>{item.productName} <span className="text-[#8a847a]">({item.sku})</span></>
+                  )}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  {isEditing ? (
+                    <Input 
+                      type="number" min="1" 
+                      value={item.quantity} 
+                      onChange={e => handleItemChange(idx, "quantity", e.target.value)}
+                      className="h-7 text-xs text-center bg-white border-[#dfd8cc] w-16 mx-auto" 
+                    />
+                  ) : item.quantity}
+                </td>
+                <td className="px-4 py-2 text-right font-financial text-[#777169]">
+                  {isEditing ? (
+                    <div className="flex items-center justify-end">
+                      <span className="mr-1 text-[#8a847a]">₹</span>
+                      <Input 
+                        type="number" step="0.01" min="0"
+                        value={displayCost / 100} 
+                        onChange={e => handleItemChange(idx, "unitCostPaisa", e.target.value)}
+                        className="h-7 text-xs text-right bg-white border-[#dfd8cc] w-20" 
+                      />
+                    </div>
+                  ) : formatMoney(displayCost)}
+                </td>
+                <td className="px-4 py-2 text-right font-financial text-[#777169]">
+                  {isEditing ? (
+                    <div className="flex items-center justify-end">
+                      <span className="mr-1 text-[#8a847a]">₹</span>
+                      <Input 
+                        type="number" step="0.01" min="0"
+                        value={item.sellingPricePaisa / 100} 
+                        onChange={e => handleItemChange(idx, "sellingPricePaisa", e.target.value)}
+                        className="h-7 text-xs text-right bg-white border-[#dfd8cc] w-20" 
+                      />
+                    </div>
+                  ) : formatMoney(item.sellingPricePaisa)}
+                </td>
+                <td className={`px-4 py-2 text-right font-financial font-semibold ${itemProfit < 0 ? 'text-[#a53a2d]' : 'text-[#1a6b3a]'}`}>
+                  {formatMoney(itemProfit)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+

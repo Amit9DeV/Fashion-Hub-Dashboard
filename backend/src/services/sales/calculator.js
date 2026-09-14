@@ -50,6 +50,8 @@ export function calculateSale(lines, requestedDiscountPaisa = 0) {
       taxablePaisa,
       taxPaisa,
       totalPaisa: taxablePaisa,
+      unitCostPaisa: line.unitCostPaisa || 0,
+      totalItemCostPaisa: (line.unitCostPaisa || 0) * line.quantity,
     };
   });
 

@@ -23,6 +23,7 @@ const customerSchema = new mongoose.Schema(
       totalOrders: { type: Number, default: 0 },
       totalSpentPaisa: { type: Number, default: 0 },
       averageOrderValuePaisa: { type: Number, default: 0 },
+      totalDuesPaisa: { type: Number, default: 0 },
       firstPurchaseAt: Date,
       lastPurchaseAt: Date,
     },

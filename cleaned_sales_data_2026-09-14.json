@@ -1,0 +1,945 @@
+[
+  {
+    "date": "2026-09-13",
+    "customer": "Dhananjay Sharma",
+    "items": [
+      "Allen Solly shirt",
+      "Adidas shoes",
+      "Cotton/...? shirt",
+      "Wrangler short"
+    ],
+    "quantity": 1,
+    "total_amount": 4900,
+    "paid_amount": 4500,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 400,
+    "notes": "Item names partly unclear; source Image 1000070418."
+  },
+  {
+    "date": "2026-09-13",
+    "customer": null,
+    "items": [
+      "Allen Solly shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 450,
+    "paid_amount": 450,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Customer name not noted; Image 1000070418."
+  },
+  {
+    "date": "2026-09-13",
+    "customer": null,
+    "items": [
+      "Tommy shirt",
+      "H&M jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 1800,
+    "paid_amount": 1500,
+    "payment_status": "Partial/unclear",
+    "payment_mode": null,
+    "due_amount": 300,
+    "notes": "Image 1000070418; handwritten 550 and 1950/1800-1500 markings are unclear."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": null,
+    "items": [
+      "OT shirt",
+      "Wrangler shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 800,
+    "paid_amount": 800,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Customer name not noted; Image 1000070417."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": null,
+    "items": [
+      "HUGU T-shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 600,
+    "paid_amount": 600,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Customer name not noted; Image 1000070417."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": "Dhanu singh",
+    "items": [
+      "Formal pant",
+      "H&M T-shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 1900,
+    "paid_amount": 1000,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 900,
+    "notes": "Source marked y; Image 1000070417."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": "Rahul Singh",
+    "items": [
+      "Cantabell pant",
+      "Whey shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 2000,
+    "paid_amount": 600,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 1400,
+    "notes": "Image 1000070417."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": "AV Sir",
+    "items": [
+      "Denim shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 800,
+    "paid_amount": 800,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070417."
+  },
+  {
+    "date": "2026-09-13",
+    "customer": null,
+    "items": [
+      "Lee Cooper jeans",
+      "Wrangler shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 1800,
+    "paid_amount": 1800,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070417; page heading says 13/09/2026."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": null,
+    "items": [
+      "Levi's jeans x2",
+      "Armani T-shirt",
+      "Balenciaga T-shirt"
+    ],
+    "quantity": 2,
+    "total_amount": 2600,
+    "paid_amount": 2600,
+    "payment_status": "Paid",
+    "payment_mode": "Online",
+    "due_amount": 0,
+    "notes": "Image 1000070415; total written 2600."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": null,
+    "items": [
+      "Superdry T-shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 550,
+    "paid_amount": 550,
+    "payment_status": "Paid",
+    "payment_mode": "Cash",
+    "due_amount": 0,
+    "notes": "Image 1000070415."
+  },
+  {
+    "date": "2026-09-12",
+    "customer": null,
+    "items": [
+      "Levi's jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 600,
+    "paid_amount": 600,
+    "payment_status": "Paid",
+    "payment_mode": "Online",
+    "due_amount": 0,
+    "notes": "Image 1000070415."
+  },
+  {
+    "date": "2026-09-11",
+    "customer": "Bajrangi Babu",
+    "items": [
+      "Tommy Hilfiger",
+      "H&M shirt",
+      "Cantabell pant"
+    ],
+    "quantity": 1,
+    "total_amount": 2500,
+    "paid_amount": 1500,
+    "payment_status": "Partial / source inconsistent",
+    "payment_mode": null,
+    "due_amount": 1000,
+    "notes": "Image 1000070414; also written 2500-1500=1000, while another note shows 2430 total."
+  },
+  {
+    "date": "2026-09-11",
+    "customer": null,
+    "items": [
+      "Check shirt",
+      "Black jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 1150,
+    "paid_amount": 1150,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070414."
+  },
+  {
+    "date": "2026-09-11",
+    "customer": "Vikash Bhojiya Rohan",
+    "items": [
+      "Denim shirt",
+      "Levi's jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 1300,
+    "paid_amount": 1300,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070414."
+  },
+  {
+    "date": "2026-09-07",
+    "customer": "Anshu Kaushal",
+    "items": [
+      "Peter England pant",
+      "The Beer House shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 2160,
+    "paid_amount": 1000,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 1160,
+    "notes": "Image 1000070412."
+  },
+  {
+    "date": "2026-09-08",
+    "customer": null,
+    "items": [
+      "Burberry jeans",
+      "Wrangler shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 1500,
+    "paid_amount": 1200,
+    "payment_status": "Unclear",
+    "payment_mode": null,
+    "due_amount": 300,
+    "notes": "Customer name not noted; Image 1000070412."
+  },
+  {
+    "date": "2026-09-08",
+    "customer": null,
+    "items": [
+      "T-shirt x2"
+    ],
+    "quantity": 2,
+    "total_amount": 700,
+    "paid_amount": 600,
+    "payment_status": "Unclear",
+    "payment_mode": null,
+    "due_amount": 100,
+    "notes": "Image 1000070412; nearby 600/1300 markings are unclear."
+  },
+  {
+    "date": "2026-09-10",
+    "customer": null,
+    "items": [
+      "Ruffused T-shirt",
+      "Adidas lower pant"
+    ],
+    "quantity": 2,
+    "total_amount": 1100,
+    "paid_amount": 1100,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070412; total 1100 paid."
+  },
+  {
+    "date": "2026-09-02",
+    "customer": null,
+    "items": [
+      "T-shirt x2"
+    ],
+    "quantity": 2,
+    "total_amount": 800,
+    "paid_amount": 800,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070411; duplicate Image 1000070413 shows the same page."
+  },
+  {
+    "date": "2026-09-02",
+    "customer": null,
+    "items": [
+      "Balmain shirt",
+      "Levi's jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 1900,
+    "paid_amount": 1900,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070411."
+  },
+  {
+    "date": "2026-09-03",
+    "customer": null,
+    "items": [
+      "Indian shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 850,
+    "paid_amount": 850,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070411."
+  },
+  {
+    "date": "2026-09-03",
+    "customer": null,
+    "items": [
+      "Levi's jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 750,
+    "paid_amount": 750,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070411."
+  },
+  {
+    "date": "2026-09-04",
+    "customer": null,
+    "items": [
+      "Lee Cooper jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 1250,
+    "paid_amount": 1250,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070411."
+  },
+  {
+    "date": "2026-09-07",
+    "customer": null,
+    "items": [
+      "Levi's jeans",
+      "NX Line shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 1300,
+    "paid_amount": 1300,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070411."
+  },
+  {
+    "date": "2026-08-28",
+    "customer": "Balbir Sir",
+    "items": [
+      "Lee Cooper shirt",
+      "Peter England pant"
+    ],
+    "quantity": 1,
+    "total_amount": 2100,
+    "paid_amount": 2100,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070410."
+  },
+  {
+    "date": "2026-08-28",
+    "customer": null,
+    "items": [
+      "Indian shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 1000,
+    "paid_amount": 1000,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Customer name not noted; Image 1000070410."
+  },
+  {
+    "date": "2026-08-29",
+    "customer": null,
+    "items": [
+      "US Polo shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 750,
+    "paid_amount": 750,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070410."
+  },
+  {
+    "date": "2026-08-30",
+    "customer": null,
+    "items": [
+      "Puma shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 500,
+    "paid_amount": 500,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070410."
+  },
+  {
+    "date": "2026-08-30",
+    "customer": "Bittu",
+    "items": [
+      "Levising pant",
+      "Descal shirt",
+      "Levi jeans",
+      "Wrangler check shirt",
+      "Beer House shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 3400,
+    "paid_amount": 3000,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 400,
+    "notes": "Image 1000070410; several item spellings unclear."
+  },
+  {
+    "date": "2026-08-28",
+    "customer": null,
+    "items": [
+      "Balram shirt x2",
+      "Lee Cooper jeans"
+    ],
+    "quantity": 2,
+    "total_amount": 3800,
+    "paid_amount": 3800,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Customer name not noted; Image 1000070409."
+  },
+  {
+    "date": "2026-08-28",
+    "customer": null,
+    "items": [
+      "Siyaram shirt",
+      "Lainder jeans"
+    ],
+    "quantity": 1,
+    "total_amount": 2170,
+    "paid_amount": 2000,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 170,
+    "notes": "Image 1000070409; brand/item names unclear."
+  },
+  {
+    "date": "2026-08-28",
+    "customer": "DJ-Bittu",
+    "items": [
+      "Balmain shirt",
+      "Rare Rabbit shirt",
+      "T-shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 3200,
+    "paid_amount": 2000,
+    "payment_status": "Partial / source unclear",
+    "payment_mode": null,
+    "due_amount": 1200,
+    "notes": "Image 1000070409; also written 1300/3200 markings."
+  },
+  {
+    "date": "2026-08-28",
+    "customer": null,
+    "items": [
+      "Rodhester jeans",
+      "Indian shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 2300,
+    "paid_amount": 2200,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 100,
+    "notes": "Customer name not noted; Image 1000070409."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Chandan",
+    "items": [
+      "Killer shirt",
+      "Park Avenue"
+    ],
+    "quantity": 1,
+    "total_amount": 2300,
+    "paid_amount": null,
+    "payment_status": "Due / unclear",
+    "payment_mode": null,
+    "due_amount": null,
+    "notes": "Image 1000070408; written 2300 and separate 'Kanchan Bhaiy 1500 due' note."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Kanchan Bhaiy",
+    "items": [
+      "Balance due (item not clear)"
+    ],
+    "quantity": 1,
+    "total_amount": 1500,
+    "paid_amount": 0,
+    "payment_status": "Due",
+    "payment_mode": null,
+    "due_amount": 1500,
+    "notes": "Image 1000070408; 1500 due written."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Gagandeep Babu",
+    "items": [
+      "Denim jeans",
+      "Denim shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 1300,
+    "paid_amount": 0,
+    "payment_status": "Due",
+    "payment_mode": null,
+    "due_amount": 1300,
+    "notes": "Image 1000070408."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Mukesh Bhaiya",
+    "items": [
+      "Dollars x2",
+      "Dollar pant x2",
+      "Killers pant",
+      "The Indian shirt",
+      "T-shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 2700,
+    "paid_amount": 0,
+    "payment_status": "Deal / payment unclear",
+    "payment_mode": null,
+    "due_amount": 2700,
+    "notes": "Image 1000070408; bottom notes show 500 and deal total 2710. Payment could not be reliably determined."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "The Beer House shirt",
+      "Indian shirt"
+    ],
+    "quantity": 2,
+    "total_amount": 2100,
+    "paid_amount": 2100,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070407; total written 2100."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "Killer jeans",
+      "Shiyaram shirt"
+    ],
+    "quantity": 2,
+    "total_amount": 2570,
+    "paid_amount": 2550,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 20,
+    "notes": "Image 1000070407; second item name unclear; item values 1650 + 920. Source says paid, but 2570-2550 leaves 20."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "The Beer House shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 1050,
+    "paid_amount": 1050,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070407; payment inferred from matching total/paid values."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "Hackett shirt",
+      "H&M jeans",
+      "Gas shirt",
+      "Beer House shirt"
+    ],
+    "quantity": 4,
+    "total_amount": 2900,
+    "paid_amount": 2600,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 300,
+    "notes": "Image 1000070407; total 2900, paid 2600."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "Wrogn shirt",
+      "Red Tape shirt"
+    ],
+    "quantity": 2,
+    "total_amount": 1500,
+    "paid_amount": 1500,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070406; total 1500."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Nikesh Shah",
+    "items": [
+      "Dollar x2",
+      "Nike T-shirt",
+      "Levi's jeans x1"
+    ],
+    "quantity": 5,
+    "total_amount": 1450,
+    "paid_amount": 450,
+    "payment_status": "Payment/total unclear",
+    "payment_mode": null,
+    "due_amount": 1000,
+    "notes": "Image 1000070406; line totals appear 240 + 550 + 700 = 1490; 1450/1500 markings also present."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "Bewkoof shirt",
+      "Levi's jeans"
+    ],
+    "quantity": 2,
+    "total_amount": 1600,
+    "paid_amount": 1350,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 250,
+    "notes": "Image 1000070406; total 1600, paid 1350."
+  },
+  {
+    "date": "2026-08-25",
+    "customer": "Umesh RJD?",
+    "items": [
+      "Balman shirt",
+      "Sap... jeans"
+    ],
+    "quantity": 2,
+    "total_amount": 2550,
+    "paid_amount": 2400,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 150,
+    "notes": "Image 1000070404; customer name and second item partly unclear. Source also mentions 2850 total, 2400 paid, implying 450 due; retained 2550 as the primary table total."
+  },
+  {
+    "date": "2026-08-25",
+    "customer": null,
+    "items": [
+      "Park Avenue pant x2",
+      "Red Tape shirt"
+    ],
+    "quantity": 3,
+    "total_amount": 3150,
+    "paid_amount": 3100,
+    "payment_status": "Paid / source mismatch",
+    "payment_mode": null,
+    "due_amount": 50,
+    "notes": "Image 1000070404; item values 2300 + 850 = 3150, but 3200 paid is also written. Primary calculation uses 3150 total and 3100 paid from table."
+  },
+  {
+    "date": "2026-08-25",
+    "customer": null,
+    "items": [
+      "Adidas shoes"
+    ],
+    "quantity": 1,
+    "total_amount": 1200,
+    "paid_amount": 1200,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070404."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "Nike T-shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 450,
+    "paid_amount": 450,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070404."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "Levi's jeans",
+      "The Indian shirt"
+    ],
+    "quantity": 2,
+    "total_amount": 2000,
+    "paid_amount": 1700,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 300,
+    "notes": "Image 1000070404; 1250 + 750 = 2000, paid 1700."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": null,
+    "items": [
+      "Momfit shirt",
+      "Denim look",
+      "Rush jeans",
+      "Levi's jeans"
+    ],
+    "quantity": 4,
+    "total_amount": 2150,
+    "paid_amount": 1800,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 350,
+    "notes": "Image 1000070405; total 2150, paid 1800."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Mithoon Ram",
+    "items": [
+      "Levi's jeans",
+      "Rare Rabbit shirt",
+      "Diesel T-shirt"
+    ],
+    "quantity": 3,
+    "total_amount": 2500,
+    "paid_amount": 0,
+    "payment_status": "Unpaid",
+    "payment_mode": null,
+    "due_amount": 2500,
+    "notes": "Image 1000070405; marked unpaid."
+  },
+  {
+    "date": "2026-08-25",
+    "customer": null,
+    "items": [
+      "US Polo shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 650,
+    "paid_amount": 650,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070403."
+  },
+  {
+    "date": "2026-08-25",
+    "customer": null,
+    "items": [
+      "US Polo shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 650,
+    "paid_amount": 650,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070403; second US Polo entry."
+  },
+  {
+    "date": "2026-08-26",
+    "customer": "Anshu",
+    "items": [
+      "Balman shirt x2"
+    ],
+    "quantity": 2,
+    "total_amount": 2800,
+    "paid_amount": 500,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 2300,
+    "notes": "Image 1000070403; 500 jama written."
+  },
+  {
+    "date": "2026-08-26",
+    "customer": "Dhanu Bhai?",
+    "items": [
+      "Denim shirt"
+    ],
+    "quantity": 1,
+    "total_amount": 650,
+    "paid_amount": 500,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 150,
+    "notes": "Image 1000070403; customer name partly unclear; 500 jama written."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Nigam Singh",
+    "items": [
+      "AX pant",
+      "Black boys shirt"
+    ],
+    "quantity": 2,
+    "total_amount": 1200,
+    "paid_amount": 1100,
+    "payment_status": "Paid",
+    "payment_mode": null,
+    "due_amount": 100,
+    "notes": "Image 1000070402; heading/customer unclear; 1200 total, 1100 paid. Source status says paid despite 100 difference."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Dhananjay Bhai",
+    "items": [
+      "Balman shirt",
+      "Jince machine"
+    ],
+    "quantity": 2,
+    "total_amount": 2750,
+    "paid_amount": 2300,
+    "payment_status": "Deal / unclear",
+    "payment_mode": null,
+    "due_amount": 450,
+    "notes": "Image 1000070402; 1500 + 1250 = 2750; nearby 2800/300 deal markings."
+  },
+  {
+    "date": "2026-08-27",
+    "customer": "Sonu Bhaiya",
+    "items": [
+      "US Polo jeans",
+      "Park pant"
+    ],
+    "quantity": 2,
+    "total_amount": 2200,
+    "paid_amount": null,
+    "payment_status": "Deal / unclear",
+    "payment_mode": null,
+    "due_amount": null,
+    "notes": "Image 1000070402; 1150 + 1050 = 2200; marked deal total; payment not clear."
+  },
+  {
+    "date": "2026-08-26",
+    "customer": "Anshu",
+    "items": [
+      "Balman shirt x3",
+      "Dollar",
+      "Shokesh"
+    ],
+    "quantity": 5,
+    "total_amount": 4370,
+    "paid_amount": 500,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 3870,
+    "notes": "Image 1000070401; calculation 4370 - 500 = 3870; underlying item values partly overlapped."
+  },
+  {
+    "date": "2026-08-26",
+    "customer": null,
+    "items": [
+      "Net play",
+      "White jeans",
+      "Blue jeans"
+    ],
+    "quantity": 3,
+    "total_amount": 1850,
+    "paid_amount": 1850,
+    "payment_status": "Paid / source mismatch",
+    "payment_mode": null,
+    "due_amount": 0,
+    "notes": "Image 1000070399; item values 650 + 580 + 650 = 1880, but written total is 1850 paid."
+  },
+  {
+    "date": "2026-08-26",
+    "customer": null,
+    "items": [
+      "Siyaram shirt (MRP 1049)",
+      "Pepe jeans (MRP 3199)"
+    ],
+    "quantity": 2,
+    "total_amount": 2100,
+    "paid_amount": 2000,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 100,
+    "notes": "Image 1000070398; sale values 900 + 1200 = 2100; MRP values also noted."
+  },
+  {
+    "date": "2026-08-26",
+    "customer": null,
+    "items": [
+      "Killer pant (MRP 2899)",
+      "Blue shirt (MRP 1999)"
+    ],
+    "quantity": 2,
+    "total_amount": 2300,
+    "paid_amount": 1800,
+    "payment_status": "Partial",
+    "payment_mode": null,
+    "due_amount": 500,
+    "notes": "Image 1000070398; sale values 1350 + 950 = 2300; 500 due written."
+  }
+]

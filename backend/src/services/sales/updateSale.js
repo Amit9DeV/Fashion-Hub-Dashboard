@@ -103,7 +103,8 @@ export async function updateSale(orderId, rawInput, user) {
           { 
             $inc: { 
               "stats.totalOrders": -1,
-              "stats.totalSpentPaisa": -order.totalPaisa 
+              "stats.totalSpentPaisa": -order.totalPaisa,
+              "stats.totalDuesPaisa": -(order.duePaisa || 0)
             } 
           },
           { session }
@@ -143,6 +144,7 @@ export async function updateSale(orderId, rawInput, user) {
           color: variant.color,
           size: variant.size,
           quantity: requestedItem.quantity,
+          unitCostPaisa: requestedItem.overriddenCostPaisa !== undefined ? requestedItem.overriddenCostPaisa : (variant.costPricePaisa || 0),
           unitPricePaisa: requestedItem.overriddenPricePaisa || variant.sellingPricePaisa,
           taxRate: globalTaxRate,
         });
@@ -150,8 +152,14 @@ export async function updateSale(orderId, rawInput, user) {
 
       const totals = calculateSale(saleLines, input.discountPaisa);
       const amountPaidPaisa = input.payments.reduce((sum, payment) => sum + payment.amountPaisa, 0);
-      if (amountPaidPaisa !== totals.totalPaisa) {
-        throw new Error("Payment total must exactly match the final bill total.");
+      if (amountPaidPaisa > totals.totalPaisa) {
+        throw new Error("Payment total cannot exceed the final bill total.");
+      }
+      
+      const duePaisa = totals.totalPaisa - amountPaidPaisa;
+      let paymentStatus = "PAID";
+      if (duePaisa > 0) {
+        paymentStatus = amountPaidPaisa > 0 ? "PARTIAL" : "UNPAID";
       }
 
       // --- 3. DEDUCT NEW STOCK ---
@@ -179,6 +187,7 @@ export async function updateSale(orderId, rawInput, user) {
         const freshCust = await Customer.findById(customer._id).session(session);
         const oldOrders = freshCust.stats?.totalOrders || 0;
         const oldSpent = freshCust.stats?.totalSpentPaisa || 0;
+        const oldDues = freshCust.stats?.totalDuesPaisa || 0;
         const totalOrders = oldOrders + 1;
         const totalSpentPaisa = oldSpent + totals.totalPaisa;
         
@@ -187,6 +196,7 @@ export async function updateSale(orderId, rawInput, user) {
             "stats.totalOrders": Math.max(0, totalOrders),
             "stats.totalSpentPaisa": Math.max(0, totalSpentPaisa),
             "stats.averageOrderValuePaisa": totalOrders > 0 ? Math.round(totalSpentPaisa / totalOrders) : 0,
+            "stats.totalDuesPaisa": Math.max(0, oldDues + duePaisa),
             "stats.lastPurchaseAt": now,
           },
         }, { session });
@@ -210,7 +220,9 @@ export async function updateSale(orderId, rawInput, user) {
             discountPaisa: totals.discountPaisa,
             taxPaisa: totals.taxPaisa,
             totalPaisa: totals.totalPaisa,
+            duePaisa,
             payments: input.payments,
+            paymentStatus,
             staffSnapshot: { id: user.id, name: user.name, role: user.role },
             notes: input.notes,
             completedAt: now,
@@ -227,7 +239,9 @@ export async function updateSale(orderId, rawInput, user) {
         discountPaisa: totals.discountPaisa,
         taxPaisa: totals.taxPaisa,
         totalPaisa: totals.totalPaisa,
+        duePaisa,
         payments: input.payments,
+        paymentStatus,
         issuedAt: now,
       };
 

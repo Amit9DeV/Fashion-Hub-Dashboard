@@ -70,12 +70,12 @@ export const getSalesReport = async (req, res) => {
               quantity: "$items.quantity",
               sellingPricePaisa: "$items.unitPricePaisa",
               totalItemSalesPaisa: "$items.totalPaisa",
-              costPricePaisa: { $ifNull: ["$variant.costPricePaisa", 0] },
-              totalItemCostPaisa: { $multiply: [{ $ifNull: ["$variant.costPricePaisa", 0] }, "$items.quantity"] }
+              costPricePaisa: { $ifNull: ["$items.unitCostPaisa", { $ifNull: ["$variant.costPricePaisa", 0] }] },
+              totalItemCostPaisa: { $ifNull: ["$items.totalItemCostPaisa", { $multiply: [{ $ifNull: ["$variant.costPricePaisa", 0] }, "$items.quantity"] }] }
             }
           },
           totalItemsQty: { $sum: "$items.quantity" },
-          totalBillCostPaisa: { $sum: { $multiply: [{ $ifNull: ["$variant.costPricePaisa", 0] }, "$items.quantity"] } }
+          totalBillCostPaisa: { $sum: { $ifNull: ["$items.totalItemCostPaisa", { $multiply: [{ $ifNull: ["$variant.costPricePaisa", 0] }, "$items.quantity"] }] } }
         }
       },
       {

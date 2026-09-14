@@ -1,10 +1,10 @@
-const API_URL ="https://fashion-hub-dashboard.onrender.com/api";
+const API_URL = "https://fashion-hub-dashboard.onrender.com/api";
 // const API_URL = "http://localhost:5000/api";
 const activeRequests = new Map();
 
 async function fetchAPI(endpoint, options = {}) {
   const isGet = !options.method || options.method === "GET";
-  
+
   // Automatically cancel previous duplicate GET requests
   if (isGet) {
     if (activeRequests.has(endpoint)) {
@@ -97,6 +97,11 @@ export const api = {
   sales: {
     complete: (saleData) =>
       fetchAPI("/sales", { method: "POST", body: JSON.stringify(saleData) }),
+    update: (id, saleData) =>
+      fetchAPI(`/sales/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(saleData),
+      }),
   },
   invoices: {
     getPdfUrl: (invoiceId) => `${API_URL}/invoices/${invoiceId}/pdf`,
@@ -129,8 +134,10 @@ export const api = {
     retry: (id) => fetchAPI(`/whatsapp/retry/${id}`, { method: "POST" }),
   },
   expenses: {
-    getAll: (queryString = "") => fetchAPI(`/expenses${queryString ? `?${queryString}` : ""}`),
-    create: (data) => fetchAPI("/expenses", { method: "POST", body: JSON.stringify(data) }),
+    getAll: (queryString = "") =>
+      fetchAPI(`/expenses${queryString ? `?${queryString}` : ""}`),
+    create: (data) =>
+      fetchAPI("/expenses", { method: "POST", body: JSON.stringify(data) }),
     delete: (id) => fetchAPI(`/expenses/${id}`, { method: "DELETE" }),
   },
 };

@@ -12,6 +12,7 @@ const orderItemSchema = new mongoose.Schema(
     color: String,
     size: String,
     quantity: { type: Number, required: true, min: 1 },
+    unitCostPaisa: { type: Number, required: true, min: 0, default: 0 },
     unitPricePaisa: { type: Number, required: true, min: 0 },
     grossPaisa: { type: Number, required: true, min: 0 },
     discountPaisa: { type: Number, required: true, min: 0 },
@@ -19,6 +20,7 @@ const orderItemSchema = new mongoose.Schema(
     taxRate: { type: Number, required: true, min: 0 },
     taxPaisa: { type: Number, required: true, min: 0 },
     totalPaisa: { type: Number, required: true, min: 0 },
+    totalItemCostPaisa: { type: Number, required: true, min: 0, default: 0 },
   },
   { _id: false }
 );
@@ -48,8 +50,9 @@ const orderSchema = new mongoose.Schema(
     discountPaisa: { type: Number, required: true },
     taxPaisa: { type: Number, required: true },
     totalPaisa: { type: Number, required: true },
+    duePaisa: { type: Number, default: 0 },
     payments: { type: [paymentSchema], required: true },
-    paymentStatus: { type: String, enum: ["PAID"], default: "PAID" },
+    paymentStatus: { type: String, enum: ["PAID", "PARTIAL", "UNPAID"], default: "PAID" },
     staffSnapshot: {
       id: { type: String },
       name: { type: String },

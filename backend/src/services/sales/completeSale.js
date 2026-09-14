@@ -24,6 +24,7 @@ export const saleInputSchema = z.object({
     quantity: z.number().int().positive().max(99),
     overriddenPricePaisa: z.number().int().positive().optional(),
     overriddenMrpPaisa: z.number().int().positive().optional(),
+    overriddenCostPaisa: z.number().int().nonnegative().optional(),
     overriddenName: z.string().trim().max(200).optional(),
   })).min(1).max(100),
   customer: z.object({
@@ -39,7 +40,7 @@ export const saleInputSchema = z.object({
     method: z.enum(["CASH", "UPI", "CARD", "OTHER"]),
     amountPaisa: z.number().int().positive(),
     reference: z.string().trim().max(100).optional(),
-  })).min(1).max(4),
+  })).max(4).default([]),
   notes: z.string().trim().max(1000).optional(),
   idempotencyKey: z.string().trim().min(10).max(100),
   completedAt: z.string().datetime().optional(),
@@ -175,6 +176,7 @@ export async function completeSale(rawInput, user) {
           color: variant.color,
           size: variant.size,
           quantity: requestedItem.quantity,
+          unitCostPaisa: requestedItem.overriddenCostPaisa !== undefined ? requestedItem.overriddenCostPaisa : (variant.costPricePaisa || 0),
           unitPricePaisa: requestedItem.overriddenPricePaisa || variant.sellingPricePaisa,
           taxRate: globalTaxRate,
         });
@@ -182,8 +184,14 @@ export async function completeSale(rawInput, user) {
 
       const totals = calculateSale(saleLines, input.discountPaisa);
       const amountPaidPaisa = input.payments.reduce((sum, payment) => sum + payment.amountPaisa, 0);
-      if (amountPaidPaisa !== totals.totalPaisa) {
-        throw new Error("Payment total must exactly match the final bill total.");
+      if (amountPaidPaisa > totals.totalPaisa) {
+        throw new Error("Payment total cannot exceed the final bill total.");
+      }
+      
+      const duePaisa = totals.totalPaisa - amountPaidPaisa;
+      let paymentStatus = "PAID";
+      if (duePaisa > 0) {
+        paymentStatus = amountPaidPaisa > 0 ? "PARTIAL" : "UNPAID";
       }
 
       const customer = await resolveCustomer(input.customer, user, session, now);
@@ -227,7 +235,9 @@ export async function completeSale(rawInput, user) {
         discountPaisa: totals.discountPaisa,
         taxPaisa: totals.taxPaisa,
         totalPaisa: totals.totalPaisa,
+        duePaisa,
         payments: input.payments,
+        paymentStatus,
         staffSnapshot: { id: user.id, name: user.name, role: user.role },
         idempotencyKey: input.idempotencyKey,
         notes: input.notes,
@@ -245,7 +255,9 @@ export async function completeSale(rawInput, user) {
         discountPaisa: totals.discountPaisa,
         taxPaisa: totals.taxPaisa,
         totalPaisa: totals.totalPaisa,
+        duePaisa,
         payments: input.payments,
+        paymentStatus,
       };
       const [invoice] = await Invoice.create([{
         invoiceNumber: numbers.invoiceNumber,
@@ -272,6 +284,7 @@ export async function completeSale(rawInput, user) {
       if (customer) {
         const oldOrders = customer.stats?.totalOrders || 0;
         const oldSpent = customer.stats?.totalSpentPaisa || 0;
+        const oldDues = customer.stats?.totalDuesPaisa || 0;
         const totalOrders = oldOrders + 1;
         const totalSpentPaisa = oldSpent + totals.totalPaisa;
         await Customer.updateOne({ _id: customer._id }, {
@@ -279,6 +292,7 @@ export async function completeSale(rawInput, user) {
             "stats.totalOrders": totalOrders,
             "stats.totalSpentPaisa": totalSpentPaisa,
             "stats.averageOrderValuePaisa": Math.round(totalSpentPaisa / totalOrders),
+            "stats.totalDuesPaisa": oldDues + duePaisa,
             "stats.firstPurchaseAt": customer.stats?.firstPurchaseAt || now,
             "stats.lastPurchaseAt": now,
           },

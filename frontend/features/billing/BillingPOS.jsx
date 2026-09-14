@@ -291,7 +291,7 @@ export function BillingPOS() {
   });
   const [completedAt, setCompletedAt] = useState("");
   const [discount, setDiscount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const [payments, setPayments] = useState([{ method: "UPI", amount: "" }]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(null);
@@ -317,8 +317,14 @@ export function BillingPOS() {
         if (customer) setCustomer(customer);
         if (order.discountPaisa)
           setDiscount((order.discountPaisa / 100).toString());
-        if (order.payments && order.payments[0])
-          setPaymentMethod(order.payments[0].method);
+        if (order.payments && order.payments.length > 0) {
+          setPayments(
+            order.payments.map((p) => ({
+              method: p.method,
+              amount: (p.amountPaisa / 100).toString(),
+            }))
+          );
+        }
         if (order.completedAt) {
           setCompletedAt(new Date(order.completedAt).toISOString().split("T")[0]);
         }
@@ -459,6 +465,27 @@ export function BillingPOS() {
       (value) => typeof value === "string" && value.trim(),
     );
 
+    let finalPayments = payments
+      .map((p) => ({
+        method: p.method,
+        amountPaisa: toPaisa(p.amount),
+      }))
+      .filter((p) => p.amountPaisa > 0);
+
+    if (finalPayments.length === 0 && payments.length === 1 && payments[0].amount === "") {
+      finalPayments = [{ method: payments[0].method, amountPaisa: totalPaisa }];
+    }
+
+    const totalPaid = finalPayments.reduce((sum, p) => sum + p.amountPaisa, 0);
+    if (totalPaid > totalPaisa) {
+      setBusy(false);
+      return setError("Total paid cannot exceed the bill amount.");
+    }
+    if (finalPayments.length === 0) {
+      setBusy(false);
+      return setError("Please provide at least one payment method or amount.");
+    }
+
     const payload = {
       items: cart.map((item) => ({
         productId: item.productId,
@@ -469,7 +496,7 @@ export function BillingPOS() {
         overriddenName: item.productName,
       })),
       discountPaisa,
-      payments: [{ method: paymentMethod, amountPaisa: totalPaisa }],
+      payments: finalPayments,
       customer: customer
         ? { customerId: customer._id }
         : draftHasDetails
@@ -836,20 +863,78 @@ export function BillingPOS() {
               />
             </div>
 
-            {/* Payment Method */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-[#5f584e]">
-                Payment Method
-              </span>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="h-9 w-32 rounded-md border bg-white px-2 text-sm outline-none focus:border-[#c9963e]"
-              >
-                {paymentOptions.map((method) => (
-                  <option key={method}>{method}</option>
-                ))}
-              </select>
+            {/* Payments */}
+            <div className="space-y-2 pt-1 border-t border-[#e6e0d5]">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-[#5f584e]">Payments</span>
+                {payments.length < 4 && (
+                  <button
+                    onClick={() => setPayments([...payments, { method: "CASH", amount: "" }])}
+                    className="text-xs text-[#c9963e] hover:underline font-medium"
+                  >
+                    + Split Payment
+                  </button>
+                )}
+              </div>
+              {payments.map((p, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <select
+                    value={p.method}
+                    onChange={(e) => {
+                      const newP = [...payments];
+                      newP[idx].method = e.target.value;
+                      setPayments(newP);
+                    }}
+                    className="h-8 flex-1 rounded-md border bg-white px-2 text-xs outline-none focus:border-[#c9963e]"
+                  >
+                    {paymentOptions.map((method) => (
+                      <option key={method}>{method}</option>
+                    ))}
+                  </select>
+                  <Input
+                    className="h-8 w-24 text-xs bg-white"
+                    placeholder="Amt (₹)"
+                    type="number"
+                    value={p.amount}
+                    onChange={(e) => {
+                      const newP = [...payments];
+                      newP[idx].amount = e.target.value;
+                      setPayments(newP);
+                    }}
+                  />
+                  {payments.length > 1 && (
+                    <button
+                      onClick={() => setPayments(payments.filter((_, i) => i !== idx))}
+                      className="text-[#8a3a30] hover:text-[#5d1611]"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {(() => {
+                const totalPaidPaisa = payments.reduce((sum, p) => sum + toPaisa(p.amount), 0);
+                const isAutoFull = payments.length === 1 && payments[0].amount === "";
+                const effectivePaid = isAutoFull ? totalPaisa : totalPaidPaisa;
+                const balanceDue = totalPaisa - effectivePaid;
+                
+                if (balanceDue > 0 && !isAutoFull) {
+                  return (
+                    <div className="flex justify-between text-xs text-[#8a3a30] font-medium pt-1">
+                      <span>Balance Due (Dues)</span>
+                      <span>{formatMoney(balanceDue)}</span>
+                    </div>
+                  );
+                } else if (balanceDue < 0) {
+                   return (
+                    <div className="flex justify-between text-xs text-[#8a3a30] font-medium pt-1">
+                      <span>Overpaid!</span>
+                      <span>{formatMoney(Math.abs(balanceDue))}</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Backdate Sale */}

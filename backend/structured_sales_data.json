@@ -1,0 +1,4285 @@
+[
+  {
+    "_source": {
+      "date": "2026-09-13",
+      "customer": "Dhananjay Sharma",
+      "items": [
+        "Allen Solly shirt",
+        "Adidas shoes",
+        "Cotton/...? shirt",
+        "Wrangler short"
+      ],
+      "quantity": 1,
+      "total_amount": 4900,
+      "paid_amount": 4500,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 400,
+      "notes": "Item names partly unclear; source Image 1000070418."
+    },
+    "customerName": "Dhananjay Sharma",
+    "completedAt": "2026-09-13T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Allen Solly shirt",
+          "brand": "ALLEN SOLLY",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 122500,
+          "grossPaisa": 122500,
+          "discountPaisa": 0,
+          "taxablePaisa": 122500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 122500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Adidas shoes",
+          "brand": "ADIDAS",
+          "category": "FOOTWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 122500,
+          "grossPaisa": 122500,
+          "discountPaisa": 0,
+          "taxablePaisa": 122500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 122500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Cotton/...? shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 122500,
+          "grossPaisa": 122500,
+          "discountPaisa": 0,
+          "taxablePaisa": 122500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 122500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Wrangler short",
+          "brand": "WRANGLER",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 122500,
+          "grossPaisa": 122500,
+          "discountPaisa": 0,
+          "taxablePaisa": 122500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 122500
+        }
+      ],
+      "subtotalPaisa": 490000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 490000,
+      "duePaisa": 40000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 450000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Item names partly unclear; source Image 1000070418.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-13",
+      "customer": null,
+      "items": [
+        "Allen Solly shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 450,
+      "paid_amount": 450,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Customer name not noted; Image 1000070418."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-13T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Allen Solly shirt",
+          "brand": "ALLEN SOLLY",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 45000,
+          "grossPaisa": 45000,
+          "discountPaisa": 0,
+          "taxablePaisa": 45000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 45000
+        }
+      ],
+      "subtotalPaisa": 45000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 45000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 45000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Customer name not noted; Image 1000070418.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-13",
+      "customer": null,
+      "items": [
+        "Tommy shirt",
+        "H&M jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 1800,
+      "paid_amount": 1500,
+      "payment_status": "Partial/unclear",
+      "payment_mode": null,
+      "due_amount": 300,
+      "notes": "Image 1000070418; handwritten 550 and 1950/1800-1500 markings are unclear."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-13T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Tommy shirt",
+          "brand": "TOMMY",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 90000,
+          "grossPaisa": 90000,
+          "discountPaisa": 0,
+          "taxablePaisa": 90000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 90000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "H&M jeans",
+          "brand": "H&M",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 90000,
+          "grossPaisa": 90000,
+          "discountPaisa": 0,
+          "taxablePaisa": 90000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 90000
+        }
+      ],
+      "subtotalPaisa": 180000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 180000,
+      "duePaisa": 30000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 150000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070418; handwritten 550 and 1950/1800-1500 markings are unclear.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": null,
+      "items": [
+        "OT shirt",
+        "Wrangler shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 800,
+      "paid_amount": 800,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Customer name not noted; Image 1000070417."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "OT shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 40000,
+          "grossPaisa": 40000,
+          "discountPaisa": 0,
+          "taxablePaisa": 40000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 40000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Wrangler shirt",
+          "brand": "WRANGLER",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 40000,
+          "grossPaisa": 40000,
+          "discountPaisa": 0,
+          "taxablePaisa": 40000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 40000
+        }
+      ],
+      "subtotalPaisa": 80000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 80000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 80000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Customer name not noted; Image 1000070417.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": null,
+      "items": [
+        "HUGU T-shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 600,
+      "paid_amount": 600,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Customer name not noted; Image 1000070417."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "HUGU T-shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 60000,
+          "grossPaisa": 60000,
+          "discountPaisa": 0,
+          "taxablePaisa": 60000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 60000
+        }
+      ],
+      "subtotalPaisa": 60000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 60000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 60000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Customer name not noted; Image 1000070417.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": "Dhanu singh",
+      "items": [
+        "Formal pant",
+        "H&M T-shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 1900,
+      "paid_amount": 1000,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 900,
+      "notes": "Source marked y; Image 1000070417."
+    },
+    "customerName": "Dhanu singh",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Formal pant",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 95000,
+          "grossPaisa": 95000,
+          "discountPaisa": 0,
+          "taxablePaisa": 95000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 95000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "H&M T-shirt",
+          "brand": "H&M",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 95000,
+          "grossPaisa": 95000,
+          "discountPaisa": 0,
+          "taxablePaisa": 95000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 95000
+        }
+      ],
+      "subtotalPaisa": 190000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 190000,
+      "duePaisa": 90000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 100000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Source marked y; Image 1000070417.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": "Rahul Singh",
+      "items": [
+        "Cantabell pant",
+        "Whey shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 2000,
+      "paid_amount": 600,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 1400,
+      "notes": "Image 1000070417."
+    },
+    "customerName": "Rahul Singh",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Cantabell pant",
+          "brand": "CANTABELL",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 100000,
+          "grossPaisa": 100000,
+          "discountPaisa": 0,
+          "taxablePaisa": 100000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 100000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Whey shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 100000,
+          "grossPaisa": 100000,
+          "discountPaisa": 0,
+          "taxablePaisa": 100000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 100000
+        }
+      ],
+      "subtotalPaisa": 200000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 200000,
+      "duePaisa": 140000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 60000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070417.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": "AV Sir",
+      "items": [
+        "Denim shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 800,
+      "paid_amount": 800,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070417."
+    },
+    "customerName": "AV Sir",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Denim shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 80000,
+          "grossPaisa": 80000,
+          "discountPaisa": 0,
+          "taxablePaisa": 80000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 80000
+        }
+      ],
+      "subtotalPaisa": 80000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 80000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 80000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070417.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-13",
+      "customer": null,
+      "items": [
+        "Lee Cooper jeans",
+        "Wrangler shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 1800,
+      "paid_amount": 1800,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070417; page heading says 13/09/2026."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-13T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Lee Cooper jeans",
+          "brand": "LEE COOPER",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 90000,
+          "grossPaisa": 90000,
+          "discountPaisa": 0,
+          "taxablePaisa": 90000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 90000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Wrangler shirt",
+          "brand": "WRANGLER",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 90000,
+          "grossPaisa": 90000,
+          "discountPaisa": 0,
+          "taxablePaisa": 90000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 90000
+        }
+      ],
+      "subtotalPaisa": 180000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 180000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 180000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070417; page heading says 13/09/2026.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": null,
+      "items": [
+        "Levi's jeans x2",
+        "Armani T-shirt",
+        "Balenciaga T-shirt"
+      ],
+      "quantity": 2,
+      "total_amount": 2600,
+      "paid_amount": 2600,
+      "payment_status": "Paid",
+      "payment_mode": "Online",
+      "due_amount": 0,
+      "notes": "Image 1000070415; total written 2600."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans x2",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 86668,
+          "grossPaisa": 86668,
+          "discountPaisa": 0,
+          "taxablePaisa": 86668,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 86668
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Armani T-shirt",
+          "brand": "ARMANI",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 86666,
+          "grossPaisa": 86666,
+          "discountPaisa": 0,
+          "taxablePaisa": 86666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 86666
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balenciaga T-shirt",
+          "brand": "BALENCIAGA",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 86666,
+          "grossPaisa": 86666,
+          "discountPaisa": 0,
+          "taxablePaisa": 86666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 86666
+        }
+      ],
+      "subtotalPaisa": 260000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 260000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "UPI",
+          "amountPaisa": 260000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070415; total written 2600.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": null,
+      "items": [
+        "Superdry T-shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 550,
+      "paid_amount": 550,
+      "payment_status": "Paid",
+      "payment_mode": "Cash",
+      "due_amount": 0,
+      "notes": "Image 1000070415."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Superdry T-shirt",
+          "brand": "SUPERDRY",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 55000,
+          "grossPaisa": 55000,
+          "discountPaisa": 0,
+          "taxablePaisa": 55000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 55000
+        }
+      ],
+      "subtotalPaisa": 55000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 55000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 55000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070415.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-12",
+      "customer": null,
+      "items": [
+        "Levi's jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 600,
+      "paid_amount": 600,
+      "payment_status": "Paid",
+      "payment_mode": "Online",
+      "due_amount": 0,
+      "notes": "Image 1000070415."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-12T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 60000,
+          "grossPaisa": 60000,
+          "discountPaisa": 0,
+          "taxablePaisa": 60000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 60000
+        }
+      ],
+      "subtotalPaisa": 60000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 60000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "UPI",
+          "amountPaisa": 60000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070415.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-11",
+      "customer": "Bajrangi Babu",
+      "items": [
+        "Tommy Hilfiger",
+        "H&M shirt",
+        "Cantabell pant"
+      ],
+      "quantity": 1,
+      "total_amount": 2500,
+      "paid_amount": 1500,
+      "payment_status": "Partial / source inconsistent",
+      "payment_mode": null,
+      "due_amount": 1000,
+      "notes": "Image 1000070414; also written 2500-1500=1000, while another note shows 2430 total."
+    },
+    "customerName": "Bajrangi Babu",
+    "completedAt": "2026-09-11T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Tommy Hilfiger",
+          "brand": "TOMMY",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 83334,
+          "grossPaisa": 83334,
+          "discountPaisa": 0,
+          "taxablePaisa": 83334,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 83334
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "H&M shirt",
+          "brand": "H&M",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 83333,
+          "grossPaisa": 83333,
+          "discountPaisa": 0,
+          "taxablePaisa": 83333,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 83333
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Cantabell pant",
+          "brand": "CANTABELL",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 83333,
+          "grossPaisa": 83333,
+          "discountPaisa": 0,
+          "taxablePaisa": 83333,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 83333
+        }
+      ],
+      "subtotalPaisa": 250000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 250000,
+      "duePaisa": 100000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 150000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070414; also written 2500-1500=1000, while another note shows 2430 total.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-11",
+      "customer": null,
+      "items": [
+        "Check shirt",
+        "Black jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 1150,
+      "paid_amount": 1150,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070414."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-11T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Check shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 57500,
+          "grossPaisa": 57500,
+          "discountPaisa": 0,
+          "taxablePaisa": 57500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 57500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Black jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 57500,
+          "grossPaisa": 57500,
+          "discountPaisa": 0,
+          "taxablePaisa": 57500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 57500
+        }
+      ],
+      "subtotalPaisa": 115000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 115000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 115000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070414.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-11",
+      "customer": "Vikash Bhojiya Rohan",
+      "items": [
+        "Denim shirt",
+        "Levi's jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 1300,
+      "paid_amount": 1300,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070414."
+    },
+    "customerName": "Vikash Bhojiya Rohan",
+    "completedAt": "2026-09-11T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Denim shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        }
+      ],
+      "subtotalPaisa": 130000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 130000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 130000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070414.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-07",
+      "customer": "Anshu Kaushal",
+      "items": [
+        "Peter England pant",
+        "The Beer House shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 2160,
+      "paid_amount": 1000,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 1160,
+      "notes": "Image 1000070412."
+    },
+    "customerName": "Anshu Kaushal",
+    "completedAt": "2026-09-07T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Peter England pant",
+          "brand": "PETER ENGLAND",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 108000,
+          "grossPaisa": 108000,
+          "discountPaisa": 0,
+          "taxablePaisa": 108000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 108000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "The Beer House shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 108000,
+          "grossPaisa": 108000,
+          "discountPaisa": 0,
+          "taxablePaisa": 108000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 108000
+        }
+      ],
+      "subtotalPaisa": 216000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 216000,
+      "duePaisa": 116000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 100000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070412.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-08",
+      "customer": null,
+      "items": [
+        "Burberry jeans",
+        "Wrangler shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 1500,
+      "paid_amount": 1200,
+      "payment_status": "Unclear",
+      "payment_mode": null,
+      "due_amount": 300,
+      "notes": "Customer name not noted; Image 1000070412."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-08T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Burberry jeans",
+          "brand": "BURBERRY",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 75000,
+          "grossPaisa": 75000,
+          "discountPaisa": 0,
+          "taxablePaisa": 75000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 75000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Wrangler shirt",
+          "brand": "WRANGLER",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 75000,
+          "grossPaisa": 75000,
+          "discountPaisa": 0,
+          "taxablePaisa": 75000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 75000
+        }
+      ],
+      "subtotalPaisa": 150000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 150000,
+      "duePaisa": 30000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 120000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Customer name not noted; Image 1000070412.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-08",
+      "customer": null,
+      "items": [
+        "T-shirt x2"
+      ],
+      "quantity": 2,
+      "total_amount": 700,
+      "paid_amount": 600,
+      "payment_status": "Unclear",
+      "payment_mode": null,
+      "due_amount": 100,
+      "notes": "Image 1000070412; nearby 600/1300 markings are unclear."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-08T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "T-shirt x2",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 70000,
+          "grossPaisa": 70000,
+          "discountPaisa": 0,
+          "taxablePaisa": 70000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 70000
+        }
+      ],
+      "subtotalPaisa": 70000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 70000,
+      "duePaisa": 10000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 60000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070412; nearby 600/1300 markings are unclear.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-10",
+      "customer": null,
+      "items": [
+        "Ruffused T-shirt",
+        "Adidas lower pant"
+      ],
+      "quantity": 2,
+      "total_amount": 1100,
+      "paid_amount": 1100,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070412; total 1100 paid."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-10T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Ruffused T-shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 55000,
+          "grossPaisa": 55000,
+          "discountPaisa": 0,
+          "taxablePaisa": 55000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 55000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Adidas lower pant",
+          "brand": "ADIDAS",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 55000,
+          "grossPaisa": 55000,
+          "discountPaisa": 0,
+          "taxablePaisa": 55000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 55000
+        }
+      ],
+      "subtotalPaisa": 110000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 110000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 110000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070412; total 1100 paid.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-02",
+      "customer": null,
+      "items": [
+        "T-shirt x2"
+      ],
+      "quantity": 2,
+      "total_amount": 800,
+      "paid_amount": 800,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070411; duplicate Image 1000070413 shows the same page."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-02T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "T-shirt x2",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 80000,
+          "grossPaisa": 80000,
+          "discountPaisa": 0,
+          "taxablePaisa": 80000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 80000
+        }
+      ],
+      "subtotalPaisa": 80000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 80000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 80000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070411; duplicate Image 1000070413 shows the same page.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-02",
+      "customer": null,
+      "items": [
+        "Balmain shirt",
+        "Levi's jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 1900,
+      "paid_amount": 1900,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070411."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-02T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balmain shirt",
+          "brand": "BALMAIN",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 95000,
+          "grossPaisa": 95000,
+          "discountPaisa": 0,
+          "taxablePaisa": 95000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 95000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 95000,
+          "grossPaisa": 95000,
+          "discountPaisa": 0,
+          "taxablePaisa": 95000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 95000
+        }
+      ],
+      "subtotalPaisa": 190000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 190000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 190000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070411.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-03",
+      "customer": null,
+      "items": [
+        "Indian shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 850,
+      "paid_amount": 850,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070411."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-03T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Indian shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 85000,
+          "grossPaisa": 85000,
+          "discountPaisa": 0,
+          "taxablePaisa": 85000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 85000
+        }
+      ],
+      "subtotalPaisa": 85000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 85000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 85000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070411.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-03",
+      "customer": null,
+      "items": [
+        "Levi's jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 750,
+      "paid_amount": 750,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070411."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-03T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 75000,
+          "grossPaisa": 75000,
+          "discountPaisa": 0,
+          "taxablePaisa": 75000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 75000
+        }
+      ],
+      "subtotalPaisa": 75000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 75000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 75000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070411.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-04",
+      "customer": null,
+      "items": [
+        "Lee Cooper jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 1250,
+      "paid_amount": 1250,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070411."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-04T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Lee Cooper jeans",
+          "brand": "LEE COOPER",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 125000,
+          "grossPaisa": 125000,
+          "discountPaisa": 0,
+          "taxablePaisa": 125000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 125000
+        }
+      ],
+      "subtotalPaisa": 125000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 125000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 125000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070411.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-09-07",
+      "customer": null,
+      "items": [
+        "Levi's jeans",
+        "NX Line shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 1300,
+      "paid_amount": 1300,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070411."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-09-07T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "NX Line shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        }
+      ],
+      "subtotalPaisa": 130000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 130000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 130000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070411.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-28",
+      "customer": "Balbir Sir",
+      "items": [
+        "Lee Cooper shirt",
+        "Peter England pant"
+      ],
+      "quantity": 1,
+      "total_amount": 2100,
+      "paid_amount": 2100,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070410."
+    },
+    "customerName": "Balbir Sir",
+    "completedAt": "2026-08-28T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Lee Cooper shirt",
+          "brand": "LEE COOPER",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 105000,
+          "grossPaisa": 105000,
+          "discountPaisa": 0,
+          "taxablePaisa": 105000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 105000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Peter England pant",
+          "brand": "PETER ENGLAND",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 105000,
+          "grossPaisa": 105000,
+          "discountPaisa": 0,
+          "taxablePaisa": 105000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 105000
+        }
+      ],
+      "subtotalPaisa": 210000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 210000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 210000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070410.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-28",
+      "customer": null,
+      "items": [
+        "Indian shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 1000,
+      "paid_amount": 1000,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Customer name not noted; Image 1000070410."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-28T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Indian shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 100000,
+          "grossPaisa": 100000,
+          "discountPaisa": 0,
+          "taxablePaisa": 100000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 100000
+        }
+      ],
+      "subtotalPaisa": 100000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 100000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 100000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Customer name not noted; Image 1000070410.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-29",
+      "customer": null,
+      "items": [
+        "US Polo shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 750,
+      "paid_amount": 750,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070410."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-29T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "US Polo shirt",
+          "brand": "US POLO",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 75000,
+          "grossPaisa": 75000,
+          "discountPaisa": 0,
+          "taxablePaisa": 75000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 75000
+        }
+      ],
+      "subtotalPaisa": 75000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 75000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 75000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070410.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-30",
+      "customer": null,
+      "items": [
+        "Puma shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 500,
+      "paid_amount": 500,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070410."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-30T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Puma shirt",
+          "brand": "PUMA",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 50000,
+          "grossPaisa": 50000,
+          "discountPaisa": 0,
+          "taxablePaisa": 50000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 50000
+        }
+      ],
+      "subtotalPaisa": 50000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 50000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 50000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070410.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-30",
+      "customer": "Bittu",
+      "items": [
+        "Levising pant",
+        "Descal shirt",
+        "Levi jeans",
+        "Wrangler check shirt",
+        "Beer House shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 3400,
+      "paid_amount": 3000,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 400,
+      "notes": "Image 1000070410; several item spellings unclear."
+    },
+    "customerName": "Bittu",
+    "completedAt": "2026-08-30T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's pant",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 68000,
+          "grossPaisa": 68000,
+          "discountPaisa": 0,
+          "taxablePaisa": 68000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 68000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Descal shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 68000,
+          "grossPaisa": 68000,
+          "discountPaisa": 0,
+          "taxablePaisa": 68000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 68000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi jeans",
+          "brand": "LEVI",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 68000,
+          "grossPaisa": 68000,
+          "discountPaisa": 0,
+          "taxablePaisa": 68000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 68000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Wrangler check shirt",
+          "brand": "WRANGLER",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 68000,
+          "grossPaisa": 68000,
+          "discountPaisa": 0,
+          "taxablePaisa": 68000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 68000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Beer House shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 68000,
+          "grossPaisa": 68000,
+          "discountPaisa": 0,
+          "taxablePaisa": 68000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 68000
+        }
+      ],
+      "subtotalPaisa": 340000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 340000,
+      "duePaisa": 40000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 300000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070410; several item spellings unclear.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-28",
+      "customer": null,
+      "items": [
+        "Balram shirt x2",
+        "Lee Cooper jeans"
+      ],
+      "quantity": 2,
+      "total_amount": 3800,
+      "paid_amount": 3800,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Customer name not noted; Image 1000070409."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-28T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balram shirt x2",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 190000,
+          "grossPaisa": 190000,
+          "discountPaisa": 0,
+          "taxablePaisa": 190000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 190000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Lee Cooper jeans",
+          "brand": "LEE COOPER",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 190000,
+          "grossPaisa": 190000,
+          "discountPaisa": 0,
+          "taxablePaisa": 190000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 190000
+        }
+      ],
+      "subtotalPaisa": 380000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 380000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 380000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Customer name not noted; Image 1000070409.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-28",
+      "customer": null,
+      "items": [
+        "Siyaram shirt",
+        "Lainder jeans"
+      ],
+      "quantity": 1,
+      "total_amount": 2170,
+      "paid_amount": 2000,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 170,
+      "notes": "Image 1000070409; brand/item names unclear."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-28T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Siyaram shirt",
+          "brand": "SIYARAM",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 108500,
+          "grossPaisa": 108500,
+          "discountPaisa": 0,
+          "taxablePaisa": 108500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 108500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Lainder jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 108500,
+          "grossPaisa": 108500,
+          "discountPaisa": 0,
+          "taxablePaisa": 108500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 108500
+        }
+      ],
+      "subtotalPaisa": 217000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 217000,
+      "duePaisa": 17000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 200000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070409; brand/item names unclear.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-28",
+      "customer": "DJ-Bittu",
+      "items": [
+        "Balmain shirt",
+        "Rare Rabbit shirt",
+        "T-shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 3200,
+      "paid_amount": 2000,
+      "payment_status": "Partial / source unclear",
+      "payment_mode": null,
+      "due_amount": 1200,
+      "notes": "Image 1000070409; also written 1300/3200 markings."
+    },
+    "customerName": "DJ-Bittu",
+    "completedAt": "2026-08-28T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balmain shirt",
+          "brand": "BALMAIN",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 106668,
+          "grossPaisa": 106668,
+          "discountPaisa": 0,
+          "taxablePaisa": 106668,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 106668
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Rare Rabbit shirt",
+          "brand": "RARE RABBIT",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 106666,
+          "grossPaisa": 106666,
+          "discountPaisa": 0,
+          "taxablePaisa": 106666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 106666
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "T-shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 106666,
+          "grossPaisa": 106666,
+          "discountPaisa": 0,
+          "taxablePaisa": 106666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 106666
+        }
+      ],
+      "subtotalPaisa": 320000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 320000,
+      "duePaisa": 120000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 200000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070409; also written 1300/3200 markings.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-28",
+      "customer": null,
+      "items": [
+        "Rodhester jeans",
+        "Indian shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 2300,
+      "paid_amount": 2200,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 100,
+      "notes": "Customer name not noted; Image 1000070409."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-28T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Rodhester jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 115000,
+          "grossPaisa": 115000,
+          "discountPaisa": 0,
+          "taxablePaisa": 115000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 115000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Indian shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 115000,
+          "grossPaisa": 115000,
+          "discountPaisa": 0,
+          "taxablePaisa": 115000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 115000
+        }
+      ],
+      "subtotalPaisa": 230000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 230000,
+      "duePaisa": 10000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 220000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Customer name not noted; Image 1000070409.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Chandan",
+      "items": [
+        "Killer shirt",
+        "Park Avenue"
+      ],
+      "quantity": 1,
+      "total_amount": 2300,
+      "paid_amount": null,
+      "payment_status": "Due / unclear",
+      "payment_mode": null,
+      "due_amount": null,
+      "notes": "Image 1000070408; written 2300 and separate 'Kanchan Bhaiy 1500 due' note."
+    },
+    "customerName": "Chandan",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Killer shirt",
+          "brand": "KILLER",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 115000,
+          "grossPaisa": 115000,
+          "discountPaisa": 0,
+          "taxablePaisa": 115000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 115000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Park Avenue",
+          "brand": "PARK AVENUE",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 115000,
+          "grossPaisa": 115000,
+          "discountPaisa": 0,
+          "taxablePaisa": 115000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 115000
+        }
+      ],
+      "subtotalPaisa": 230000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 230000,
+      "duePaisa": 230000,
+      "payments": [],
+      "paymentStatus": "UNPAID",
+      "notes": "Image 1000070408; written 2300 and separate 'Kanchan Bhaiy 1500 due' note.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Kanchan Bhaiy",
+      "items": [
+        "Balance due (item not clear)"
+      ],
+      "quantity": 1,
+      "total_amount": 1500,
+      "paid_amount": 0,
+      "payment_status": "Due",
+      "payment_mode": null,
+      "due_amount": 1500,
+      "notes": "Image 1000070408; 1500 due written."
+    },
+    "customerName": "Kanchan Bhaiy",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balance due (item not clear)",
+          "brand": "MISC",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 150000,
+          "grossPaisa": 150000,
+          "discountPaisa": 0,
+          "taxablePaisa": 150000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 150000
+        }
+      ],
+      "subtotalPaisa": 150000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 150000,
+      "duePaisa": 150000,
+      "payments": [],
+      "paymentStatus": "UNPAID",
+      "notes": "Image 1000070408; 1500 due written.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Gagandeep Babu",
+      "items": [
+        "Denim jeans",
+        "Denim shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 1300,
+      "paid_amount": 0,
+      "payment_status": "Due",
+      "payment_mode": null,
+      "due_amount": 1300,
+      "notes": "Image 1000070408."
+    },
+    "customerName": "Gagandeep Babu",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Denim jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Denim shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        }
+      ],
+      "subtotalPaisa": 130000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 130000,
+      "duePaisa": 130000,
+      "payments": [],
+      "paymentStatus": "UNPAID",
+      "notes": "Image 1000070408.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Mukesh Bhaiya",
+      "items": [
+        "Dollars x2",
+        "Dollar pant x2",
+        "Killers pant",
+        "The Indian shirt",
+        "T-shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 2700,
+      "paid_amount": 0,
+      "payment_status": "Deal / payment unclear",
+      "payment_mode": null,
+      "due_amount": 2700,
+      "notes": "Image 1000070408; bottom notes show 500 and deal total 2710. Payment could not be reliably determined."
+    },
+    "customerName": "Mukesh Bhaiya",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Dollar x2",
+          "brand": "DOLLAR",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 54000,
+          "grossPaisa": 54000,
+          "discountPaisa": 0,
+          "taxablePaisa": 54000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 54000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Dollar pant x2",
+          "brand": "DOLLAR",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 54000,
+          "grossPaisa": 54000,
+          "discountPaisa": 0,
+          "taxablePaisa": 54000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 54000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Killer pant",
+          "brand": "KILLER",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 54000,
+          "grossPaisa": 54000,
+          "discountPaisa": 0,
+          "taxablePaisa": 54000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 54000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "The Indian shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 54000,
+          "grossPaisa": 54000,
+          "discountPaisa": 0,
+          "taxablePaisa": 54000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 54000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "T-shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 54000,
+          "grossPaisa": 54000,
+          "discountPaisa": 0,
+          "taxablePaisa": 54000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 54000
+        }
+      ],
+      "subtotalPaisa": 270000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 270000,
+      "duePaisa": 270000,
+      "payments": [],
+      "paymentStatus": "UNPAID",
+      "notes": "Image 1000070408; bottom notes show 500 and deal total 2710. Payment could not be reliably determined.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "The Beer House shirt",
+        "Indian shirt"
+      ],
+      "quantity": 2,
+      "total_amount": 2100,
+      "paid_amount": 2100,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070407; total written 2100."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "The Beer House shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 105000,
+          "grossPaisa": 105000,
+          "discountPaisa": 0,
+          "taxablePaisa": 105000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 105000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Indian shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 105000,
+          "grossPaisa": 105000,
+          "discountPaisa": 0,
+          "taxablePaisa": 105000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 105000
+        }
+      ],
+      "subtotalPaisa": 210000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 210000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 210000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070407; total written 2100.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "Killer jeans",
+        "Shiyaram shirt"
+      ],
+      "quantity": 2,
+      "total_amount": 2570,
+      "paid_amount": 2550,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 20,
+      "notes": "Image 1000070407; second item name unclear; item values 1650 + 920. Source says paid, but 2570-2550 leaves 20."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Killer jeans",
+          "brand": "KILLER",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 128500,
+          "grossPaisa": 128500,
+          "discountPaisa": 0,
+          "taxablePaisa": 128500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 128500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Siyaram shirt",
+          "brand": "SIYARAM",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 128500,
+          "grossPaisa": 128500,
+          "discountPaisa": 0,
+          "taxablePaisa": 128500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 128500
+        }
+      ],
+      "subtotalPaisa": 257000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 257000,
+      "duePaisa": 2000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 255000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070407; second item name unclear; item values 1650 + 920. Source says paid, but 2570-2550 leaves 20.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "The Beer House shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 1050,
+      "paid_amount": 1050,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070407; payment inferred from matching total/paid values."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "The Beer House shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 105000,
+          "grossPaisa": 105000,
+          "discountPaisa": 0,
+          "taxablePaisa": 105000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 105000
+        }
+      ],
+      "subtotalPaisa": 105000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 105000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 105000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070407; payment inferred from matching total/paid values.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "Hackett shirt",
+        "H&M jeans",
+        "Gas shirt",
+        "Beer House shirt"
+      ],
+      "quantity": 4,
+      "total_amount": 2900,
+      "paid_amount": 2600,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 300,
+      "notes": "Image 1000070407; total 2900, paid 2600."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Hackett shirt",
+          "brand": "HACKETT",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 72500,
+          "grossPaisa": 72500,
+          "discountPaisa": 0,
+          "taxablePaisa": 72500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 72500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "H&M jeans",
+          "brand": "H&M",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 72500,
+          "grossPaisa": 72500,
+          "discountPaisa": 0,
+          "taxablePaisa": 72500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 72500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Gas shirt",
+          "brand": "GAS",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 72500,
+          "grossPaisa": 72500,
+          "discountPaisa": 0,
+          "taxablePaisa": 72500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 72500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Beer House shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 72500,
+          "grossPaisa": 72500,
+          "discountPaisa": 0,
+          "taxablePaisa": 72500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 72500
+        }
+      ],
+      "subtotalPaisa": 290000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 290000,
+      "duePaisa": 30000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 260000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070407; total 2900, paid 2600.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "Wrogn shirt",
+        "Red Tape shirt"
+      ],
+      "quantity": 2,
+      "total_amount": 1500,
+      "paid_amount": 1500,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070406; total 1500."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Wrogn shirt",
+          "brand": "WROGN",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 75000,
+          "grossPaisa": 75000,
+          "discountPaisa": 0,
+          "taxablePaisa": 75000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 75000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Red Tape shirt",
+          "brand": "RED TAPE",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 75000,
+          "grossPaisa": 75000,
+          "discountPaisa": 0,
+          "taxablePaisa": 75000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 75000
+        }
+      ],
+      "subtotalPaisa": 150000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 150000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 150000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070406; total 1500.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Nikesh Shah",
+      "items": [
+        "Dollar x2",
+        "Nike T-shirt",
+        "Levi's jeans x1"
+      ],
+      "quantity": 5,
+      "total_amount": 1450,
+      "paid_amount": 450,
+      "payment_status": "Payment/total unclear",
+      "payment_mode": null,
+      "due_amount": 1000,
+      "notes": "Image 1000070406; line totals appear 240 + 550 + 700 = 1490; 1450/1500 markings also present."
+    },
+    "customerName": "Nikesh Shah",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Dollar x2",
+          "brand": "DOLLAR",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 48334,
+          "grossPaisa": 48334,
+          "discountPaisa": 0,
+          "taxablePaisa": 48334,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 48334
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Nike T-shirt",
+          "brand": "NIKE",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 48333,
+          "grossPaisa": 48333,
+          "discountPaisa": 0,
+          "taxablePaisa": 48333,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 48333
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans x1",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 48333,
+          "grossPaisa": 48333,
+          "discountPaisa": 0,
+          "taxablePaisa": 48333,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 48333
+        }
+      ],
+      "subtotalPaisa": 145000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 145000,
+      "duePaisa": 100000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 45000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070406; line totals appear 240 + 550 + 700 = 1490; 1450/1500 markings also present.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "Bewkoof shirt",
+        "Levi's jeans"
+      ],
+      "quantity": 2,
+      "total_amount": 1600,
+      "paid_amount": 1350,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 250,
+      "notes": "Image 1000070406; total 1600, paid 1350."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Bewkoof shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 80000,
+          "grossPaisa": 80000,
+          "discountPaisa": 0,
+          "taxablePaisa": 80000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 80000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 80000,
+          "grossPaisa": 80000,
+          "discountPaisa": 0,
+          "taxablePaisa": 80000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 80000
+        }
+      ],
+      "subtotalPaisa": 160000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 160000,
+      "duePaisa": 25000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 135000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070406; total 1600, paid 1350.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-25",
+      "customer": "Umesh RJD?",
+      "items": [
+        "Balman shirt",
+        "Sap... jeans"
+      ],
+      "quantity": 2,
+      "total_amount": 2550,
+      "paid_amount": 2400,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 150,
+      "notes": "Image 1000070404; customer name and second item partly unclear. Source also mentions 2850 total, 2400 paid, implying 450 due; retained 2550 as the primary table total."
+    },
+    "customerName": "Umesh RJD?",
+    "completedAt": "2026-08-25T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balmain shirt",
+          "brand": "BALMAIN",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 127500,
+          "grossPaisa": 127500,
+          "discountPaisa": 0,
+          "taxablePaisa": 127500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 127500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 127500,
+          "grossPaisa": 127500,
+          "discountPaisa": 0,
+          "taxablePaisa": 127500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 127500
+        }
+      ],
+      "subtotalPaisa": 255000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 255000,
+      "duePaisa": 15000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 240000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070404; customer name and second item partly unclear. Source also mentions 2850 total, 2400 paid, implying 450 due; retained 2550 as the primary table total.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-25",
+      "customer": null,
+      "items": [
+        "Park Avenue pant x2",
+        "Red Tape shirt"
+      ],
+      "quantity": 3,
+      "total_amount": 3150,
+      "paid_amount": 3100,
+      "payment_status": "Paid / source mismatch",
+      "payment_mode": null,
+      "due_amount": 50,
+      "notes": "Image 1000070404; item values 2300 + 850 = 3150, but 3200 paid is also written. Primary calculation uses 3150 total and 3100 paid from table."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-25T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Park Avenue pant x2",
+          "brand": "PARK AVENUE",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 157500,
+          "grossPaisa": 157500,
+          "discountPaisa": 0,
+          "taxablePaisa": 157500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 157500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Red Tape shirt",
+          "brand": "RED TAPE",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 157500,
+          "grossPaisa": 157500,
+          "discountPaisa": 0,
+          "taxablePaisa": 157500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 157500
+        }
+      ],
+      "subtotalPaisa": 315000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 315000,
+      "duePaisa": 5000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 310000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070404; item values 2300 + 850 = 3150, but 3200 paid is also written. Primary calculation uses 3150 total and 3100 paid from table.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-25",
+      "customer": null,
+      "items": [
+        "Adidas shoes"
+      ],
+      "quantity": 1,
+      "total_amount": 1200,
+      "paid_amount": 1200,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070404."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-25T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Adidas shoes",
+          "brand": "ADIDAS",
+          "category": "FOOTWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 120000,
+          "grossPaisa": 120000,
+          "discountPaisa": 0,
+          "taxablePaisa": 120000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 120000
+        }
+      ],
+      "subtotalPaisa": 120000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 120000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 120000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070404.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "Nike T-shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 450,
+      "paid_amount": 450,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070404."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Nike T-shirt",
+          "brand": "NIKE",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 45000,
+          "grossPaisa": 45000,
+          "discountPaisa": 0,
+          "taxablePaisa": 45000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 45000
+        }
+      ],
+      "subtotalPaisa": 45000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 45000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 45000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070404.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "Levi's jeans",
+        "The Indian shirt"
+      ],
+      "quantity": 2,
+      "total_amount": 2000,
+      "paid_amount": 1700,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 300,
+      "notes": "Image 1000070404; 1250 + 750 = 2000, paid 1700."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 100000,
+          "grossPaisa": 100000,
+          "discountPaisa": 0,
+          "taxablePaisa": 100000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 100000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "The Indian shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 100000,
+          "grossPaisa": 100000,
+          "discountPaisa": 0,
+          "taxablePaisa": 100000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 100000
+        }
+      ],
+      "subtotalPaisa": 200000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 200000,
+      "duePaisa": 30000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 170000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070404; 1250 + 750 = 2000, paid 1700.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": null,
+      "items": [
+        "Momfit shirt",
+        "Denim look",
+        "Rush jeans",
+        "Levi's jeans"
+      ],
+      "quantity": 4,
+      "total_amount": 2150,
+      "paid_amount": 1800,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 350,
+      "notes": "Image 1000070405; total 2150, paid 1800."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Momfit shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 53750,
+          "grossPaisa": 53750,
+          "discountPaisa": 0,
+          "taxablePaisa": 53750,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 53750
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Denim look",
+          "brand": "MISC",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 53750,
+          "grossPaisa": 53750,
+          "discountPaisa": 0,
+          "taxablePaisa": 53750,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 53750
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Rush jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 53750,
+          "grossPaisa": 53750,
+          "discountPaisa": 0,
+          "taxablePaisa": 53750,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 53750
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 53750,
+          "grossPaisa": 53750,
+          "discountPaisa": 0,
+          "taxablePaisa": 53750,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 53750
+        }
+      ],
+      "subtotalPaisa": 215000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 215000,
+      "duePaisa": 35000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 180000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070405; total 2150, paid 1800.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Mithoon Ram",
+      "items": [
+        "Levi's jeans",
+        "Rare Rabbit shirt",
+        "Diesel T-shirt"
+      ],
+      "quantity": 3,
+      "total_amount": 2500,
+      "paid_amount": 0,
+      "payment_status": "Unpaid",
+      "payment_mode": null,
+      "due_amount": 2500,
+      "notes": "Image 1000070405; marked unpaid."
+    },
+    "customerName": "Mithoon Ram",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Levi's jeans",
+          "brand": "LEVI'S",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 83334,
+          "grossPaisa": 83334,
+          "discountPaisa": 0,
+          "taxablePaisa": 83334,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 83334
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Rare Rabbit shirt",
+          "brand": "RARE RABBIT",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 83333,
+          "grossPaisa": 83333,
+          "discountPaisa": 0,
+          "taxablePaisa": 83333,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 83333
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Diesel T-shirt",
+          "brand": "DIESEL",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 83333,
+          "grossPaisa": 83333,
+          "discountPaisa": 0,
+          "taxablePaisa": 83333,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 83333
+        }
+      ],
+      "subtotalPaisa": 250000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 250000,
+      "duePaisa": 250000,
+      "payments": [],
+      "paymentStatus": "UNPAID",
+      "notes": "Image 1000070405; marked unpaid.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-25",
+      "customer": null,
+      "items": [
+        "US Polo shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 650,
+      "paid_amount": 650,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070403."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-25T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "US Polo shirt",
+          "brand": "US POLO",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        }
+      ],
+      "subtotalPaisa": 65000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 65000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 65000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070403.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-25",
+      "customer": null,
+      "items": [
+        "US Polo shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 650,
+      "paid_amount": 650,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070403; second US Polo entry."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-25T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "US Polo shirt",
+          "brand": "US POLO",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        }
+      ],
+      "subtotalPaisa": 65000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 65000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 65000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070403; second US Polo entry.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-26",
+      "customer": "Anshu",
+      "items": [
+        "Balman shirt x2"
+      ],
+      "quantity": 2,
+      "total_amount": 2800,
+      "paid_amount": 500,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 2300,
+      "notes": "Image 1000070403; 500 jama written."
+    },
+    "customerName": "Anshu",
+    "completedAt": "2026-08-26T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balmain shirt x2",
+          "brand": "BALMAIN",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 280000,
+          "grossPaisa": 280000,
+          "discountPaisa": 0,
+          "taxablePaisa": 280000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 280000
+        }
+      ],
+      "subtotalPaisa": 280000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 280000,
+      "duePaisa": 230000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 50000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070403; 500 jama written.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-26",
+      "customer": "Dhanu Bhai?",
+      "items": [
+        "Denim shirt"
+      ],
+      "quantity": 1,
+      "total_amount": 650,
+      "paid_amount": 500,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 150,
+      "notes": "Image 1000070403; customer name partly unclear; 500 jama written."
+    },
+    "customerName": "Dhanu Bhai?",
+    "completedAt": "2026-08-26T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Denim shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 65000,
+          "grossPaisa": 65000,
+          "discountPaisa": 0,
+          "taxablePaisa": 65000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 65000
+        }
+      ],
+      "subtotalPaisa": 65000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 65000,
+      "duePaisa": 15000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 50000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070403; customer name partly unclear; 500 jama written.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Nigam Singh",
+      "items": [
+        "AX pant",
+        "Black boys shirt"
+      ],
+      "quantity": 2,
+      "total_amount": 1200,
+      "paid_amount": 1100,
+      "payment_status": "Paid",
+      "payment_mode": null,
+      "due_amount": 100,
+      "notes": "Image 1000070402; heading/customer unclear; 1200 total, 1100 paid. Source status says paid despite 100 difference."
+    },
+    "customerName": "Nigam Singh",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "AX pant",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 60000,
+          "grossPaisa": 60000,
+          "discountPaisa": 0,
+          "taxablePaisa": 60000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 60000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Black boys shirt",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 60000,
+          "grossPaisa": 60000,
+          "discountPaisa": 0,
+          "taxablePaisa": 60000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 60000
+        }
+      ],
+      "subtotalPaisa": 120000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 120000,
+      "duePaisa": 10000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 110000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070402; heading/customer unclear; 1200 total, 1100 paid. Source status says paid despite 100 difference.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Dhananjay Bhai",
+      "items": [
+        "Balman shirt",
+        "Jince machine"
+      ],
+      "quantity": 2,
+      "total_amount": 2750,
+      "paid_amount": 2300,
+      "payment_status": "Deal / unclear",
+      "payment_mode": null,
+      "due_amount": 450,
+      "notes": "Image 1000070402; 1500 + 1250 = 2750; nearby 2800/300 deal markings."
+    },
+    "customerName": "Dhananjay Bhai",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balmain shirt",
+          "brand": "BALMAIN",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 137500,
+          "grossPaisa": 137500,
+          "discountPaisa": 0,
+          "taxablePaisa": 137500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 137500
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Jince machine",
+          "brand": "MISC",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 137500,
+          "grossPaisa": 137500,
+          "discountPaisa": 0,
+          "taxablePaisa": 137500,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 137500
+        }
+      ],
+      "subtotalPaisa": 275000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 275000,
+      "duePaisa": 45000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 230000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070402; 1500 + 1250 = 2750; nearby 2800/300 deal markings.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-27",
+      "customer": "Sonu Bhaiya",
+      "items": [
+        "US Polo jeans",
+        "Park pant"
+      ],
+      "quantity": 2,
+      "total_amount": 2200,
+      "paid_amount": null,
+      "payment_status": "Deal / unclear",
+      "payment_mode": null,
+      "due_amount": null,
+      "notes": "Image 1000070402; 1150 + 1050 = 2200; marked deal total; payment not clear."
+    },
+    "customerName": "Sonu Bhaiya",
+    "completedAt": "2026-08-27T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "US Polo jeans",
+          "brand": "US POLO",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 110000,
+          "grossPaisa": 110000,
+          "discountPaisa": 0,
+          "taxablePaisa": 110000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 110000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Park pant",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 110000,
+          "grossPaisa": 110000,
+          "discountPaisa": 0,
+          "taxablePaisa": 110000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 110000
+        }
+      ],
+      "subtotalPaisa": 220000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 220000,
+      "duePaisa": 220000,
+      "payments": [],
+      "paymentStatus": "UNPAID",
+      "notes": "Image 1000070402; 1150 + 1050 = 2200; marked deal total; payment not clear.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-26",
+      "customer": "Anshu",
+      "items": [
+        "Balman shirt x3",
+        "Dollar",
+        "Shokesh"
+      ],
+      "quantity": 5,
+      "total_amount": 4370,
+      "paid_amount": 500,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 3870,
+      "notes": "Image 1000070401; calculation 4370 - 500 = 3870; underlying item values partly overlapped."
+    },
+    "customerName": "Anshu",
+    "completedAt": "2026-08-26T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Balmain shirt x3",
+          "brand": "BALMAIN",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 145668,
+          "grossPaisa": 145668,
+          "discountPaisa": 0,
+          "taxablePaisa": 145668,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 145668
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Dollar",
+          "brand": "DOLLAR",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 145666,
+          "grossPaisa": 145666,
+          "discountPaisa": 0,
+          "taxablePaisa": 145666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 145666
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Shokesh",
+          "brand": "MISC",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 145666,
+          "grossPaisa": 145666,
+          "discountPaisa": 0,
+          "taxablePaisa": 145666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 145666
+        }
+      ],
+      "subtotalPaisa": 437000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 437000,
+      "duePaisa": 387000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 50000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070401; calculation 4370 - 500 = 3870; underlying item values partly overlapped.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-26",
+      "customer": null,
+      "items": [
+        "Net play",
+        "White jeans",
+        "Blue jeans"
+      ],
+      "quantity": 3,
+      "total_amount": 1850,
+      "paid_amount": 1850,
+      "payment_status": "Paid / source mismatch",
+      "payment_mode": null,
+      "due_amount": 0,
+      "notes": "Image 1000070399; item values 650 + 580 + 650 = 1880, but written total is 1850 paid."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-26T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Net play",
+          "brand": "MISC",
+          "category": "MISC",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 61668,
+          "grossPaisa": 61668,
+          "discountPaisa": 0,
+          "taxablePaisa": 61668,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 61668
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "White jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 61666,
+          "grossPaisa": 61666,
+          "discountPaisa": 0,
+          "taxablePaisa": 61666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 61666
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Blue jeans",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 61666,
+          "grossPaisa": 61666,
+          "discountPaisa": 0,
+          "taxablePaisa": 61666,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 61666
+        }
+      ],
+      "subtotalPaisa": 185000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 185000,
+      "duePaisa": 0,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 185000
+        }
+      ],
+      "paymentStatus": "PAID",
+      "notes": "Image 1000070399; item values 650 + 580 + 650 = 1880, but written total is 1850 paid.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-26",
+      "customer": null,
+      "items": [
+        "Siyaram shirt (MRP 1049)",
+        "Pepe jeans (MRP 3199)"
+      ],
+      "quantity": 2,
+      "total_amount": 2100,
+      "paid_amount": 2000,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 100,
+      "notes": "Image 1000070398; sale values 900 + 1200 = 2100; MRP values also noted."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-26T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Siyaram shirt (MRP 1049)",
+          "brand": "SIYARAM",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 105000,
+          "grossPaisa": 105000,
+          "discountPaisa": 0,
+          "taxablePaisa": 105000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 105000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Pepe jeans (MRP 3199)",
+          "brand": "MISC",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 105000,
+          "grossPaisa": 105000,
+          "discountPaisa": 0,
+          "taxablePaisa": 105000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 105000
+        }
+      ],
+      "subtotalPaisa": 210000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 210000,
+      "duePaisa": 10000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 200000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070398; sale values 900 + 1200 = 2100; MRP values also noted.",
+      "isImmutable": true
+    }
+  },
+  {
+    "_source": {
+      "date": "2026-08-26",
+      "customer": null,
+      "items": [
+        "Killer pant (MRP 2899)",
+        "Blue shirt (MRP 1999)"
+      ],
+      "quantity": 2,
+      "total_amount": 2300,
+      "paid_amount": 1800,
+      "payment_status": "Partial",
+      "payment_mode": null,
+      "due_amount": 500,
+      "notes": "Image 1000070398; sale values 1350 + 950 = 2300; 500 due written."
+    },
+    "customerName": "Walk-in Customer",
+    "completedAt": "2026-08-26T00:00:00.000Z",
+    "orderData": {
+      "items": [
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Killer pant (MRP 2899)",
+          "brand": "KILLER",
+          "category": "BOTTOMWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 115000,
+          "grossPaisa": 115000,
+          "discountPaisa": 0,
+          "taxablePaisa": 115000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 115000
+        },
+        {
+          "productId": "6aa76ee9cd4ae4d7a3b94345",
+          "variantId": "6aa76ee9cd4ae4d7a3b94346",
+          "productName": "Blue shirt (MRP 1999)",
+          "brand": "MISC",
+          "category": "TOPWEAR",
+          "sku": "LEGACY-001",
+          "quantity": 1,
+          "unitPricePaisa": 115000,
+          "grossPaisa": 115000,
+          "discountPaisa": 0,
+          "taxablePaisa": 115000,
+          "taxRate": 0,
+          "taxPaisa": 0,
+          "totalPaisa": 115000
+        }
+      ],
+      "subtotalPaisa": 230000,
+      "discountPaisa": 0,
+      "taxPaisa": 0,
+      "totalPaisa": 230000,
+      "duePaisa": 50000,
+      "payments": [
+        {
+          "method": "CASH",
+          "amountPaisa": 180000
+        }
+      ],
+      "paymentStatus": "PARTIAL",
+      "notes": "Image 1000070398; sale values 1350 + 950 = 2300; 500 due written.",
+      "isImmutable": true
+    }
+  }
+]
