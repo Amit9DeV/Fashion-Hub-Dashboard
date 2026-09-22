@@ -33,14 +33,15 @@ export const updateSettings = async (req, res) => {
 
     await connectToDatabase();
     
-    const { storeName, tagline, taxRate, invoiceFooter, invoicePreferences } = req.body;
+    const { storeName, tagline, gstin, taxRate, invoiceFooter, invoicePreferences } = req.body;
     
     let settings = await Settings.findOne();
     if (!settings) {
-      settings = new Settings({ storeName, tagline, taxRate, invoiceFooter, invoicePreferences });
+      settings = new Settings({ storeName, tagline, gstin, taxRate, invoiceFooter, invoicePreferences });
     } else {
       settings.storeName = storeName;
       settings.tagline = tagline;
+      settings.gstin = gstin;
       settings.taxRate = taxRate;
       settings.invoiceFooter = invoiceFooter;
       if (invoicePreferences) {

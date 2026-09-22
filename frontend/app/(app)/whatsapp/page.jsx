@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { MessageCircle, RefreshCcw, AlertTriangle, FileText, CheckCircle2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { apiBase } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 import { api } from "@/src/services/api";
 import Link from "next/link";
@@ -114,7 +115,7 @@ export default function WhatsAppPage() {
                     <td className="px-5 py-3.5 font-medium">{msg.phoneNumber}</td>
                     <td className="px-5 py-3.5">
                       <a 
-                        href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/invoices/${msg.invoiceId}/pdf`}
+                        href={`${apiBase()}/invoices/${msg.invoiceId}/pdf`}
                         target="_blank"
                         className="flex items-center gap-1.5 text-xs font-semibold hover:text-[#9b7740]"
                       >

@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Image as ImageIcon, 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
 const COMMON_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "28", "30", "32", "34", "36", "38", "40", "42", "6", "7", "8", "9", "10", "11", "12"];
 const COMMON_COLORS = ["Black", "White", "Navy", "Grey", "Olive", "Red", "Blue", "Beige", "Cream", "Brown"];
@@ -124,10 +125,11 @@ export default function NewProductWizard() {
       };
 
       const data = await api.products.create(payload);
+      toast.success("Product created successfully");
       router.push(`/products/${data.product._id}`);
       router.refresh();
     } catch (err) {
-      setError(err.message || "Failed to create product");
+      toast.error(err.message || "Failed to create product");
       setBusy(false);
     }
   }

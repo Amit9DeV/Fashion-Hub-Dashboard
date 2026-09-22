@@ -173,7 +173,21 @@ export default function ProductDetailPage(props) {
             <p className="text-sm text-[#706a61] mt-1">{product.categorySnapshot}</p>
           </div>
           <div className="flex gap-3">
-             <Button variant="outline" onClick={() => setEditingBasic(!editingBasic)}>
+             <Button variant="outline" onClick={() => {
+              if (editingBasic) {
+                setBasicForm({
+                  name: product.name || "",
+                  brandId: product.brandId || "",
+                  categoryId: product.categoryId || "",
+                  description: product.description || "",
+                  status: product.status || "ACTIVE"
+                });
+                setEditingBasic(false);
+              } else {
+                setActiveTab("overview");
+                setEditingBasic(true);
+              }
+            }}>
               {editingBasic ? "Cancel Edit" : "Edit Details"}
             </Button>
             <Button variant="destructive" onClick={handleDeleteProduct} className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100">

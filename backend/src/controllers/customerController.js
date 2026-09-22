@@ -34,7 +34,15 @@ export const searchCustomers = async (req, res) => {
 export const getAllCustomers = async (req, res) => {
   try {
     await connectToDatabase();
-    const customers = await Customer.find({}).sort({ createdAt: -1 }).lean();
+    const query = req.query.query?.trim().slice(0, 80) || "";
+    const search = query ? new RegExp(escapeRegExp(query), "i") : null;
+    
+    let filter = {};
+    if (search) {
+      filter.$or = [{ name: search }, { mobile: search }, { whatsappNumber: search }];
+    }
+    
+    const customers = await Customer.find(filter).sort({ createdAt: -1 }).lean();
     return res.json({ success: true, data: { customers } });
   } catch (error) {
     console.error(error);
@@ -48,12 +56,41 @@ export const getCustomerById = async (req, res) => {
     const customer = await Customer.findById(req.params.id).lean();
     if (!customer) return res.status(404).json({ success: false, message: "Customer not found" });
     
-    const orders = await Order.find({ "customerSnapshot.customerId": req.params.id }).sort({ completedAt: -1 }).lean() || [];
+    // Order stores customerId at the root level, not inside customerSnapshot
+    const orders = await Order.find({ customerId: req.params.id }).sort({ completedAt: -1 }).lean() || [];
     
     return res.json({ success: true, data: { customer, orders } });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not fetch customer." });
+  }
+};
+
+export const updateCustomer = async (req, res) => {
+  try {
+    const { name, mobile, email, gstin } = req.body;
+    await connectToDatabase();
+
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (mobile !== undefined) updates.mobile = mobile;
+    if (email !== undefined) updates.email = email;
+    if (gstin !== undefined) updates.gstin = gstin;
+
+    const customer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+
+    if (!customer) {
+      return res.status(404).json({ success: false, message: "Customer not found." });
+    }
+
+    return res.json({ success: true, data: { customer } });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not update customer." });
   }
 };
 

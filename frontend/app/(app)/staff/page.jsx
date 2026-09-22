@@ -1,12 +1,15 @@
 import { apiBase } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck } from "lucide-react";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function StaffPage() {
-  const res = await fetch(`${apiBase()}/staff`, { 
+  const cookieStore = await cookies();
+  const res = await fetch(`${apiBase()}/staff`, {
     cache: 'no-store',
+    headers: { cookie: cookieStore.toString() },
   });
   
   const payload = await res.json().catch(() => ({}));

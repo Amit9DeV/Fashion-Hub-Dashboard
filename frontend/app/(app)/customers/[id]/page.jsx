@@ -1,13 +1,18 @@
 import { formatMoney, formatDate } from "@/lib/utils";
 import { apiBase } from "@/lib/backend";
+import { redirect } from "next/navigation";
 import { FileText } from "lucide-react";
+import EditCustomerButton from "@/components/customers/EditCustomerButton";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomerDetailPage(props) {
   const params = await props.params;
-  const res = await fetch(`${apiBase()}/customers/${params.id}`, { 
+  const cookieStore = await cookies();
+  const res = await fetch(`${apiBase()}/customers/${params.id}`, {
     cache: 'no-store',
+    headers: { cookie: cookieStore.toString() },
   });
   
   const payload = await res.json().catch(() => ({}));
@@ -17,13 +22,17 @@ export default async function CustomerDetailPage(props) {
 
   return (
     <div className="space-y-7">
-      <section className="border-b border-[#dfd8cc] pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Customer Profile</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">{customer.name || "Unknown"}</h2>
-        <div className="mt-2 text-sm text-[#706a61] space-x-4">
-          {customer.mobile && <span>{customer.mobile}</span>}
-          {customer.email && <span>{customer.email}</span>}
+      <section className="border-b border-[#dfd8cc] pb-6 flex justify-between items-start">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Customer Profile</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight">{customer.name || "Unknown"}</h2>
+          <div className="mt-2 text-sm text-[#706a61] space-x-4">
+            {customer.mobile && <span>{customer.mobile}</span>}
+            {customer.email && <span>{customer.email}</span>}
+            {customer.gstin && <span>GSTIN: {customer.gstin}</span>}
+          </div>
         </div>
+        <EditCustomerButton customer={customer} />
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
@@ -37,7 +46,12 @@ export default async function CustomerDetailPage(props) {
         </div>
         <div className="rounded-md border bg-white p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#7b7367]">Avg Order Value</p>
-          <p className="font-financial mt-4 text-2xl font-semibold">{formatMoney(customer.stats?.averageOrderValuePaisa || 0)}</p>
+          <p className="font-financial mt-4 text-2xl font-semibold">
+            {formatMoney(
+              customer.stats?.averageOrderValuePaisa || 
+              (customer.stats?.totalOrders ? Math.round(customer.stats.totalSpentPaisa / customer.stats.totalOrders) : 0)
+            )}
+          </p>
         </div>
       </section>
 

@@ -1,12 +1,15 @@
 import { apiBase } from "@/lib/backend";
 import { PricingEditor } from "@/features/pricing/PricingEditor";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
   // We use the existing getAllProducts API which includes product.variants due to aggregation
-  const res = await fetch(`${apiBase()}/products/all`, { 
+  const cookieStore = await cookies();
+  const res = await fetch(`${apiBase()}/products/all`, {
     cache: 'no-store',
+    headers: { cookie: cookieStore.toString() },
   });
   
   const payload = await res.json().catch(() => ({}));
@@ -16,6 +19,10 @@ export default async function PricingPage() {
   const variants = products.flatMap(product => 
     (product.variants || []).map(variant => ({
       ...variant,
+      // Stringify MongoDB ObjectIds to plain strings for safe serialization
+      // across the server→client component boundary
+      _id: variant._id?.toString(),
+      productId: variant.productId?.toString() || product._id?.toString(),
       productName: product.name,
       productBrand: product.brandSnapshot,
       productCategory: product.categorySnapshot,

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
 
 const PRESET_DATES = [
+  { label: "Lifetime", value: "lifetime" },
   { label: "Today", value: "today" },
   { label: "Yesterday", value: "yesterday" },
   { label: "Last 7 Days", value: "7days" },
@@ -28,6 +29,8 @@ function getDateRange(preset) {
   const end = new Date();
   const start = new Date();
   switch (preset) {
+    case "lifetime":
+      return { start: "", end: "" };
     case "today":
       break;
     case "yesterday":
@@ -53,9 +56,9 @@ function getDateRange(preset) {
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
-  const [preset, setPreset] = useState("30days");
+  const [preset, setPreset] = useState("lifetime");
   
-  const defaultDates = getDateRange("30days");
+  const defaultDates = getDateRange("lifetime");
   const [startDate, setStartDate] = useState(defaultDates.start);
   const [endDate, setEndDate] = useState(defaultDates.end);
   
@@ -498,13 +501,20 @@ function ExpandedBillDetails({ bill, onUpdated }) {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    setItems(bill.items.map(i => ({ ...i })));
+    setItems(bill.items.map(i => ({ 
+      ...i, 
+      unitCostPaisa: i.unitCostPaisa || i.costPricePaisa || 0,
+      sellingPricePaisa: i.sellingPricePaisa || 0
+    })));
   }, [bill, isEditing]);
 
   const handleItemChange = (idx, field, val) => {
     const newItems = [...items];
-    if (field === "unitCostPaisa" || field === "sellingPricePaisa") {
-      newItems[idx][field] = Math.round(Number(val) * 100);
+    if (field === "unitCostPaisa" || field === "costPricePaisa" || field === "sellingPricePaisa") {
+      const numVal = Math.round(Number(val) * 100);
+      newItems[idx][field] = numVal;
+      if (field === "unitCostPaisa") newItems[idx]["costPricePaisa"] = numVal;
+      if (field === "costPricePaisa") newItems[idx]["unitCostPaisa"] = numVal;
     } else if (field === "quantity") {
       newItems[idx][field] = parseInt(val) || 0;
     } else {
@@ -522,22 +532,35 @@ function ExpandedBillDetails({ bill, onUpdated }) {
       
       const payload = {
         items: items.map(i => ({
-          productId: i.productId,
-          variantId: i.variantId,
+          productId: i.productId?.toString(),
+          variantId: i.variantId?.toString(),
           quantity: i.quantity,
           overriddenPricePaisa: i.sellingPricePaisa,
-          overriddenCostPaisa: i.unitCostPaisa || i.costPricePaisa || 0,
-          overriddenName: i.productName
+          overriddenCostPaisa: i.unitCostPaisa ?? i.costPricePaisa ?? 0,
+          overriddenName: i.productName,
         })),
-        customer: fullOrder.customerSnapshot || {},
+        customer: fullOrder.customerId
+          ? { customerId: fullOrder.customerId.toString() }
+          : (fullOrder.customerSnapshot?.name || fullOrder.customerSnapshot?.mobile)
+            ? {
+                name: fullOrder.customerSnapshot?.name,
+                mobile: fullOrder.customerSnapshot?.mobile,
+                whatsappNumber: fullOrder.customerSnapshot?.whatsappNumber,
+              }
+            : null,
         discountPaisa: fullOrder.discountPaisa || 0,
-        payments: fullOrder.payments || [],
+        payments: (fullOrder.payments || []).map(p => ({
+          method: p.method,
+          amountPaisa: p.amountPaisa,
+        })),
         notes: fullOrder.notes,
-        idempotencyKey: fullOrder.idempotencyKey || `edit-${Date.now()}`,
-        completedAt: fullOrder.completedAt
+        // Always use a fresh idempotency key for edits to avoid conflicts
+        idempotencyKey: `edit-${bill.id}-${Date.now()}`,
+        completedAt: fullOrder.completedAt,
       };
       
-      await api.sales.update(bill.id, payload);
+      // Use orders.update (PUT /api/orders/:id) which routes through the same updateSale service
+      await api.orders.update(bill.id, payload);
       setIsEditing(false);
       onUpdated();
     } catch (e) {
@@ -566,7 +589,7 @@ function ExpandedBillDetails({ bill, onUpdated }) {
           </div>
         )}
       </div>
-      <table className="w-full text-xs text-left">
+      <table className="w-full text-xs text-left sub-table">
         <thead className="bg-[#faf9f6] text-[#8a847a]">
           <tr>
             <th className="px-4 py-2 font-semibold">Item</th>
@@ -578,8 +601,13 @@ function ExpandedBillDetails({ bill, onUpdated }) {
         </thead>
         <tbody className="divide-y divide-[#f5f2ee]">
           {(isEditing ? items : bill.items).map((item, idx) => {
-            const displayCost = isEditing ? (item.unitCostPaisa || item.costPricePaisa || 0) : (item.totalItemCostPaisa / item.quantity);
-            const itemProfit = isEditing 
+            // In view mode: costPricePaisa is per-unit from report aggregation; fall back to totalItemCostPaisa/qty
+            // In edit mode: unitCostPaisa is initialized from costPricePaisa and updated by user
+            const displayCost = isEditing
+              ? (item.unitCostPaisa ?? item.costPricePaisa ?? 0)
+              : (item.costPricePaisa || (item.totalItemCostPaisa > 0 ? Math.round(item.totalItemCostPaisa / item.quantity) : 0));
+            // itemProfit: in edit mode compute from current editable values; in view use pre-computed totals
+            const itemProfit = isEditing
               ? (item.sellingPricePaisa - displayCost) * item.quantity
               : item.totalItemSalesPaisa - item.totalItemCostPaisa;
 

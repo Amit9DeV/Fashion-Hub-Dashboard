@@ -3,11 +3,16 @@ import { ArrowRight, CircleAlert, Package, ReceiptText, UsersRound, FileText, Tr
 import { formatMoney } from "@/lib/utils";
 import { apiBase } from "@/lib/backend";
 import { SalesChart } from "@/components/dashboard/SalesChart";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const res = await fetch(`${apiBase()}/dashboard/stats`, { cache: "no-store" });
+  const cookieStore = await cookies();
+  const res = await fetch(`${apiBase()}/dashboard/stats`, {
+    cache: "no-store",
+    headers: { cookie: cookieStore.toString() },
+  });
   const payload = await res.json().catch(() => ({}));
   const {
     today = { sales: 0, orders: 0, itemsSold: 0 },
@@ -196,7 +201,7 @@ export default async function DashboardPage() {
       {topProducts.length > 0 && (
         <section className="content-card">
           <div style={{ padding: '18px 24px', borderBottom: '1px solid #f0ede7' }}>
-            <p className="card-eyebrow" style={{ color: '#1a5a5a' }}>Top Performers · 30 Days</p>
+            <p className="card-eyebrow" style={{ color: '#1a5a5a' }}>Top Performers · Lifetime</p>
             <p className="card-title">Best-selling products</p>
           </div>
           <div className="overflow-x-auto">

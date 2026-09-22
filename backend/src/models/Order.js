@@ -19,6 +19,9 @@ const orderItemSchema = new mongoose.Schema(
     taxablePaisa: { type: Number, required: true, min: 0 },
     taxRate: { type: Number, required: true, min: 0 },
     taxPaisa: { type: Number, required: true, min: 0 },
+    cgstPaisa: { type: Number, min: 0, default: 0 },
+    sgstPaisa: { type: Number, min: 0, default: 0 },
+    hsn: { type: String, trim: true },
     totalPaisa: { type: Number, required: true, min: 0 },
     totalItemCostPaisa: { type: Number, required: true, min: 0, default: 0 },
   },
@@ -49,6 +52,8 @@ const orderSchema = new mongoose.Schema(
     subtotalPaisa: { type: Number, required: true },
     discountPaisa: { type: Number, required: true },
     taxPaisa: { type: Number, required: true },
+    cgstPaisa: { type: Number, min: 0, default: 0 },
+    sgstPaisa: { type: Number, min: 0, default: 0 },
     totalPaisa: { type: Number, required: true },
     duePaisa: { type: Number, default: 0 },
     payments: { type: [paymentSchema], required: true },
@@ -66,5 +71,7 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+orderSchema.index({ completedAt: -1 });
 
 export default mongoose.models.Order || mongoose.model("Order", orderSchema);

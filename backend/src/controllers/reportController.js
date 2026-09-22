@@ -70,8 +70,20 @@ export const getSalesReport = async (req, res) => {
               quantity: "$items.quantity",
               sellingPricePaisa: "$items.unitPricePaisa",
               totalItemSalesPaisa: "$items.totalPaisa",
-              costPricePaisa: { $ifNull: ["$items.unitCostPaisa", { $ifNull: ["$variant.costPricePaisa", 0] }] },
-              totalItemCostPaisa: { $ifNull: ["$items.totalItemCostPaisa", { $multiply: [{ $ifNull: ["$variant.costPricePaisa", 0] }, "$items.quantity"] }] }
+              costPricePaisa: {
+                $cond: [
+                  { $gt: ["$items.unitCostPaisa", 0] },
+                  "$items.unitCostPaisa",
+                  { $ifNull: ["$variant.costPricePaisa", 0] }
+                ]
+              },
+              totalItemCostPaisa: {
+                $cond: [
+                  { $gt: ["$items.totalItemCostPaisa", 0] },
+                  "$items.totalItemCostPaisa",
+                  { $multiply: [{ $ifNull: ["$variant.costPricePaisa", 0] }, "$items.quantity"] }
+                ]
+              }
             }
           },
           totalItemsQty: { $sum: "$items.quantity" },
@@ -138,9 +150,10 @@ export const getSalesReport = async (req, res) => {
       trendMap[dateStr].bills += 1;
       trendMap[dateStr].items += bill.totalItemsQty;
 
-      // Group items
+      // Group items — key by variantId+productName so that historic orders with
+      // different product names but the same placeholder variantId don't collapse
       for (const item of bill.items) {
-        const vid = item.variantId?.toString() || item.sku;
+        const vid = `${item.variantId?.toString() || 'unknown'}::${item.productName}`;
         const itemProfit = item.totalItemSalesPaisa - item.totalItemCostPaisa;
         
         // Products

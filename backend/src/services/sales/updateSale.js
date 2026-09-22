@@ -86,15 +86,30 @@ export async function updateSale(orderId, rawInput, user) {
       const invoice = await Invoice.findOne({ orderId: order._id }).session(session);
       if (!invoice) throw new Error("Invoice not found.");
 
-      const now = input.completedAt ? new Date(input.completedAt) : order.completedAt;
+      const now = (() => {
+        if (input.completedAt) {
+          // Handle both full ISO datetime ("2026-09-14T00:00:00Z") and
+          // date-only strings ("2026-09-14") from the date picker
+          const raw = input.completedAt;
+          if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            // Date-only: treat as midnight in local time (not UTC midnight)
+            const [y, m, d] = raw.split("-").map(Number);
+            return new Date(y, m - 1, d, 0, 0, 0, 0);
+          }
+          return new Date(raw);
+        }
+        return order.completedAt;
+      })();
 
       // --- 1. REVERSE OLD STOCK & STATS ---
-      for (const item of order.items) {
-        await ProductVariant.updateOne(
-          { _id: item.variantId },
-          { $inc: { stock: item.quantity } },
-          { session }
-        );
+      if (order.items && order.items.length > 0) {
+        const restoreOps = order.items.map(item => ({
+          updateOne: {
+            filter: { _id: item.variantId },
+            update: { $inc: { stock: item.quantity } }
+          }
+        }));
+        await ProductVariant.bulkWrite(restoreOps, { session });
       }
       
       if (order.customerId) {
@@ -115,18 +130,22 @@ export async function updateSale(orderId, rawInput, user) {
       const compactedItems = compactCart(input.items);
       const saleLines = [];
 
+      const productIds = [...new Set(compactedItems.map(i => i.productId))];
+      const variantIds = [...new Set(compactedItems.map(i => i.variantId))];
+
+      const [products, variants] = await Promise.all([
+        Product.find({ _id: { $in: productIds }, status: "ACTIVE" }).lean().session(session),
+        ProductVariant.find({ _id: { $in: variantIds }, status: "ACTIVE" }).lean().session(session)
+      ]);
+
+      const productMap = new Map(products.map(p => [p._id.toString(), p]));
+      const variantMap = new Map(variants.map(v => [v._id.toString(), v]));
+
       for (const requestedItem of compactedItems) {
-        const product = await Product.findOne({
-          _id: requestedItem.productId,
-          status: "ACTIVE"
-        }).session(session);
+        const product = productMap.get(requestedItem.productId.toString());
         if (!product) throw new Error("One of the selected products is unavailable.");
 
-        const variant = await ProductVariant.findOne({
-          _id: requestedItem.variantId,
-          productId: product._id,
-          status: "ACTIVE"
-        }).session(session);
+        const variant = variantMap.get(requestedItem.variantId.toString());
         if (!variant) throw new Error("One selected variant is inactive or missing.");
         
         if (variant.stock < requestedItem.quantity) {
@@ -163,19 +182,27 @@ export async function updateSale(orderId, rawInput, user) {
       }
 
       // --- 3. DEDUCT NEW STOCK ---
-      for (const item of totals.items) {
-        const updateResult = await ProductVariant.updateOne(
-          {
-            _id: item.variantId,
-            productId: item.productId,
-            stock: { $gte: item.quantity },
-            status: "ACTIVE"
-          },
-          { $inc: { stock: -item.quantity } },
-          { session }
-        );
-        if (updateResult.modifiedCount !== 1) {
-          throw new Error(`Stock changed while saving edits for ${item.sku}. Please retry.`);
+      const deductOps = totals.items.map(item => {
+        const variantUpdate = { $inc: { stock: -item.quantity } };
+        // We purposefully DO NOT update master pricing if overridden during billing.
+        // Price overrides are meant to apply only to the specific invoice.
+        return {
+          updateOne: {
+            filter: {
+              _id: item.variantId,
+              productId: item.productId,
+              stock: { $gte: item.quantity },
+              status: "ACTIVE"
+            },
+            update: variantUpdate
+          }
+        };
+      });
+
+      if (deductOps.length > 0) {
+        const deductResult = await ProductVariant.bulkWrite(deductOps, { session });
+        if (deductResult.modifiedCount !== deductOps.length) {
+          throw new Error("Stock changed while completing the sale. Please retry.");
         }
       }
 
@@ -257,20 +284,27 @@ export async function updateSale(orderId, rawInput, user) {
         { session }
       );
 
-      // --- 6. AUDIT & LOGS ---
+      // --- 6. REVERSE OLD SALE MOVEMENTS then write new ones ---
+      // Delete the original SALE movement records for this order so the ledger
+      // only reflects the final edited state, not duplicates.
+      await InventoryMovement.deleteMany(
+        { referenceId: order._id, referenceType: "ORDER" },
+        session ? { session } : undefined
+      );
+
       await InventoryMovement.insertMany(totals.items.map((item) => ({
         productId: item.productId,
         variantId: item.variantId,
         skuSnapshot: item.sku,
         productNameSnapshot: item.productName,
-        type: "MANUAL_ADJUSTMENT",
+        type: "SALE",
         quantityDelta: -item.quantity,
         referenceType: "ORDER",
         referenceId: order._id,
         reason: `Edited sale ${order.invoiceNumber}`,
         performedBy: { id: user.id, name: user.name },
         occurredAt: now,
-      })), { session });
+      })), session ? { session } : undefined);
 
       await AuditLog.create([{
         action: "SALE_EDITED",

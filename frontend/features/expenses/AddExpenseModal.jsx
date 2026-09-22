@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
 export function AddExpenseModal({ isOpen, onClose, onExpenseAdded }) {
   const [busy, setBusy] = useState(false);
@@ -18,6 +19,15 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseAdded }) {
     date: new Date().toISOString().split("T")[0],
     notes: "",
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -45,6 +55,7 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseAdded }) {
       });
 
       onExpenseAdded(expense);
+      toast.success("Expense recorded successfully");
       onClose();
       setForm({
         title: "",
@@ -55,7 +66,7 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseAdded }) {
         notes: "",
       });
     } catch (err) {
-      setError(err.message || "Failed to add expense");
+      toast.error(err.message || "Failed to add expense");
     } finally {
       setBusy(false);
     }

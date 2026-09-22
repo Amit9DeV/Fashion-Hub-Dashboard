@@ -3,9 +3,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { api } from "@/src/services/api";
-import { Plus, Receipt, Trash2, IndianRupee, Store, Zap, Heart, User, Sparkles } from "lucide-react";
+import { Plus, Receipt, Trash2, IndianRupee, Store, Zap, Heart, User, Sparkles, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddExpenseModal } from "@/features/expenses/AddExpenseModal";
+import EditExpenseModal from "@/components/expenses/EditExpenseModal";
 
 const CATEGORY_ICONS = {
   STOCK: Store,
@@ -20,6 +21,7 @@ export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
   const [busy, setBusy] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editExpense, setEditExpense] = useState(null);
 
   useEffect(() => {
     fetchExpenses();
@@ -122,13 +124,22 @@ export default function ExpensesPage() {
                         <p className="text-[10px] font-normal text-[#8a847a] mt-0.5">{expense.paymentMethod}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                          onClick={() => handleDelete(expense._id)}
-                          className="text-[#8a3a30] hover:text-[#5d1611] transition-colors"
-                          title="Delete expense"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => setEditExpense(expense)}
+                            className="text-[#c9963e] hover:text-[#9b7740] transition-colors"
+                            title="Edit expense"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(expense._id)}
+                            className="text-[#8a3a30] hover:text-[#5d1611] transition-colors"
+                            title="Delete expense"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -144,6 +155,14 @@ export default function ExpensesPage() {
         onClose={() => setIsModalOpen(false)}
         onExpenseAdded={(newExpense) => {
           setExpenses((prev) => [newExpense, ...prev].sort((a, b) => new Date(b.date) - new Date(a.date)));
+        }}
+      />
+      <EditExpenseModal
+        isOpen={!!editExpense}
+        onClose={() => setEditExpense(null)}
+        expense={editExpense}
+        onExpenseUpdated={(updatedExpense) => {
+          setExpenses((prev) => prev.map(e => e._id === updatedExpense._id ? updatedExpense : e).sort((a, b) => new Date(b.date) - new Date(a.date)));
         }}
       />
     </div>

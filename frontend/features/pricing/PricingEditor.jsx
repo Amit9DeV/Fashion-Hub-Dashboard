@@ -5,6 +5,7 @@ import { Check, Edit2, Loader2, Save, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function PricingEditor({ initialVariants }) {
@@ -64,6 +65,7 @@ export function PricingEditor({ initialVariants }) {
         return v;
       }));
       
+      toast.success("Pricing updated successfully");
       setEditingId(null);
     } catch (err) {
       setError(err.message || "Failed to save pricing.");
@@ -130,6 +132,10 @@ export function PricingEditor({ initialVariants }) {
                           className="w-24 ml-auto h-8 text-right bg-white"
                           value={draft.costPrice}
                           onChange={e => setDraft({...draft, costPrice: e.target.value})}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') saveEdit(variant);
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
                           placeholder="0.00"
                         />
                       ) : (
@@ -146,6 +152,10 @@ export function PricingEditor({ initialVariants }) {
                           className="w-24 ml-auto h-8 text-right bg-white"
                           value={draft.mrp}
                           onChange={e => setDraft({...draft, mrp: e.target.value})}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') saveEdit(variant);
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
                           placeholder="0.00"
                         />
                       ) : (
@@ -159,9 +169,13 @@ export function PricingEditor({ initialVariants }) {
                       {isEditing ? (
                         <Input 
                           type="number" 
-                          className="w-24 ml-auto h-8 text-right bg-white font-bold"
+                          className="w-24 ml-auto h-8 text-right bg-white font-semibold focus-visible:ring-[#c9963e]"
                           value={draft.sellingPrice}
                           onChange={e => setDraft({...draft, sellingPrice: e.target.value})}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') saveEdit(variant);
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
                           placeholder="0.00"
                         />
                       ) : (

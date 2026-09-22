@@ -4,6 +4,7 @@ const settingsSchema = new mongoose.Schema(
   {
     storeName: { type: String, required: true, default: "Fashion Hub" },
     tagline: { type: String, default: "Premium Men's Fashion" },
+    gstin: { type: String, trim: true },
     taxRate: { type: Number, default: 5 },
     invoiceFooter: { type: String, default: "Thank you for shopping with us!" },
     currency: { type: String, default: "INR" },

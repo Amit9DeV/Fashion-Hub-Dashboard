@@ -60,6 +60,39 @@ export const createExpense = async (req, res) => {
   }
 };
 
+// @route   PUT /api/expenses/:id
+// @desc    Update an expense
+// @access  Private
+export const updateExpense = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await connectToDatabase();
+    const { title, amountPaisa, category, paymentMethod, date, notes } = req.body;
+
+    const updates = {};
+    if (title !== undefined) updates.title = title;
+    if (amountPaisa !== undefined) updates.amountPaisa = amountPaisa;
+    if (category !== undefined) updates.category = category;
+    if (paymentMethod !== undefined) updates.paymentMethod = paymentMethod;
+    if (date !== undefined) updates.date = new Date(date);
+    if (notes !== undefined) updates.notes = notes;
+
+    const expense = await Expense.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true }
+    );
+    if (!expense) {
+      return res.status(404).json({ success: false, message: "Expense not found." });
+    }
+
+    return res.json({ success: true, data: expense, message: "Expense updated successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not update expense." });
+  }
+};
+
 // @route   DELETE /api/expenses/:id
 // @desc    Delete an expense
 // @access  Private

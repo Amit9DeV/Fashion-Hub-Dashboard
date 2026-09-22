@@ -48,22 +48,13 @@ export default function ReturnsPage() {
     setReason("");
 
     try {
-      // Find order by exact invoice number or id. 
-      // The orders API expects to just fetch all for now, so we filter client side for MVP, 
-      // but ideally we need an endpoint. Let's just fetch all and find it since it's an MVP,
-      // or we can use a new search endpoint. We already have /orders
-      const data = await api.orders.getAll();
-      const found = (data.orders || []).find(o => 
-        o.invoiceNumber.toLowerCase() === query.toLowerCase() || 
-        o.orderNumber.toLowerCase() === query.toLowerCase() ||
-        o._id === query
-      );
+      // fetchAPI already unwraps response.data, so we get { orders: [...] } directly
+      const data = await api.orders.search(query);
+      const found = data.orders?.[0];
 
       if (!found) {
         setError("Order not found with that Invoice or Order Number.");
       } else {
-        // Also check if this order already has items returned? 
-        // For a robust system we'd check previous returns.
         setOrder(found);
       }
     } catch (err) {
@@ -98,6 +89,22 @@ export default function ReturnsPage() {
       }
     });
     return total;
+  };
+
+  const getAlreadyReturnedQty = (variantId) => {
+    if (!order || !history) return 0;
+    let returned = 0;
+    history.forEach(ret => {
+      // Use toString() to safely compare MongoDB ObjectIds (which may be objects or strings)
+      if (ret.orderId?.toString() === order._id?.toString()) {
+        ret.items.forEach(item => {
+          if (item.variantId?.toString() === variantId?.toString()) {
+            returned += item.quantity;
+          }
+        });
+      }
+    });
+    return returned;
   };
 
   const submitReturn = async () => {
@@ -184,6 +191,10 @@ export default function ReturnsPage() {
                   {order.items.map(item => {
                     const returnQty = returnItems[item.variantId] || 0;
                     const unitPrice = Math.floor(item.totalPaisa / item.quantity);
+                    const maxAllowed = item.quantity - getAlreadyReturnedQty(item.variantId);
+
+                    // Skip showing items that have already been fully returned
+                    if (maxAllowed <= 0) return null;
 
                     return (
                       <div key={item.variantId} className={`flex items-center justify-between border rounded-md p-3 transition ${returnQty > 0 ? 'border-[#c9963e] bg-[#fffbf5]' : ''}`}>
@@ -193,7 +204,7 @@ export default function ReturnsPage() {
                           <p className="text-xs font-financial mt-1">{formatMoney(unitPrice)} each</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <p className="text-xs text-[#706a61]">Max: {item.quantity}</p>
+                          <p className="text-xs text-[#706a61]">Max: {maxAllowed}</p>
                           <div className="flex items-center border rounded-md">
                             <button 
                               type="button"
@@ -204,9 +215,9 @@ export default function ReturnsPage() {
                             <span className="w-8 text-center font-medium text-sm">{returnQty}</span>
                             <button 
                               type="button"
-                              onClick={() => incrementReturn(item.variantId, item.quantity)}
+                              onClick={() => incrementReturn(item.variantId, maxAllowed)}
                               className="px-2 py-1 text-lg hover:bg-gray-100"
-                              disabled={returnQty === item.quantity}
+                              disabled={returnQty === maxAllowed}
                             >+</button>
                           </div>
                         </div>

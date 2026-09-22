@@ -3,19 +3,30 @@ import { FileText, MessageCircle } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { apiBase } from "@/lib/backend";
 import DeleteOrderButton from "@/components/orders/DeleteOrderButton";
+import { cookies } from "next/headers";
+import { SearchInput } from "@/components/ui/SearchInput";
 
 export const dynamic = "force-dynamic";
 
-export default async function OrdersPage() {
-  const res = await fetch(`${apiBase()}/orders`, { 
+export default async function OrdersPage(props) {
+  const searchParams = await props.searchParams;
+  const q = searchParams?.q || "";
+  const cookieStore = await cookies();
+  const res = await fetch(`${apiBase()}/orders?query=${encodeURIComponent(q)}`, {
     cache: 'no-store',
+    headers: { cookie: cookieStore.toString() },
   });
   
   const payload = await res.json().catch(() => ({}));
   const { orders = [], invoices = [], messages = [] } = payload.data || {};
 
-  const invoiceByOrderId = new Map(invoices.map((invoice) => [invoice.orderId.toString(), invoice]));
-  const messageByOrderId = new Map(messages.map((message) => [message.orderId.toString(), message]));
+  // Guard against null orderId to prevent .toString() crash
+  const invoiceByOrderId = new Map(
+    invoices.filter(i => i.orderId).map((invoice) => [invoice.orderId.toString(), invoice])
+  );
+  const messageByOrderId = new Map(
+    messages.filter(m => m.orderId).map((message) => [message.orderId.toString(), message])
+  );
 
   return (
     <div className="overflow-hidden rounded-md border bg-white">
@@ -30,7 +41,10 @@ export default async function OrdersPage() {
           </h2>
           <p className="mt-1 text-sm text-[#756e64]" style={{ fontFamily: "'Inter', sans-serif" }}>Sales ledger with historical records.</p>
         </div>
-        <span className="hidden rounded-full bg-[#f0ede7] px-3 py-1 text-xs font-semibold text-[#5f584e] sm:block">{orders.length} recent</span>
+        <div className="flex items-center gap-3">
+          <SearchInput placeholder="Search invoice or customer..." />
+          <span className="hidden rounded-full bg-[#f0ede7] px-3 py-1 text-xs font-semibold text-[#5f584e] sm:block">{orders.length} recent</span>
+        </div>
       </div>
       {orders.length ? (
         <div className="overflow-x-auto">
@@ -56,7 +70,11 @@ export default async function OrdersPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <FileText size={15} className="text-[#9b7740]" />
-                        <a href={`${apiBase()}/invoices/${invoice?._id}/pdf`} target="_blank" rel="noreferrer" className="font-mono text-xs font-semibold hover:text-[#9b7740]">{order.invoiceNumber}</a>
+                        {invoice ? (
+                          <a href={`${apiBase()}/invoices/${invoice._id}/pdf`} target="_blank" rel="noreferrer" className="font-mono text-xs font-semibold hover:text-[#9b7740]">{order.invoiceNumber}</a>
+                        ) : (
+                          <span className="font-mono text-xs font-semibold text-[#81796d]" title="Invoice PDF not generated yet">{order.invoiceNumber}</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-5 py-3.5">

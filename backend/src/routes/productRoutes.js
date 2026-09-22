@@ -13,11 +13,13 @@ import {
   createBrand,
   createCategory,
 } from "../controllers/productController.js";
+import { generateBarcodes } from "../controllers/barcodeController.js";
 
 const router = express.Router();
 
 // Specific routes first
 router.get("/master", getMasterData);
+router.post("/barcodes", generateBarcodes);
 router.post("/brands", createBrand);
 router.post("/categories", createCategory);
 router.get("/all", getAllProducts);

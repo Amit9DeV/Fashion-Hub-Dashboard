@@ -43,7 +43,8 @@ export const saleInputSchema = z.object({
   })).max(4).default([]),
   notes: z.string().trim().max(1000).optional(),
   idempotencyKey: z.string().trim().min(10).max(100),
-  completedAt: z.string().datetime().optional(),
+  // Accept full ISO datetime ("2026-09-14T00:00:00Z") or date-only ("2026-09-14")
+  completedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}(T.*)?$/, "Invalid date format").optional(),
 });
 
 function cleanPhone(value) {
@@ -147,18 +148,22 @@ export async function completeSale(rawInput, user) {
       const compactedItems = compactCart(input.items);
       const saleLines = [];
 
+      const productIds = [...new Set(compactedItems.map(i => i.productId))];
+      const variantIds = [...new Set(compactedItems.map(i => i.variantId))];
+
+      const [products, variants] = await Promise.all([
+        Product.find({ _id: { $in: productIds }, status: "ACTIVE" }).lean().session(session),
+        ProductVariant.find({ _id: { $in: variantIds }, status: "ACTIVE" }).lean().session(session)
+      ]);
+
+      const productMap = new Map(products.map(p => [p._id.toString(), p]));
+      const variantMap = new Map(variants.map(v => [v._id.toString(), v]));
+
       for (const requestedItem of compactedItems) {
-        const product = await Product.findOne({
-          _id: requestedItem.productId,
-          status: "ACTIVE"
-        }).session(session);
+        const product = productMap.get(requestedItem.productId.toString());
         if (!product) throw new Error("One of the selected products is unavailable.");
 
-        const variant = await ProductVariant.findOne({
-          _id: requestedItem.variantId,
-          productId: product._id,
-          status: "ACTIVE"
-        }).session(session);
+        const variant = variantMap.get(requestedItem.variantId.toString());
         if (!variant) throw new Error("One selected variant is inactive or missing.");
         
         if (variant.stock < requestedItem.quantity) {
@@ -178,7 +183,8 @@ export async function completeSale(rawInput, user) {
           quantity: requestedItem.quantity,
           unitCostPaisa: requestedItem.overriddenCostPaisa !== undefined ? requestedItem.overriddenCostPaisa : (variant.costPricePaisa || 0),
           unitPricePaisa: requestedItem.overriddenPricePaisa || variant.sellingPricePaisa,
-          taxRate: globalTaxRate,
+          taxRate: product.taxRate ?? globalTaxRate,
+          hsn: product.hsn || "",
         });
       }
 
@@ -197,27 +203,27 @@ export async function completeSale(rawInput, user) {
       const customer = await resolveCustomer(input.customer, user, session, now);
       const numbers = await nextSaleNumbers(session, now);
 
-      for (const item of totals.items) {
+      const bulkOps = totals.items.map((item) => {
         const variantUpdate = { $inc: { stock: -item.quantity } };
-        // Automatically update master pricing if overridden during billing
-        const originalItem = compactedItems.find(reqItem => reqItem.variantId === item.variantId.toString());
-        if (originalItem) {
-          if (originalItem.overriddenPricePaisa !== undefined) variantUpdate.$set = { ...variantUpdate.$set, sellingPricePaisa: originalItem.overriddenPricePaisa };
-          if (originalItem.overriddenMrpPaisa !== undefined) variantUpdate.$set = { ...variantUpdate.$set, mrpPaisa: originalItem.overriddenMrpPaisa };
-        }
+        // We purposefully DO NOT update master pricing if overridden during billing.
+        // Price overrides are meant to apply only to the specific invoice.
+        return {
+          updateOne: {
+            filter: {
+              _id: item.variantId,
+              productId: item.productId,
+              stock: { $gte: item.quantity },
+              status: "ACTIVE"
+            },
+            update: variantUpdate
+          }
+        };
+      });
 
-        const updateResult = await ProductVariant.updateOne(
-          {
-            _id: item.variantId,
-            productId: item.productId,
-            stock: { $gte: item.quantity },
-            status: "ACTIVE"
-          },
-          variantUpdate,
-          { session }
-        );
-        if (updateResult.modifiedCount !== 1) {
-          throw new Error(`Stock changed while completing the sale for ${item.sku}. Please retry.`);
+      if (bulkOps.length > 0) {
+        const bulkResult = await ProductVariant.bulkWrite(bulkOps, { session });
+        if (bulkResult.modifiedCount !== bulkOps.length) {
+          throw new Error("Stock changed while completing the sale. Please retry.");
         }
       }
 
@@ -234,6 +240,8 @@ export async function completeSale(rawInput, user) {
         subtotalPaisa: totals.subtotalPaisa,
         discountPaisa: totals.discountPaisa,
         taxPaisa: totals.taxPaisa,
+        cgstPaisa: totals.cgstPaisa,
+        sgstPaisa: totals.sgstPaisa,
         totalPaisa: totals.totalPaisa,
         duePaisa,
         payments: input.payments,
@@ -248,12 +256,14 @@ export async function completeSale(rawInput, user) {
         invoiceNumber: numbers.invoiceNumber,
         orderNumber: numbers.orderNumber,
         issuedAt: now,
-        store: STORE_SNAPSHOT,
+        store: { ...STORE_SNAPSHOT, gstin: settings?.gstin || STORE_SNAPSHOT.gstin },
         customer: customerSnapshot,
         items: totals.items,
         subtotalPaisa: totals.subtotalPaisa,
         discountPaisa: totals.discountPaisa,
         taxPaisa: totals.taxPaisa,
+        cgstPaisa: totals.cgstPaisa,
+        sgstPaisa: totals.sgstPaisa,
         totalPaisa: totals.totalPaisa,
         duePaisa,
         payments: input.payments,

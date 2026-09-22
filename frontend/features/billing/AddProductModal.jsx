@@ -5,6 +5,7 @@ import { X, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
 export function AddProductModal({ isOpen, onClose, onProductAdded, initialQuery }) {
   const [busy, setBusy] = useState(false);
@@ -33,6 +34,15 @@ export function AddProductModal({ isOpen, onClose, onProductAdded, initialQuery 
       }).catch(console.error);
     }
   }, [isOpen, initialQuery]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -89,9 +99,10 @@ export function AddProductModal({ isOpen, onClose, onProductAdded, initialQuery 
       };
 
       onProductAdded(cartItem);
+      toast.success("Product created successfully");
       onClose();
     } catch (err) {
-      setError(err.message || "Failed to create product");
+      toast.error(err.message || "Failed to create product");
     } finally {
       setBusy(false);
     }

@@ -1,11 +1,14 @@
 import { apiBase } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function InventoryPage() {
-  const res = await fetch(`${apiBase()}/inventory`, { 
+  const cookieStore = await cookies();
+  const res = await fetch(`${apiBase()}/inventory`, {
     cache: 'no-store',
+    headers: { cookie: cookieStore.toString() },
   });
   
   const payload = await res.json().catch(() => ({}));

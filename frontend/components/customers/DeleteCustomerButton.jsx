@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
 export default function DeleteCustomerButton({ customerId }) {
   const [deleting, setDeleting] = useState(false);
@@ -15,9 +16,10 @@ export default function DeleteCustomerButton({ customerId }) {
     setDeleting(true);
     try {
       await api.customers.delete(customerId);
+      toast.success("Customer deleted successfully");
       router.refresh();
     } catch (err) {
-      alert(err.message || "Failed to delete customer");
+      toast.error(err.message || "Failed to delete customer");
       setDeleting(false);
     }
   }

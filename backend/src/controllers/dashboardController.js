@@ -8,8 +8,20 @@ export const getDashboardStats = async (req, res) => {
     await connectToDatabase();
     
     const now = new Date();
-    const todayStart = new Date(now); 
-    todayStart.setHours(0, 0, 0, 0);
+
+    // IST is UTC+5:30. Compute today's midnight in IST as a UTC timestamp
+    // so MongoDB Atlas (which stores in UTC) matches correctly.
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(now.getTime() + IST_OFFSET_MS);
+    const istMidnight = new Date(
+      Date.UTC(
+        nowIST.getUTCFullYear(),
+        nowIST.getUTCMonth(),
+        nowIST.getUTCDate(),
+        0, 0, 0, 0
+      ) - IST_OFFSET_MS
+    );
+    const todayStart = istMidnight;
 
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -19,7 +31,7 @@ export const getDashboardStats = async (req, res) => {
     
     let todaySales = 0;
     let todayItemsSold = 0;
-    const paymentSummary = { UPI: 0, CASH: 0, CARD: 0 };
+    const paymentSummary = { UPI: 0, CASH: 0, CARD: 0, OTHER: 0 };
     
     for (const order of todayOrders) {
       todaySales += order.totalPaisa || 0;
@@ -27,9 +39,12 @@ export const getDashboardStats = async (req, res) => {
         todayItemsSold += item.quantity || 0;
       }
       for (const payment of order.payments) {
-        if (payment.method === "UPI") paymentSummary.UPI += payment.amountPaisa;
-        else if (payment.method === "CASH") paymentSummary.CASH += payment.amountPaisa;
-        else if (payment.method === "CARD") paymentSummary.CARD += payment.amountPaisa;
+        const method = payment.method;
+        if (paymentSummary[method] !== undefined) {
+          paymentSummary[method] += payment.amountPaisa;
+        } else {
+          paymentSummary[method] = (paymentSummary[method] || 0) + payment.amountPaisa;
+        }
       }
     }
 
@@ -80,42 +95,52 @@ export const getDashboardStats = async (req, res) => {
       { $count: "count" },
     ]);
 
-    // 4. Sales Chart Data (Last 30 Days)
+    // 4. Sales Chart Data (Last 30 Days) — using IST-aware date keys
     const thirtyDayOrders = await Order.find({ completedAt: { $gte: thirtyDaysAgo } }).lean();
     
-    // Aggregate by day string (e.g. "Aug 18")
+    // Build date keys in IST so they match the server-side locale
     const salesByDate = {};
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      // Convert to IST for display label
+      const dIST = new Date(d.getTime() + IST_OFFSET_MS);
+      const dateStr = dIST.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
       salesByDate[dateStr] = 0;
     }
-    
-    // Top Products Aggregation
-    const productSales = {};
 
     for (const order of thirtyDayOrders) {
-      const dateStr = new Date(order.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      const dateStr = new Date(order.completedAt).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'
+      });
       if (salesByDate[dateStr] !== undefined) {
         salesByDate[dateStr] += (order.totalPaisa / 100);
-      }
-
-      for (const item of order.items) {
-        const key = item.productId.toString();
-        if (!productSales[key]) {
-          productSales[key] = { name: item.productName, sold: 0, revenue: 0 };
-        }
-        productSales[key].sold += item.quantity;
-        productSales[key].revenue += (item.totalPaisa || (item.unitPricePaisa || 0) * item.quantity);
       }
     }
 
     const salesChartData = Object.entries(salesByDate).map(([date, revenue]) => ({ date, revenue }));
-    
-    const topProducts = Object.values(productSales)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
+
+    // 5. Top Products — lifetime aggregation using MongoDB pipeline (accurate & efficient)
+    // Group by productId+productName composite to prevent old placeholder orders
+    // with the same productId but different product names from collapsing into one row.
+    const topProductsAgg = await Order.aggregate([
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: { productId: "$items.productId", productName: "$items.productName" },
+          name: { $first: "$items.productName" },
+          sold: { $sum: "$items.quantity" },
+          revenue: { $sum: "$items.totalPaisa" },
+        }
+      },
+      { $sort: { revenue: -1 } },
+      { $limit: 5 },
+    ]);
+
+    const topProducts = topProductsAgg.map(p => ({
+      name: p.name,
+      sold: p.sold,
+      revenue: p.revenue,
+    }));
 
     // 5. All-time totals
     const allTimeAgg = await Order.aggregate([

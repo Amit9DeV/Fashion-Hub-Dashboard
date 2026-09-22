@@ -100,9 +100,22 @@ export const getProducts = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     await connectToDatabase();
+    
+    const query = req.query.query?.trim().slice(0, 80) || "";
+    const search = query ? new RegExp(escapeRegExp(query), "i") : null;
+    
+    let match = {};
+    if (search) {
+      match.$or = [
+        { name: search },
+        { brandSnapshot: search },
+        { categorySnapshot: search },
+      ];
+    }
 
     // Aggregation to get products with their variant count and total stock
     const products = await Product.aggregate([
+      { $match: match },
       {
         $lookup: {
           from: "productvariants",
@@ -153,32 +166,24 @@ export const getProductById = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-  try {
-    if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
-    }
-    await connectToDatabase();
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Could not create product." });
+  if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+  let session;
   try {
+    await connectToDatabase();
+    session = await mongoose.startSession();
+    session.startTransaction();
+
     const { name, brandId, categoryId, description, variants } = req.body;
 
     const safeBrandId = brandId || null;
     const safeCategoryId = categoryId || null;
 
     // Fetch snapshots
-    const brand = safeBrandId ? await Brand.findById(safeBrandId) : null;
-    const category = safeCategoryId
-      ? await Category.findById(safeCategoryId)
-      : null;
+    const brand = safeBrandId ? await Brand.findById(safeBrandId).session(session) : null;
+    const category = safeCategoryId ? await Category.findById(safeCategoryId).session(session) : null;
 
     const product = new Product({
       name,
@@ -206,9 +211,7 @@ export const createProduct = async (req, res) => {
         status: "ACTIVE",
       }));
 
-      const insertedVariants = await ProductVariant.insertMany(variantDocs, {
-        session,
-      });
+      const insertedVariants = await ProductVariant.insertMany(variantDocs, { session });
 
       // Log initial inventory movements
       const movements = insertedVariants
@@ -237,15 +240,12 @@ export const createProduct = async (req, res) => {
 
     return res.json({ success: true, data: { product } });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
     console.error(error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || "Could not create product.",
-      });
+    return res.status(500).json({ success: false, message: error.message || "Could not create product." });
   }
 };
 
@@ -295,27 +295,24 @@ export const updateProduct = async (req, res) => {
 };
 
 export const addVariant = async (req, res) => {
-  try {
-    if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
-    }
-    await connectToDatabase();
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Could not add variant." });
+  if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+  let session;
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+    await connectToDatabase();
+    session = await mongoose.startSession();
+    session.startTransaction();
 
-    const { sku, color, size, sellingPrice, costPrice, mrp, barcode, stock } =
-      req.body;
+    const product = await Product.findById(req.params.id).session(session);
+    if (!product) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    const { sku, color, size, sellingPrice, costPrice, mrp, barcode, stock } = req.body;
 
     const variant = new ProductVariant({
       productId: req.params.id,
@@ -334,21 +331,19 @@ export const addVariant = async (req, res) => {
 
     if (variant.stock > 0) {
       await InventoryMovement.create(
-        [
-          {
-            productId: product._id,
-            variantId: variant._id,
-            skuSnapshot: variant.sku,
-            productNameSnapshot: product.name,
-            type: "PURCHASE",
-            quantityDelta: variant.stock,
-            referenceType: "ProductVariant",
-            referenceId: variant._id,
-            reason: "Variant Creation",
-            performedBy: { id: req.user.id, name: req.user.name || "Admin" },
-            occurredAt: new Date(),
-          },
-        ],
+        [{
+          productId: product._id,
+          variantId: variant._id,
+          skuSnapshot: variant.sku,
+          productNameSnapshot: product.name,
+          type: "PURCHASE",
+          quantityDelta: variant.stock,
+          referenceType: "ProductVariant",
+          referenceId: variant._id,
+          reason: "Variant Creation",
+          performedBy: { id: req.user.id, name: req.user.name || "Admin" },
+          occurredAt: new Date(),
+        }],
         { session },
       );
     }
@@ -358,12 +353,12 @@ export const addVariant = async (req, res) => {
 
     return res.json({ success: true, data: { variant } });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
     console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Could not add variant." });
+    return res.status(500).json({ success: false, message: "Could not add variant." });
   }
 };
 
@@ -401,8 +396,21 @@ export const updateVariant = async (req, res) => {
     if (mrp !== undefined)
       updates.mrpPaisa = Math.round((parseFloat(mrp) || 0) * 100);
 
+    // Stock changes must always be audited via InventoryMovement
+    let oldStock = null;
     if (stock !== undefined) {
-      updates.stock = parseInt(stock, 10);
+      const newStock = parseInt(stock, 10);
+      if (!isNaN(newStock)) {
+        // Fetch old stock before overwriting
+        const existingVariant = await ProductVariant.findOne(
+          { _id: req.params.variantId, productId: req.params.id },
+          "stock"
+        );
+        if (existingVariant) {
+          oldStock = existingVariant.stock;
+          updates.stock = newStock;
+        }
+      }
     }
 
     const variant = await ProductVariant.findOneAndUpdate(
@@ -412,16 +420,31 @@ export const updateVariant = async (req, res) => {
     );
 
     if (!variant)
-      return res
-        .status(404)
-        .json({ success: false, message: "Variant not found" });
+      return res.status(404).json({ success: false, message: "Variant not found" });
+
+    // Write inventory movement if stock was manually adjusted
+    if (oldStock !== null && variant.stock !== oldStock) {
+      const quantityDelta = variant.stock - oldStock;
+      const product = await (await import("../models/Product.js")).default.findById(req.params.id).lean();
+      await InventoryMovement.create({
+        productId: variant.productId,
+        variantId: variant._id,
+        skuSnapshot: variant.sku,
+        productNameSnapshot: product?.name || "Unknown",
+        type: "MANUAL_ADJUSTMENT",
+        quantityDelta,
+        referenceType: "ProductVariant",
+        referenceId: variant._id,
+        reason: `Manual stock adjustment by ${req.user.name || req.user.id}`,
+        performedBy: { id: req.user.id, name: req.user.name || "Admin" },
+        occurredAt: new Date(),
+      });
+    }
 
     return res.json({ success: true, data: { variant } });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Could not update variant." });
+    return res.status(500).json({ success: false, message: "Could not update variant." });
   }
 };
 
@@ -461,9 +484,11 @@ export const createBrand = async (req, res) => {
 export const createCategory = async (req, res) => {
   try {
     await connectToDatabase();
-    const { name } = req.body;
+    const { name, gender } = req.body;
     if (!name) return res.status(400).json({ success: false, message: "Name required" });
-    const category = await Category.create({ name, gender: 'MEN', status: 'ACTIVE' });
+    const validGenders = ["MEN", "WOMEN", "KIDS", "UNISEX"];
+    const safeGender = validGenders.includes(gender?.toUpperCase()) ? gender.toUpperCase() : "UNISEX";
+    const category = await Category.create({ name, gender: safeGender, status: 'ACTIVE' });
     return res.json({ success: true, data: { category } });
   } catch (error) {
     console.error(error);
@@ -480,24 +505,33 @@ export const deleteProduct = async (req, res) => {
 
     const product = await Product.findById(req.params.id);
     if (!product)
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+      return res.status(404).json({ success: false, message: "Product not found" });
 
-    // Delete variants first
+    // Safety check: block deletion if product appears in any historical order
+    const variants = await ProductVariant.find({ productId: product._id }, "_id").lean();
+    const variantIds = variants.map((v) => v._id);
+    if (variantIds.length > 0) {
+      const Order = (await import("../models/Order.js")).default;
+      const orderCount = await Order.countDocuments({ "items.variantId": { $in: variantIds } });
+      if (orderCount > 0) {
+        // Soft-delete instead of hard delete to preserve ledger integrity
+        await Product.findByIdAndUpdate(product._id, { status: "INACTIVE" });
+        await ProductVariant.updateMany({ productId: product._id }, { status: "INACTIVE" });
+        return res.json({
+          success: true,
+          message: `Product has ${orderCount} historical order(s). It has been deactivated instead of deleted to preserve ledger integrity.`,
+        });
+      }
+    }
+
+    // Safe to hard-delete (no order history)
     await ProductVariant.deleteMany({ productId: product._id });
-    // Delete product
     await Product.findByIdAndDelete(product._id);
 
-    return res.json({
-      success: true,
-      message: "Product and variants deleted successfully.",
-    });
+    return res.json({ success: true, message: "Product and variants deleted successfully." });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Could not delete product." });
+    return res.status(500).json({ success: false, message: "Could not delete product." });
   }
 };
 

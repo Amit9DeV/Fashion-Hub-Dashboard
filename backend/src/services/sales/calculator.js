@@ -30,6 +30,8 @@ export function calculateSale(lines, requestedDiscountPaisa = 0) {
 
   let assignedDiscount = 0;
   let assignedTax = 0;
+  let assignedCgst = 0;
+  let assignedSgst = 0;
   const calculatedItems = lines.map((line, index) => {
     const grossPaisa = line.unitPricePaisa * line.quantity;
     const isLast = index === lines.length - 1;
@@ -41,7 +43,14 @@ export function calculateSale(lines, requestedDiscountPaisa = 0) {
     const taxablePaisa = grossPaisa - discountPaisa;
     // Tax is part of a tax-inclusive selling price.
     const taxPaisa = Math.round((taxablePaisa * line.taxRate) / (100 + line.taxRate));
+    
+    // Indian GST: split into CGST and SGST equally for intra-state sales
+    const cgstPaisa = Math.floor(taxPaisa / 2);
+    const sgstPaisa = taxPaisa - cgstPaisa;
+    
     assignedTax += taxPaisa;
+    assignedCgst += cgstPaisa;
+    assignedSgst += sgstPaisa;
 
     return {
       ...line,
@@ -49,6 +58,8 @@ export function calculateSale(lines, requestedDiscountPaisa = 0) {
       discountPaisa,
       taxablePaisa,
       taxPaisa,
+      cgstPaisa,
+      sgstPaisa,
       totalPaisa: taxablePaisa,
       unitCostPaisa: line.unitCostPaisa || 0,
       totalItemCostPaisa: (line.unitCostPaisa || 0) * line.quantity,
@@ -60,6 +71,8 @@ export function calculateSale(lines, requestedDiscountPaisa = 0) {
     subtotalPaisa,
     discountPaisa: requestedDiscountPaisa,
     taxPaisa: assignedTax,
+    cgstPaisa: assignedCgst,
+    sgstPaisa: assignedSgst,
     totalPaisa: subtotalPaisa - requestedDiscountPaisa,
   };
 }

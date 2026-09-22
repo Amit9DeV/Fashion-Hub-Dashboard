@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatMoney } from "@/lib/utils";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 import { AddProductModal } from "./AddProductModal";
 
 const paymentOptions = ["CASH", "UPI", "CARD", "OTHER"];
@@ -290,6 +291,7 @@ export function BillingPOS() {
     marketingWhatsAppConsent: false,
   });
   const [completedAt, setCompletedAt] = useState("");
+  const originalCompletedAt = useRef(null);
   const [discount, setDiscount] = useState("");
   const [payments, setPayments] = useState([{ method: "UPI", amount: "" }]);
   const [error, setError] = useState("");
@@ -297,7 +299,6 @@ export function BillingPOS() {
   const [success, setSuccess] = useState(null);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
-  // Load order data if editing
   useEffect(() => {
     if (!editOrderId) return;
     async function loadOrder() {
@@ -308,7 +309,10 @@ export function BillingPOS() {
           setCart(
             order.items.map((item) => ({
               ...item,
-              stock: 999,
+              // Use real current stock + original qty so the cashier can restore
+              // the original amount without triggering a false 'out of stock' error.
+              // The backend will validate actual stock atomically on submit.
+              stock: (item.currentStock || 0) + item.quantity,
               sellingPricePaisa: item.unitPricePaisa,
               mrpPaisa: item.mrpPaisa || item.unitPricePaisa,
             })),
@@ -326,6 +330,7 @@ export function BillingPOS() {
           );
         }
         if (order.completedAt) {
+          originalCompletedAt.current = order.completedAt;
           setCompletedAt(new Date(order.completedAt).toISOString().split("T")[0]);
         }
       } catch (err) {
@@ -503,15 +508,22 @@ export function BillingPOS() {
           ? customerDraft
           : null,
       idempotencyKey,
-      ...(completedAt && { completedAt: new Date(completedAt).toISOString() }),
+      // Send full ISO datetime string. If the user didn't change the date, preserve the original exact time.
+      ...(completedAt && { 
+        completedAt: originalCompletedAt.current && originalCompletedAt.current.startsWith(completedAt)
+          ? originalCompletedAt.current
+          : new Date(completedAt).toISOString()
+      }),
     };
 
     try {
       let data;
       if (editOrderId) {
         data = await api.orders.update(editOrderId, payload);
+        toast.success("Order updated successfully");
       } else {
         data = await api.sales.complete(payload);
+        toast.success("Order completed successfully");
       }
       setSuccess(data);
       setCart([]);
@@ -1028,14 +1040,16 @@ export function BillingPOS() {
               <Check size={28} />
             </div>
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">
-              Sale complete
+              {editOrderId ? "Order updated" : "Sale complete"}
             </p>
             <h2 className="mt-2 text-2xl font-semibold">
               {success.invoiceNumber}
             </h2>
             <p className="mt-2 text-sm text-[#6e675e]">
-              Inventory, immutable order, invoice, payment, and audit entry were
-              saved together.
+              {editOrderId
+                ? "Order, invoice, stock, and audit entry have been updated."
+                : "Inventory, immutable order, invoice, payment, and audit entry were saved together."
+              }
             </p>
             {success.postSaleWarning && (
               <p className="mt-4 rounded-md bg-[#fff4e5] px-3 py-2 text-xs leading-5 text-[#7d521b]">

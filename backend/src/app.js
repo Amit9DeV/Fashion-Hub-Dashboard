@@ -3,8 +3,10 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import { requestLogger } from "./middleware/logger.js";
+import { requireAuth } from "./middleware/auth.js";
 import productRoutes from "./routes/productRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import salesRoutes from "./routes/salesRoutes.js";
@@ -18,6 +20,13 @@ import inventoryRoutes from "./routes/inventoryRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import staffRoutes from "./routes/staffRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
+import cashDrawerRoutes from "./routes/cashDrawerRoutes.js";
+import purchaseRoutes from "./routes/purchaseRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+
+import CartReservation from "./models/CartReservation.js";
+import ProductVariant from "./models/ProductVariant.js";
 
 const app = express();
 
@@ -47,15 +56,18 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser()); // Required for reading JWT from HttpOnly cookie
 app.use(requestLogger);
 
-// TEMPORARY BYPASS: Inject mock user because requireAuth is missing (Critical Bug 5)
-app.use((req, res, next) => {
-  if (!req.user) {
-    req.user = { id: "6aa6338183bdf1ee2ab95260", role: "ADMIN", name: "Mock Admin" };
-  }
-  next();
+// Public routes (no auth required)
+app.use("/api/auth", authRoutes);
+
+app.get("/api/health", (req, res) => {
+  res.json({ success: true, message: "Backend is running" });
 });
+
+// All routes below this require authentication
+app.use(requireAuth);
 
 app.use("/api/products", productRoutes);
 app.use("/api/customers", customerRoutes);
@@ -70,15 +82,35 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/cash-drawer", cashDrawerRoutes);
+app.use("/api/purchase", purchaseRoutes);
+app.use("/api/cart", cartRoutes);
 
-app.get("/api/health", (req, res) => {
-  res.json({ success: true, message: "Backend is running" });
-});
-
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err);
   if (res.headersSent) return next(err);
-  return res.status(500).json({ success: false, message: err.message || "Server error" });
+  return res
+    .status(500)
+    .json({ success: false, message: err.message || "Server error" });
 });
+
+// Periodic background job: release expired stock reservations
+setInterval(async () => {
+  try {
+    const expired = await CartReservation.find({
+      expiresAt: { $lt: new Date() },
+    });
+    for (const res of expired) {
+      await ProductVariant.updateOne(
+        { _id: res.variantId },
+        { $inc: { reserved: -res.quantity } },
+      );
+      await CartReservation.deleteOne({ _id: res._id });
+    }
+  } catch (error) {
+    console.error("Cron Error releasing stock:", error);
+  }
+}, 60 * 1000); // Check every minute
 
 export default app;
