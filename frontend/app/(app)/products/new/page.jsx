@@ -26,6 +26,8 @@ export default function NewProductWizard() {
   const [pricing, setPricing] = useState({ mrp: "", costPrice: "", sellingPrice: "" });
   const [matrix, setMatrix] = useState({ colors: [], sizes: [] });
   const [variants, setVariants] = useState([]);
+  const [images, setImages] = useState([]);
+  const [imageUrl, setImageUrl] = useState("");
   
   // Base SKU prefix for auto-generation
   const [skuPrefix, setSkuPrefix] = useState("");
@@ -121,7 +123,8 @@ export default function NewProductWizard() {
         brandId: basic.brandId,
         categoryId: basic.categoryId,
         description: basic.description,
-        variants: variants
+        variants: variants,
+        images: images.filter(Boolean),
       };
 
       const data = await api.products.create(payload);
@@ -349,13 +352,71 @@ export default function NewProductWizard() {
 
         {/* STEP 4: IMAGES */}
         {step === 4 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 text-center py-12">
-            <ImageIcon className="mx-auto text-[#dfd8cc] mb-4" size={48} />
-            <h3 className="text-xl font-semibold mb-2">Product Images</h3>
-            <p className="text-[#706a61] max-w-md mx-auto mb-6">
-              Image uploading will be integrated with cloud storage (AWS S3/Cloudinary) in the next phase. You can skip this for now.
-            </p>
-            <Button variant="outline" type="button" className="pointer-events-none">Select Images...</Button>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+            <div className="rounded-xl border bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-3 border-b pb-4 mb-4">
+                <ImageIcon className="text-[#c9963e]" size={24} />
+                <div>
+                  <h3 className="font-semibold text-lg">Product Images</h3>
+                  <p className="text-xs text-[#706a61]">Add URLs for product photos or catalog imagery.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Enter image URL (e.g. https://images.unsplash.com/...)"
+                    value={imageUrl}
+                    onChange={e => setImageUrl(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (imageUrl.trim()) {
+                          setImages([...images, imageUrl.trim()]);
+                          setImageUrl("");
+                        }
+                      }
+                    }}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="gold"
+                    onClick={() => {
+                      if (imageUrl.trim()) {
+                        setImages([...images, imageUrl.trim()]);
+                        setImageUrl("");
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+
+                {images.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                    {images.map((img, idx) => (
+                      <div key={idx} className="relative group rounded-md border overflow-hidden aspect-square bg-[#faf9f6]">
+                        <img src={img} alt={`Product preview ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white rounded-full p-1 text-xs transition-colors"
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-[#dfd8cc] p-8 text-center bg-[#faf9f6]">
+                    <ImageIcon className="mx-auto text-[#c2bcaf] mb-2" size={32} />
+                    <p className="text-sm text-[#706a61]">No images added yet.</p>
+                    <p className="text-xs text-[#8a847a] mt-1">Paste a link above or continue without an image (can be added later).</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -384,6 +445,16 @@ export default function NewProductWizard() {
                   <p className="text-sm text-gray-500">Base Selling Price</p>
                   <p className="font-semibold text-xl">₹{pricing.sellingPrice || "0.00"}</p>
                 </div>
+                {images.length > 0 && (
+                  <div className="sm:col-span-2">
+                    <p className="text-sm text-gray-500 mb-2">Images ({images.length})</p>
+                    <div className="flex gap-2">
+                      {images.map((img, i) => (
+                        <img key={i} src={img} alt="Thumb" className="size-12 rounded object-cover border" />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

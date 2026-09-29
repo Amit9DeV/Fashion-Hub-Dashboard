@@ -682,7 +682,7 @@ export function BillingPOS() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d8b46a]">
-                {editOrderId ? "Editing bill" : "Current bill"}
+                {editOrderId ? "✏ Editing existing bill" : "Current bill"}
               </p>
               <h2 className="mt-1 text-lg font-semibold">
                 {editOrderId ? "Edit mode" : "Counter sale"}
@@ -692,6 +692,11 @@ export function BillingPOS() {
               {cart.reduce((sum, item) => sum + item.quantity, 0)} items
             </span>
           </div>
+          {editOrderId && (
+            <div className="mt-2 rounded bg-[#2a1f00] border border-[#5a3e00] px-3 py-1.5 text-[10px] text-[#d8b46a]">
+              ⚠ Modifying order — stock, customer stats & invoice will be recalculated on save.
+            </div>
+          )}
         </div>
 
         {/* Edit hint banner */}
@@ -1066,8 +1071,8 @@ export function BillingPOS() {
                 </a>
               </Button>
               {editOrderId ? (
-                <Button onClick={() => router.push("/billing")}>
-                  New bill
+                <Button onClick={() => router.push("/orders")}>
+                  Back to Orders
                 </Button>
               ) : (
                 <Button

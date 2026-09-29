@@ -1,6 +1,7 @@
 import connectToDatabase from "../config/db.js";
 import Customer from "../models/Customer.js";
 import Order from "../models/Order.js";
+import crypto from "crypto";
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -63,6 +64,41 @@ export const getCustomerById = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not fetch customer." });
+  }
+};
+
+export const createCustomer = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { name, mobile, whatsappNumber, email, gstin } = req.body;
+
+    if (!name && !mobile) {
+      return res.status(400).json({ success: false, message: "Name or mobile number is required." });
+    }
+
+    // Check for duplicate mobile
+    if (mobile) {
+      const existing = await Customer.findOne({ mobile });
+      if (existing) {
+        return res.status(409).json({ success: false, message: "A customer with this mobile number already exists.", data: { customer: existing } });
+      }
+    }
+
+    const customerCode = `CUS-${Date.now().toString(36).toUpperCase()}`;
+    const customer = await Customer.create({
+      customerCode,
+      name: name || "Walk-in customer",
+      mobile: mobile || undefined,
+      whatsappNumber: whatsappNumber || mobile || undefined,
+      email: email || undefined,
+      gstin: gstin || undefined,
+      createdBy: req.user?.id,
+    });
+
+    return res.status(201).json({ success: true, data: { customer }, message: "Customer created successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not create customer." });
   }
 };
 

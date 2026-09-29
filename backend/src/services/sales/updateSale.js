@@ -83,8 +83,34 @@ export async function updateSale(orderId, rawInput, user) {
       const order = await Order.findById(orderId).session(session);
       if (!order) throw new Error("Order not found.");
       
-      const invoice = await Invoice.findOne({ orderId: order._id }).session(session);
-      if (!invoice) throw new Error("Invoice not found.");
+      // Gracefully handle legacy orders that pre-date the Invoice model
+      let invoice = await Invoice.findOne({ orderId: order._id }).session(session);
+      const invoiceWasMissing = !invoice;
+      if (!invoice) {
+        // Create a minimal placeholder invoice so the update can proceed
+        const { randomBytes } = await import("node:crypto");
+        const [created] = await Invoice.create([{
+          invoiceNumber: order.invoiceNumber,
+          orderId: order._id,
+          customerId: order.customerId,
+          publicToken: randomBytes(32).toString("base64url"),
+          snapshot: {
+            invoiceNumber: order.invoiceNumber,
+            orderNumber: order.orderNumber,
+            issuedAt: order.completedAt,
+            customer: order.customerSnapshot,
+            items: order.items,
+            subtotalPaisa: order.subtotalPaisa,
+            discountPaisa: order.discountPaisa,
+            taxPaisa: order.taxPaisa,
+            totalPaisa: order.totalPaisa,
+            duePaisa: order.duePaisa || 0,
+            payments: order.payments,
+            paymentStatus: order.paymentStatus || "PAID",
+          },
+        }], { session });
+        invoice = created;
+      }
 
       const now = (() => {
         if (input.completedAt) {

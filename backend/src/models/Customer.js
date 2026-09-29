@@ -7,6 +7,7 @@ const customerSchema = new mongoose.Schema(
     mobile: { type: String, trim: true, unique: true, sparse: true },
     whatsappNumber: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
+    gstin: { type: String, trim: true, uppercase: true },
     address: {
       line1: String,
       line2: String,

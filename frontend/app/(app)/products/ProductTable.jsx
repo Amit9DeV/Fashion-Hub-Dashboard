@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { api } from "@/src/services/api";
 
-export default function ProductTable({ initialProducts }) {
+export default function ProductTable({ initialProducts, searchComponent }) {
   const router = useRouter();
   const [products, setProducts] = useState(initialProducts || []);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
 
@@ -25,6 +28,24 @@ export default function ProductTable({ initialProducts }) {
       setCategories(res.categories || []);
     }).catch(console.error);
   }, []);
+
+  const filteredProducts = products.filter((product) => {
+    if (selectedBrand && product.brandId !== selectedBrand && product.brandSnapshot !== selectedBrand) {
+      return false;
+    }
+    if (selectedCategory && product.categoryId !== selectedCategory && product.categorySnapshot !== selectedCategory) {
+      return false;
+    }
+    if (selectedStatus) {
+      if (selectedStatus === "IN_STOCK" && (product.totalStock <= 10 || !product.totalStock)) return false;
+      if (selectedStatus === "LOW_STOCK" && (product.totalStock <= 0 || product.totalStock > 10)) return false;
+      if (selectedStatus === "OUT_OF_STOCK" && product.totalStock > 0) return false;
+      if (selectedStatus === "ACTIVE" && product.status !== "ACTIVE") return false;
+      if (selectedStatus === "DRAFT" && product.status !== "DRAFT") return false;
+      if (selectedStatus === "ARCHIVED" && product.status !== "ARCHIVED") return false;
+    }
+    return true;
+  });
 
   const handleRowClick = (id) => {
     router.push(`/products/${id}`);
@@ -85,39 +106,102 @@ export default function ProductTable({ initialProducts }) {
     }
   };
 
-  if (!products.length) {
-    return (
-      <div className="grid min-h-[300px] place-items-center p-6 text-center">
-        <div>
-          <div className="mx-auto size-14 rounded-full bg-[#faf9f6] flex items-center justify-center border border-[#dfd8cc] mb-4">
-            <Shirt className="text-[#c9963e]" size={24} />
-          </div>
-          <h3 className="font-semibold text-lg">No products found</h3>
-          <p className="mt-1 text-sm text-[#706a61] max-w-xs mx-auto">Start building your catalog to manage inventory, track variants, and process sales.</p>
-          <Button variant="gold" asChild className="mt-6">
-            <Link href="/products/new">Add First Product</Link>
-          </Button>
+  return (
+    <div className="space-y-4">
+      {/* Dynamic Filters Bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        {searchComponent}
+        <select 
+          className="border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+          value={selectedBrand}
+          onChange={(e) => setSelectedBrand(e.target.value)}
+        >
+          <option value="">All Brands</option>
+          {brands.map((b) => (
+            <option key={b._id} value={b._id}>{b.name}</option>
+          ))}
+        </select>
+        <select 
+          className="border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+        >
+          <option value="">All Categories</option>
+          {categories.map((c) => (
+            <option key={c._id} value={c._id}>{c.name}</option>
+          ))}
+        </select>
+        <select 
+          className="border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+        >
+          <option value="">All Statuses</option>
+          <option value="IN_STOCK">In Stock (&gt;10)</option>
+          <option value="LOW_STOCK">Low Stock (1-10)</option>
+          <option value="OUT_OF_STOCK">Out of Stock</option>
+          <option value="ACTIVE">Status: Active</option>
+          <option value="DRAFT">Status: Draft</option>
+          <option value="ARCHIVED">Status: Archived</option>
+        </select>
+        {(selectedBrand || selectedCategory || selectedStatus) && (
+          <button 
+            type="button"
+            onClick={() => { setSelectedBrand(""); setSelectedCategory(""); setSelectedStatus(""); }}
+            className="text-xs text-[#8a1a1a] hover:underline"
+          >
+            Clear filters
+          </button>
+        )}
+        <div className="ml-auto text-xs text-[#8a847a]">
+          Showing {filteredProducts.length} of {products.length} products
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[900px] text-left text-sm">
-        <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-[0.12em] text-[#81796d]">
-          <tr>
-            <th className="px-5 py-3 font-semibold w-12">Image</th>
-            <th className="px-5 py-3 font-semibold">Product</th>
-            <th className="px-5 py-3 font-semibold">Brand & Category</th>
-            <th className="px-5 py-3 font-semibold text-center">Variants</th>
-            <th className="px-5 py-3 font-semibold text-right">Total Stock</th>
-            <th className="px-5 py-3 text-right font-semibold">Status</th>
-            <th className="px-5 py-3 font-semibold w-24 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#f0ede7]">
-          {products.map((product) => {
+      <section className="overflow-hidden rounded-md border bg-white shadow-sm">
+        {!products.length ? (
+          <div className="grid min-h-[300px] place-items-center p-6 text-center">
+            <div>
+              <div className="mx-auto size-14 rounded-full bg-[#faf9f6] flex items-center justify-center border border-[#dfd8cc] mb-4">
+                <Shirt className="text-[#c9963e]" size={24} />
+              </div>
+              <h3 className="font-semibold text-lg">No products found</h3>
+              <p className="mt-1 text-sm text-[#706a61] max-w-xs mx-auto">Start building your catalog to manage inventory, track variants, and process sales.</p>
+              <Button variant="gold" asChild className="mt-6">
+                <Link href="/products/new">Add First Product</Link>
+              </Button>
+            </div>
+          </div>
+        ) : !filteredProducts.length ? (
+          <div className="grid min-h-[220px] place-items-center p-6 text-center">
+            <div>
+              <p className="text-sm font-medium text-[#5f584e]">No products match the selected filters.</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-3 text-xs"
+                onClick={() => { setSelectedBrand(""); setSelectedCategory(""); setSelectedStatus(""); }}
+              >
+                Reset Filters
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-[0.12em] text-[#81796d]">
+                <tr>
+                  <th className="px-5 py-3 font-semibold w-12">Image</th>
+                  <th className="px-5 py-3 font-semibold">Product</th>
+                  <th className="px-5 py-3 font-semibold">Brand & Category</th>
+                  <th className="px-5 py-3 font-semibold text-center">Variants</th>
+                  <th className="px-5 py-3 font-semibold text-right">Total Stock</th>
+                  <th className="px-5 py-3 text-right font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold w-24 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0ede7]">
+                {filteredProducts.map((product) => {
             let stockStatusStyle = 'bg-gray-100 text-gray-600';
             let stockLabel = 'OUT OF STOCK';
             
@@ -239,10 +323,13 @@ export default function ProductTable({ initialProducts }) {
                   )}
                 </td>
               </tr>
-            )
+            );
           })}
-        </tbody>
-      </table>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

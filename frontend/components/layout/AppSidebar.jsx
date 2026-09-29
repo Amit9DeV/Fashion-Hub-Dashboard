@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Boxes, ClipboardList, LayoutDashboard, MessageCircle, PackageSearch, Receipt, ReceiptText, RotateCcw, Settings, Shirt, Tags, UsersRound } from "lucide-react";
+import { BarChart3, Boxes, ClipboardList, LayoutDashboard, MessageCircle, PackageSearch, Receipt, ReceiptText, RotateCcw, Settings, Shirt, Tags, Users, UsersRound } from "lucide-react";
 import { BrandMark } from "@/components/layout/BrandMark";
 
 const nav = [
@@ -17,7 +17,7 @@ const nav = [
   { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
-  { label: "Staff", href: "/staff", icon: PackageSearch },
+  { label: "Staff", href: "/staff", icon: Users },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

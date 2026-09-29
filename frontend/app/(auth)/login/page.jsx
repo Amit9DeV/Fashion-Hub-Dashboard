@@ -6,6 +6,7 @@ import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { apiBase } from "@/lib/backend";
 
 export default function LoginPage() {
   return (
@@ -28,7 +29,7 @@ function LoginForm() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`http://localhost:5000/api/auth/login`, {
+      const res = await fetch(`${apiBase()}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // allows Express to set the session cookie on the browser

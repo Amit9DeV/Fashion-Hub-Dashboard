@@ -41,20 +41,10 @@ export default async function ProductsPage(props) {
         </div>
       </section>
 
-      {/* Basic Filters Stub */}
-      <div className="flex gap-4 items-center">
-        <SearchInput placeholder="Search products by name, SKU, or category..." />
-        <select className="border rounded-md px-3 py-2 text-sm text-[#706a61] focus:outline-none">
-          <option>All Brands</option>
-        </select>
-        <select className="border rounded-md px-3 py-2 text-sm text-[#706a61] focus:outline-none">
-          <option>All Categories</option>
-        </select>
-      </div>
-
-      <section className="overflow-hidden rounded-md border bg-white shadow-sm">
-        <ProductTable initialProducts={products} />
-      </section>
+      <ProductTable 
+        initialProducts={products} 
+        searchComponent={<SearchInput placeholder="Search products by name, SKU, or category..." />} 
+      />
     </div>
   );
 }

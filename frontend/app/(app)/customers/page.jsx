@@ -5,6 +5,7 @@ import { apiBase } from "@/lib/backend";
 import DeleteCustomerButton from "@/components/customers/DeleteCustomerButton";
 import { cookies } from "next/headers";
 import { SearchInput } from "@/components/ui/SearchInput";
+import CustomerTable from "./CustomerTable";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,5 @@
-// const API_URL =
-//   process.env.NEXT_PUBLIC_API_URL || "https://fashion-hub-dashboard.onrender.com/api";
-const API_URL = "https://fashion-hub-dashboard.onrender.com/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://fashion-hub-dashboard.onrender.com/api";
 const activeRequests = new Map();
 
 async function fetchAPI(endpoint, options = {}) {
@@ -106,6 +105,8 @@ export const api = {
       fetchAPI(`/customers?query=${encodeURIComponent(query)}`),
     getAll: () => fetchAPI("/customers/all"),
     getById: (id) => fetchAPI(`/customers/${id}`),
+    create: (data) =>
+      fetchAPI("/customers", { method: "POST", body: JSON.stringify(data) }),
     update: (id, data) =>
       fetchAPI(`/customers/${id}`, {
         method: "PUT",
@@ -206,6 +207,13 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+  },
+  staff: {
+    getAll: () => fetchAPI("/staff"),
+    create: (data) =>
+      fetchAPI("/staff", { method: "POST", body: JSON.stringify(data) }),
+    update: (id, data) =>
+      fetchAPI(`/staff/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   },
   auth: {
     login: (email, password) =>

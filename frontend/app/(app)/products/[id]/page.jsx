@@ -491,23 +491,191 @@ export default function ProductDetailPage(props) {
 
         {/* INVENTORY TAB */}
         {activeTab === 'inventory' && (
-          <div className="rounded-xl border bg-white p-12 text-center shadow-sm">
-            <Box className="mx-auto text-[#dfd8cc] mb-4" size={48} />
-            <h3 className="text-xl font-semibold mb-2">Inventory Movements</h3>
-            <p className="text-[#706a61] max-w-md mx-auto">
-              This detailed ledger tracks every stock change (Purchases, Sales, Returns, Manual Adjustments). Coming soon in the next phase!
-            </p>
+          <div className="space-y-6">
+            {/* Inventory KPI Cards */}
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#81796d]">Total Units on Hand</p>
+                <p className="mt-2 text-2xl font-bold font-financial text-[#0b0b0b]">
+                  {product.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) || 0}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#81796d]">Inventory Cost Value</p>
+                <p className="mt-2 text-2xl font-bold font-financial text-[#1a3a7a]">
+                  {formatMoney(product.variants?.reduce((sum, v) => sum + (v.stock || 0) * (v.costPricePaisa || 0), 0) || 0)}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#81796d]">Retail Sales Value</p>
+                <p className="mt-2 text-2xl font-bold font-financial text-[#1a6b3a]">
+                  {formatMoney(product.variants?.reduce((sum, v) => sum + (v.stock || 0) * (v.sellingPricePaisa || 0), 0) || 0)}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#81796d]">Low / Out of Stock</p>
+                <p className="mt-2 text-2xl font-bold font-financial text-[#8a1a1a]">
+                  {product.variants?.filter((v) => (v.stock || 0) <= (v.reorderLevel || 5)).length || 0}
+                </p>
+              </div>
+            </div>
+
+            {/* Inventory Variants Table */}
+            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+              <div className="border-b px-6 py-4">
+                <h3 className="font-semibold text-base text-[#0b0b0b]">Live Variant Inventory</h3>
+                <p className="text-xs text-[#8a847a] mt-0.5">Live stock positions and valuation for each variant</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-wider text-[#81796d]">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold">SKU / Barcode</th>
+                      <th className="px-6 py-3 font-semibold">Variant</th>
+                      <th className="px-6 py-3 font-semibold text-right">Cost Value</th>
+                      <th className="px-6 py-3 font-semibold text-right">Retail Value</th>
+                      <th className="px-6 py-3 font-semibold text-right">Stock</th>
+                      <th className="px-6 py-3 font-semibold text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f0ede7]">
+                    {(product.variants || []).map((v) => {
+                      const stock = v.stock || 0;
+                      const isOut = stock === 0;
+                      const isLow = stock > 0 && stock <= (v.reorderLevel || 5);
+                      const costVal = stock * (v.costPricePaisa || 0);
+                      const retailVal = stock * (v.sellingPricePaisa || 0);
+
+                      return (
+                        <tr key={v._id} className="hover:bg-[#faf9f6]">
+                          <td className="px-6 py-3.5">
+                            <span className="font-mono text-xs font-semibold">{v.sku}</span>
+                            {v.barcode && <p className="font-mono text-[10px] text-[#8a847a]">{v.barcode}</p>}
+                          </td>
+                          <td className="px-6 py-3.5 text-xs text-[#5f584e]">
+                            {[v.color, v.size].filter(Boolean).join(" · ") || "Default"}
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-financial text-xs text-[#706a61]">
+                            {formatMoney(costVal)}
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-financial text-xs font-semibold text-[#0b0b0b]">
+                            {formatMoney(retailVal)}
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-bold font-financial">
+                            {stock}
+                          </td>
+                          <td className="px-6 py-3.5 text-right">
+                            <span className={`inline-block rounded-sm px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${
+                              isOut ? "bg-[#fef0f0] text-[#8a1a1a]" : isLow ? "bg-[#fdf8f0] text-[#8a5a10]" : "bg-[#f0f9f4] text-[#1a6b3a]"
+                            }`}>
+                              {isOut ? "Out of Stock" : isLow ? "Low Stock" : "In Stock"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* SALES TAB */}
+        {/* SALES & MARGIN TAB */}
         {activeTab === 'sales' && (
-          <div className="rounded-xl border bg-white p-12 text-center shadow-sm">
-            <TrendingUp className="mx-auto text-[#dfd8cc] mb-4" size={48} />
-            <h3 className="text-xl font-semibold mb-2">Sales History</h3>
-            <p className="text-[#706a61] max-w-md mx-auto">
-              View historic sales trends and top-performing variants for this product. Coming soon in the next phase!
-            </p>
+          <div className="space-y-6">
+            {/* Margin KPI Cards */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#81796d]">Average Unit Margin</p>
+                <p className="mt-2 text-2xl font-bold font-financial text-[#1a6b3a]">
+                  {(() => {
+                    const vars = product.variants || [];
+                    if (!vars.length) return "₹0.00";
+                    const totalProfit = vars.reduce((s, v) => s + Math.max(0, (v.sellingPricePaisa || 0) - (v.costPricePaisa || 0)), 0);
+                    return formatMoney(Math.round(totalProfit / vars.length));
+                  })()}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#81796d]">Avg Gross Margin %</p>
+                <p className="mt-2 text-2xl font-bold font-financial text-[#1a3a7a]">
+                  {(() => {
+                    const vars = product.variants || [];
+                    if (!vars.length) return "0%";
+                    const margins = vars.map(v => {
+                      const sp = v.sellingPricePaisa || 0;
+                      const cp = v.costPricePaisa || 0;
+                      return sp > 0 ? ((sp - cp) / sp) * 100 : 0;
+                    });
+                    const avg = margins.reduce((a, b) => a + b, 0) / margins.length;
+                    return `${avg.toFixed(1)}%`;
+                  })()}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#81796d]">Active Variants</p>
+                <p className="mt-2 text-2xl font-bold font-financial text-[#0b0b0b]">
+                  {product.variants?.filter(v => v.status === "ACTIVE").length || 0}
+                </p>
+              </div>
+            </div>
+
+            {/* Margin Breakdown Table */}
+            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+              <div className="border-b px-6 py-4">
+                <h3 className="font-semibold text-base text-[#0b0b0b]">Variant Margin & Profitability</h3>
+                <p className="text-xs text-[#8a847a] mt-0.5">Unit profit margin and markup across each variant</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-wider text-[#81796d]">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold">SKU</th>
+                      <th className="px-6 py-3 font-semibold">Variant</th>
+                      <th className="px-6 py-3 font-semibold text-right">Cost Price</th>
+                      <th className="px-6 py-3 font-semibold text-right">MRP</th>
+                      <th className="px-6 py-3 font-semibold text-right">Selling Price</th>
+                      <th className="px-6 py-3 font-semibold text-right">Unit Profit</th>
+                      <th className="px-6 py-3 font-semibold text-right">Margin %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f0ede7]">
+                    {(product.variants || []).map((v) => {
+                      const cp = v.costPricePaisa || 0;
+                      const mrp = v.mrpPaisa || 0;
+                      const sp = v.sellingPricePaisa || 0;
+                      const profit = sp - cp;
+                      const marginPct = sp > 0 ? ((profit / sp) * 100).toFixed(1) : "0.0";
+
+                      return (
+                        <tr key={v._id} className="hover:bg-[#faf9f6]">
+                          <td className="px-6 py-3.5 font-mono text-xs font-semibold">{v.sku}</td>
+                          <td className="px-6 py-3.5 text-xs text-[#5f584e]">
+                            {[v.color, v.size].filter(Boolean).join(" · ") || "Default"}
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-financial text-xs text-[#706a61]">
+                            {cp ? formatMoney(cp) : "—"}
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-financial text-xs text-[#706a61]">
+                            {mrp ? formatMoney(mrp) : "—"}
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-financial text-xs font-semibold text-[#0b0b0b]">
+                            {sp ? formatMoney(sp) : "—"}
+                          </td>
+                          <td className={`px-6 py-3.5 text-right font-financial text-xs font-semibold ${profit >= 0 ? "text-[#1a6b3a]" : "text-[#8a1a1a]"}`}>
+                            {formatMoney(profit)}
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-financial text-xs font-bold text-[#1a3a7a]">
+                            {marginPct}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 

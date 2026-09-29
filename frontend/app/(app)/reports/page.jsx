@@ -133,17 +133,24 @@ export default function ReportsPage() {
         <div className="rounded-md border bg-white p-3 shadow-lg z-50">
           <p className="mb-2 text-xs font-bold text-[#151515] uppercase">{label}</p>
           <div className="space-y-1">
-            {payload.map((entry, index) => (
-              <div key={index} className="flex items-center justify-between gap-4 text-xs font-medium text-[#5f584e]">
-                <div className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                  {entry.name}
+            {payload.map((entry, index) => {
+              const isItemCount = entry.dataKey === "items" || entry.name === "Items Sold";
+              return (
+                <div key={index} className="flex items-center justify-between gap-4 text-xs font-medium text-[#5f584e]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                    {entry.name}
+                  </div>
+                  <span className="font-semibold text-[#151515]">
+                    {isItemCount
+                      ? `${Number(entry.value).toLocaleString()} units`
+                      : isMoney
+                        ? formatMoney(entry.value)
+                        : Number(entry.value).toLocaleString()}
+                  </span>
                 </div>
-                <span className="font-semibold text-[#151515]">
-                  {isMoney ? formatMoney(entry.value) : entry.value.toLocaleString()}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       );
@@ -500,43 +507,57 @@ function ExpandedBillDetails({ bill, onUpdated }) {
   const [saving, setSaving] = useState(false);
   const [items, setItems] = useState([]);
 
+  // Compute a reliable unit selling price from available data
+  function getUnitSellingPrice(item) {
+    // sellingPricePaisa comes from "$items.unitPricePaisa" in aggregation
+    if (item.sellingPricePaisa && item.sellingPricePaisa > 0) return item.sellingPricePaisa;
+    // fallback: derive from totalItemSalesPaisa / quantity
+    if (item.totalItemSalesPaisa > 0 && item.quantity > 0) {
+      return Math.round(item.totalItemSalesPaisa / item.quantity);
+    }
+    return 0;
+  }
+
+  // Compute a reliable unit cost price from available data
+  function getUnitCostPrice(item) {
+    if (item.costPricePaisa && item.costPricePaisa > 0) return item.costPricePaisa;
+    if (item.unitCostPaisa && item.unitCostPaisa > 0) return item.unitCostPaisa;
+    if (item.totalItemCostPaisa > 0 && item.quantity > 0) {
+      return Math.round(item.totalItemCostPaisa / item.quantity);
+    }
+    return 0;
+  }
+
   useEffect(() => {
-    setItems(bill.items.map(i => ({ 
-      ...i, 
-      unitCostPaisa: i.unitCostPaisa || i.costPricePaisa || 0,
-      sellingPricePaisa: i.sellingPricePaisa || 0
+    setItems(bill.items.map(i => ({
+      ...i,
+      _unitCostPaisa: getUnitCostPrice(i),
+      _unitSellingPaisa: getUnitSellingPrice(i),
     })));
   }, [bill, isEditing]);
 
-  const handleItemChange = (idx, field, val) => {
+  const handleCostChange = (idx, val) => {
     const newItems = [...items];
-    if (field === "unitCostPaisa" || field === "costPricePaisa" || field === "sellingPricePaisa") {
-      const numVal = Math.round(Number(val) * 100);
-      newItems[idx][field] = numVal;
-      if (field === "unitCostPaisa") newItems[idx]["costPricePaisa"] = numVal;
-      if (field === "costPricePaisa") newItems[idx]["unitCostPaisa"] = numVal;
-    } else if (field === "quantity") {
-      newItems[idx][field] = parseInt(val) || 0;
-    } else {
-      newItems[idx][field] = val;
-    }
+    const numVal = Math.round(Number(val) * 100);
+    newItems[idx]._unitCostPaisa = isNaN(numVal) || numVal < 0 ? 0 : numVal;
     setItems(newItems);
   };
 
-  const handleSave = async () => {
+  // COGS correction only — does NOT change selling prices, items, payments, customer
+  const handleSaveCostCorrection = async () => {
     try {
       setSaving(true);
-      // Fetch full order to get all fields needed for updateSale
       const fullOrderResponse = await api.orders.getById(bill.id);
       const fullOrder = fullOrderResponse.order;
-      
+
+      // Build payload preserving everything except cost overrides
       const payload = {
         items: items.map(i => ({
           productId: i.productId?.toString(),
           variantId: i.variantId?.toString(),
           quantity: i.quantity,
-          overriddenPricePaisa: i.sellingPricePaisa,
-          overriddenCostPaisa: i.unitCostPaisa ?? i.costPricePaisa ?? 0,
+          overriddenPricePaisa: i._unitSellingPaisa,
+          overriddenCostPaisa: i._unitCostPaisa,
           overriddenName: i.productName,
         })),
         customer: fullOrder.customerId
@@ -554,17 +575,15 @@ function ExpandedBillDetails({ bill, onUpdated }) {
           amountPaisa: p.amountPaisa,
         })),
         notes: fullOrder.notes,
-        // Always use a fresh idempotency key for edits to avoid conflicts
-        idempotencyKey: `edit-${bill.id}-${Date.now()}`,
+        idempotencyKey: `costedit-${bill.id}-${Date.now()}`,
         completedAt: fullOrder.completedAt,
       };
-      
-      // Use orders.update (PUT /api/orders/:id) which routes through the same updateSale service
+
       await api.orders.update(bill.id, payload);
       setIsEditing(false);
       onUpdated();
     } catch (e) {
-      alert("Failed to update bill: " + e.message);
+      alert("Failed to update cost data: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -574,91 +593,87 @@ function ExpandedBillDetails({ bill, onUpdated }) {
     <div className="rounded border border-[#dfd8cc] bg-white overflow-hidden">
       <div className="bg-[#f5f2ee] px-4 py-2 flex justify-between items-center border-b border-[#dfd8cc]">
         <h4 className="font-bold text-xs text-[#5f584e] uppercase tracking-wider">Bill Items</h4>
-        {!isEditing ? (
-          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="h-7 px-2 text-xs text-[#1a3a7a] hover:bg-[#e6f0ff]">
-            <Edit2 size={12} className="mr-1" /> Edit Items
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} disabled={saving} className="h-7 px-2 text-xs text-[#a53a2d] hover:bg-[#ffe6e6]">
-              <X size={12} className="mr-1" /> Cancel
+        <div className="flex gap-2 items-center">
+          {/* Full edit → opens BillingPOS edit mode */}
+          <a
+            href={`/billing?editOrderId=${bill.id}`}
+            className="h-7 px-3 text-xs font-medium inline-flex items-center gap-1 rounded border border-[#c9963e] text-[#9b7740] hover:bg-[#fffcf5] transition-colors"
+            title="Edit items, customer, payment, discount in the full POS interface"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+            Full Edit (POS)
+          </a>
+
+          {/* Inline cost correction */}
+          {!isEditing ? (
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="h-7 px-2 text-xs text-[#5a2a7a] hover:bg-[#f0e8ff]">
+              <Edit2 size={12} className="mr-1" /> Fix Cost Prices
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={saving} className="h-7 px-2 text-xs bg-[#1a6b3a] hover:bg-[#134d2a] text-white">
-              {saving ? <RefreshCcw size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />} Save
-            </Button>
-          </div>
-        )}
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} disabled={saving} className="h-7 px-2 text-xs text-[#a53a2d] hover:bg-[#ffe6e6]">
+                <X size={12} className="mr-1" /> Cancel
+              </Button>
+              <Button size="sm" onClick={handleSaveCostCorrection} disabled={saving} className="h-7 px-2 text-xs bg-[#5a2a7a] hover:bg-[#3d1a57] text-white">
+                {saving ? <RefreshCcw size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />} Save Costs
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {isEditing && (
+        <div className="px-4 py-2 bg-[#f8f4ff] border-b border-[#dfd8cc]">
+          <p className="text-[10px] text-[#5a2a7a] font-medium">
+            ✏ <strong>Cost Price Correction</strong> — Adjusts COGS &amp; profit margin only. To change items, quantities, payment or customer, use <strong>Full Edit (POS)</strong> above.
+          </p>
+        </div>
+      )}
+
       <table className="w-full text-xs text-left sub-table">
         <thead className="bg-[#faf9f6] text-[#8a847a]">
           <tr>
             <th className="px-4 py-2 font-semibold">Item</th>
-            <th className="px-4 py-2 font-semibold text-center w-20">Qty</th>
-            <th className="px-4 py-2 font-semibold text-right w-28">Cost Price</th>
+            <th className="px-4 py-2 font-semibold text-center w-16">Qty</th>
+            <th className="px-4 py-2 font-semibold text-right w-28">
+              {isEditing ? "Cost Price (edit)" : "Cost Price"}
+            </th>
             <th className="px-4 py-2 font-semibold text-right w-28">Selling Price</th>
             <th className="px-4 py-2 font-semibold text-right">Item Profit</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#f5f2ee]">
           {(isEditing ? items : bill.items).map((item, idx) => {
-            // In view mode: costPricePaisa is per-unit from report aggregation; fall back to totalItemCostPaisa/qty
-            // In edit mode: unitCostPaisa is initialized from costPricePaisa and updated by user
-            const displayCost = isEditing
-              ? (item.unitCostPaisa ?? item.costPricePaisa ?? 0)
-              : (item.costPricePaisa || (item.totalItemCostPaisa > 0 ? Math.round(item.totalItemCostPaisa / item.quantity) : 0));
-            // itemProfit: in edit mode compute from current editable values; in view use pre-computed totals
-            const itemProfit = isEditing
-              ? (item.sellingPricePaisa - displayCost) * item.quantity
-              : item.totalItemSalesPaisa - item.totalItemCostPaisa;
+            const unitCost = isEditing
+              ? item._unitCostPaisa
+              : getUnitCostPrice(item);
+            const unitSelling = isEditing
+              ? item._unitSellingPaisa
+              : getUnitSellingPrice(item);
+            const qty = item.quantity;
+            const itemProfit = (unitSelling - unitCost) * qty;
 
             return (
-              <tr key={idx} className={isEditing ? "bg-blue-50/30" : ""}>
+              <tr key={idx} className={isEditing ? "bg-[#fdf8ff]" : ""}>
                 <td className="px-4 py-2 font-medium">
-                  {isEditing ? (
-                    <Input 
-                      value={item.productName} 
-                      onChange={e => handleItemChange(idx, "productName", e.target.value)}
-                      className="h-7 text-xs bg-white border-[#dfd8cc]" 
-                    />
-                  ) : (
-                    <>{item.productName} <span className="text-[#8a847a]">({item.sku})</span></>
-                  )}
+                  {item.productName} <span className="text-[#8a847a]">({item.sku})</span>
                 </td>
-                <td className="px-4 py-2 text-center">
-                  {isEditing ? (
-                    <Input 
-                      type="number" min="1" 
-                      value={item.quantity} 
-                      onChange={e => handleItemChange(idx, "quantity", e.target.value)}
-                      className="h-7 text-xs text-center bg-white border-[#dfd8cc] w-16 mx-auto" 
-                    />
-                  ) : item.quantity}
-                </td>
+                <td className="px-4 py-2 text-center">{qty}</td>
                 <td className="px-4 py-2 text-right font-financial text-[#777169]">
                   {isEditing ? (
                     <div className="flex items-center justify-end">
                       <span className="mr-1 text-[#8a847a]">₹</span>
-                      <Input 
+                      <Input
                         type="number" step="0.01" min="0"
-                        value={displayCost / 100} 
-                        onChange={e => handleItemChange(idx, "unitCostPaisa", e.target.value)}
-                        className="h-7 text-xs text-right bg-white border-[#dfd8cc] w-20" 
+                        value={unitCost / 100}
+                        onChange={e => handleCostChange(idx, e.target.value)}
+                        className="h-7 text-xs text-right bg-white border-[#c9b0e8] w-20"
                       />
                     </div>
-                  ) : formatMoney(displayCost)}
+                  ) : formatMoney(unitCost)}
                 </td>
                 <td className="px-4 py-2 text-right font-financial text-[#777169]">
-                  {isEditing ? (
-                    <div className="flex items-center justify-end">
-                      <span className="mr-1 text-[#8a847a]">₹</span>
-                      <Input 
-                        type="number" step="0.01" min="0"
-                        value={item.sellingPricePaisa / 100} 
-                        onChange={e => handleItemChange(idx, "sellingPricePaisa", e.target.value)}
-                        className="h-7 text-xs text-right bg-white border-[#dfd8cc] w-20" 
-                      />
-                    </div>
-                  ) : formatMoney(item.sellingPricePaisa)}
+                  {formatMoney(unitSelling)}
                 </td>
                 <td className={`px-4 py-2 text-right font-financial font-semibold ${itemProfit < 0 ? 'text-[#a53a2d]' : 'text-[#1a6b3a]'}`}>
                   {formatMoney(itemProfit)}

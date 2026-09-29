@@ -82,10 +82,10 @@ export default async function OrdersPage(props) {
                       <p className="mt-1 text-xs text-[#7c756b]">{order.customerSnapshot?.mobile || "—"}</p>
                     </td>
                     <td className="px-5 py-3.5 text-xs text-[#5f594f]">
-                      {order.items.reduce((sum, item) => sum + item.quantity, 0)} item(s)
+                      {(order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0)} item(s)
                     </td>
                     <td className="px-5 py-3.5 text-xs">
-                      {order.payments.map((payment) => payment.method).join(" + ")}
+                      {(order.payments || []).map((payment) => payment.method).join(" + ") || "—"}
                     </td>
                     <td className="px-5 py-3.5">
                       {message ? (

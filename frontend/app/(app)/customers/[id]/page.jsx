@@ -80,7 +80,9 @@ export default async function CustomerDetailPage(props) {
                       </div>
                     </td>
                     <td className="px-5 py-3.5">{formatDate(order.completedAt)}</td>
-                    <td className="px-5 py-3.5">{order.items.length}</td>
+                    <td className="px-5 py-3.5">
+                      {(order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0)}
+                    </td>
                     <td className="px-5 py-3.5 text-right font-semibold">{formatMoney(order.totalPaisa)}</td>
                   </tr>
                 ))}

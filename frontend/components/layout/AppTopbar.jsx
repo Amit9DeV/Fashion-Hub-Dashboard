@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search, Menu, X, LayoutDashboard, ReceiptText, ClipboardList, Shirt, Boxes, UsersRound, RotateCcw, BarChart3, MessageCircle, PackageSearch, Settings, ArrowRight } from "lucide-react";
+import { Bell, Search, Menu, X, LayoutDashboard, ReceiptText, ClipboardList, Shirt, Boxes, UsersRound, RotateCcw, BarChart3, MessageCircle, Users, Settings, ArrowRight, Tags, Receipt } from "lucide-react";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { BrandMark } from "@/components/layout/BrandMark";
 
@@ -12,20 +12,22 @@ const nav = [
   { label: "Billing", href: "/billing", icon: ReceiptText },
   { label: "Orders", href: "/orders", icon: ClipboardList },
   { label: "Products", href: "/products", icon: Shirt },
+  { label: "Pricing", href: "/pricing", icon: Tags },
   { label: "Inventory", href: "/inventory", icon: Boxes },
+  { label: "Expenses", href: "/expenses", icon: Receipt },
   { label: "Customers", href: "/customers", icon: UsersRound },
   { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
-  { label: "Staff", href: "/staff", icon: PackageSearch },
+  { label: "Staff", href: "/staff", icon: Users },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 const titles = {
   "/dashboard": "Dashboard", "/billing": "Billing", "/orders": "Orders",
   "/products": "Products", "/inventory": "Inventory", "/customers": "Customers",
-  "/returns": "Returns", "/reports": "Reports", "/whatsapp": "WhatsApp",
-  "/settings": "Settings", "/staff": "Staff",
+  "/returns": "Returns & Exchanges", "/reports": "Reports", "/whatsapp": "WhatsApp",
+  "/settings": "Settings", "/staff": "Staff", "/pricing": "Pricing", "/expenses": "Expenses",
 };
 
 export function AppTopbar() {

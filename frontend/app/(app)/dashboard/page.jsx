@@ -60,7 +60,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* ── KPI Row ───────────────────────────────────────────────── */}
-      <section className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+      <section className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
         <MetricCard label="Total Sales" value={formatMoney(totalSales)} icon={ReceiptText} theme={{ bg: '#f0f9f4', text: '#1a6b3a', border: '#1a6b3a' }} />
         <MetricCard label="Today's Sales" value={formatMoney(today.sales)} icon={Banknote} theme={{ bg: '#f0f4fc', text: '#1a3a7a', border: '#1a3a7a' }} />
         <MetricCard label="Today's Orders" value={today.orders.toString()} icon={Package} theme={{ bg: '#fdf8f0', text: '#8a5a10', border: '#c9963e' }} />
@@ -70,6 +70,12 @@ export default async function DashboardPage() {
           label="Low Stock"
           value={inventoryAttention.lowStockCount.toString()}
           icon={CircleAlert}
+          theme={{ bg: '#fdf8f0', text: '#8a5a10', border: '#8a5a10' }}
+        />
+        <MetricCard
+          label="Out of Stock"
+          value={inventoryAttention.outOfStockCount.toString()}
+          icon={TriangleAlert}
           theme={{ bg: '#fef0f0', text: '#8a1a1a', border: '#8a1a1a' }}
         />
       </section>
@@ -96,9 +102,12 @@ export default async function DashboardPage() {
                 <p className="card-title">Today's collection split</p>
               </div>
               <div style={{ padding: '20px 24px', flex: 1 }} className="space-y-5">
-                <PaymentRow label="UPI" amount={paymentSummary.UPI} icon={ScanLine} color="#1a3a7a" />
-                <PaymentRow label="Cash" amount={paymentSummary.CASH} icon={Banknote} color="#1a6b3a" />
-                <PaymentRow label="Card" amount={paymentSummary.CARD} icon={CreditCard} color="#5a2a7a" />
+                <PaymentRow label="UPI" amount={paymentSummary.UPI || 0} icon={ScanLine} color="#1a3a7a" />
+                <PaymentRow label="Cash" amount={paymentSummary.CASH || 0} icon={Banknote} color="#1a6b3a" />
+                <PaymentRow label="Card" amount={paymentSummary.CARD || 0} icon={CreditCard} color="#5a2a7a" />
+                {paymentSummary.OTHER > 0 && (
+                  <PaymentRow label="Other" amount={paymentSummary.OTHER} icon={CreditCard} color="#706a61" />
+                )}
                 <div style={{ borderTop: '1px solid #f0ede7', paddingTop: 20, marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 12, fontWeight: 600, color: '#0b0b0b', letterSpacing: '0.02em', fontFamily: "'Inter', sans-serif" }}>Total</span>
                   <span className="font-financial" style={{ fontSize: 22, fontWeight: 700, color: '#1a6b3a', letterSpacing: '-0.02em' }}>{formatMoney(today.sales)}</span>
@@ -141,8 +150,15 @@ export default async function DashboardPage() {
                           <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, fontWeight: 600, color: '#0b0b0b', letterSpacing: '0.04em' }}>{order.invoiceNumber}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '13px 20px', fontSize: 13, color: '#3d3830' }}>{order.customerSnapshot?.name || "Walk-in"}</td>
-                      <td style={{ padding: '13px 20px', fontSize: 11, color: '#81796d', fontFamily: "'Inter', sans-serif" }}>{order.payments.map(p => p.method).join(" + ")}</td>
+                      <td style={{ padding: '13px 20px' }}>
+                        <p style={{ fontSize: 13, color: '#3d3830', fontWeight: 500 }}>{order.customerSnapshot?.name || "Walk-in"}</p>
+                        {order.customerSnapshot?.mobile && (
+                          <p style={{ fontSize: 10, color: '#81796d', marginTop: 2 }}>{order.customerSnapshot.mobile}</p>
+                        )}
+                      </td>
+                      <td style={{ padding: '13px 20px', fontSize: 11, color: '#81796d', fontFamily: "'Inter', sans-serif" }}>
+                        {(order.payments || []).map(p => p.method).join(" + ") || "—"}
+                      </td>
                       <td style={{ padding: '13px 20px', textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#1a6b3a', fontVariantNumeric: 'tabular-nums', fontFamily: "'Inter', sans-serif" }}>{formatMoney(order.totalPaisa)}</td>
                     </tr>
                   ))}

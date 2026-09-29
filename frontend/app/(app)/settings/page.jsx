@@ -11,16 +11,24 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     storeName: "Fashion Hub",
     tagline: "Premium Men's Fashion",
+    gstin: "",
     taxRate: 5,
-    invoiceFooter: "Thank you for shopping with us!"
+    invoiceFooter: "Thank you for shopping with us!",
+    invoicePreferences: {}
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     api.settings.get()
       .then((payload) => {
-        if (payload?.settings) setSettings(payload.settings);
+        if (payload?.settings) {
+          setSettings({
+            ...payload.settings,
+            gstin: payload.settings.gstin || "",
+          });
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -29,18 +37,19 @@ export default function SettingsPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
+    setMessage(null);
     try {
       await api.settings.update(settings);
       router.refresh();
-      alert("Settings saved!");
+      setMessage({ type: "success", text: "Settings saved successfully!" });
     } catch (error) {
-      alert(error.message);
+      setMessage({ type: "error", text: error.message || "Failed to save settings." });
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <div>Loading settings...</div>;
+  if (loading) return <div className="p-8 text-sm text-[#706a61]">Loading settings...</div>;
 
   return (
     <div className="mx-auto max-w-2xl space-y-7">
@@ -54,17 +63,34 @@ export default function SettingsPage() {
         </h2>
       </section>
 
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-md border bg-white p-6">
+      {message && (
+        <div className={`p-4 rounded-md text-sm ${message.type === 'success' ? 'bg-[#f0f9f4] text-[#1a6b3a] border border-[#a3d9b8]' : 'bg-[#fff4f0] text-[#8a2a1a] border border-[#f0b0a0]'}`}>
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-md border bg-white p-6 shadow-sm">
         <div className="space-y-4">
           <h3 className="font-semibold text-lg border-b pb-2">Store Details</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label htmlFor="storeName" className="text-sm font-medium">Store Name</label>
+              <label htmlFor="storeName" className="text-sm font-medium">Store Name *</label>
               <Input id="storeName" name="storeName" required value={settings.storeName} onChange={e => setSettings({...settings, storeName: e.target.value})} />
             </div>
             <div className="space-y-2">
               <label htmlFor="tagline" className="text-sm font-medium">Tagline</label>
               <Input id="tagline" name="tagline" value={settings.tagline} onChange={e => setSettings({...settings, tagline: e.target.value})} />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <label htmlFor="gstin" className="text-sm font-medium">Store GSTIN</label>
+              <Input 
+                id="gstin" 
+                name="gstin" 
+                placeholder="e.g. 29ABCDE1234F1Z5" 
+                value={settings.gstin} 
+                onChange={e => setSettings({...settings, gstin: e.target.value.toUpperCase()})} 
+              />
+              <p className="text-xs text-[#8a847a]">Displayed on printed tax invoices and receipts.</p>
             </div>
           </div>
         </div>
@@ -74,7 +100,7 @@ export default function SettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="taxRate" className="text-sm font-medium">Default Tax Rate (%)</label>
-              <Input id="taxRate" name="taxRate" type="number" step="0.1" required value={settings.taxRate} onChange={e => setSettings({...settings, taxRate: parseFloat(e.target.value)})} />
+              <Input id="taxRate" name="taxRate" type="number" step="0.1" required value={settings.taxRate} onChange={e => setSettings({...settings, taxRate: parseFloat(e.target.value) || 0})} />
             </div>
             <div className="space-y-2">
               <label htmlFor="invoiceFooter" className="text-sm font-medium">Invoice Footer Message</label>
@@ -91,8 +117,9 @@ export default function SettingsPage() {
               { id: "showStoreContact", label: "Store Contact & Socials" },
               { id: "showGstin", label: "GSTIN" },
               { id: "showCustomerDetails", label: "Customer Name & Mobile" },
+              { id: "showTaxBreakdown", label: "Tax Breakdown (CGST/SGST)" },
               { id: "showVariantInfo", label: "Variant Colors & Sizes" },
-              { id: "showTrustBadges", label: "Trust Badges (e.g. 100% Original)" },
+              { id: "showTrustBadges", label: "Trust Badges" },
               { id: "showPolicyText", label: "Exchange Policy Text" }
             ].map(pref => (
               <label key={pref.id} className="flex items-center space-x-3 rounded border p-3 cursor-pointer hover:bg-gray-50">

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatMoney } from "@/lib/utils";
 
 export function PricingEditor({ initialVariants }) {
   const [variants, setVariants] = useState(initialVariants);
@@ -28,9 +28,9 @@ export function PricingEditor({ initialVariants }) {
   function startEdit(variant) {
     setEditingId(variant._id);
     setDraft({
-      costPrice: variant.costPricePaisa ? (variant.costPricePaisa / 100).toString() : "",
-      mrp: variant.mrpPaisa ? (variant.mrpPaisa / 100).toString() : "",
-      sellingPrice: variant.sellingPricePaisa ? (variant.sellingPricePaisa / 100).toString() : "",
+      costPrice: variant.costPricePaisa != null ? (variant.costPricePaisa / 100).toString() : "",
+      mrp: variant.mrpPaisa != null ? (variant.mrpPaisa / 100).toString() : "",
+      sellingPrice: variant.sellingPricePaisa != null ? (variant.sellingPricePaisa / 100).toString() : "",
     });
     setError("");
   }
@@ -140,7 +140,7 @@ export function PricingEditor({ initialVariants }) {
                         />
                       ) : (
                         <span className="font-financial text-[#706a61]">
-                          {variant.costPricePaisa ? (variant.costPricePaisa / 100).toFixed(2) : "-"}
+                          {variant.costPricePaisa != null ? formatMoney(variant.costPricePaisa) : "—"}
                         </span>
                       )}
                     </td>
@@ -160,7 +160,7 @@ export function PricingEditor({ initialVariants }) {
                         />
                       ) : (
                         <span className="font-financial text-[#706a61]">
-                          {variant.mrpPaisa ? (variant.mrpPaisa / 100).toFixed(2) : "-"}
+                          {variant.mrpPaisa != null ? formatMoney(variant.mrpPaisa) : "—"}
                         </span>
                       )}
                     </td>
@@ -180,7 +180,7 @@ export function PricingEditor({ initialVariants }) {
                         />
                       ) : (
                         <span className="font-financial font-semibold text-[#1a6b3a]">
-                          {variant.sellingPricePaisa ? (variant.sellingPricePaisa / 100).toFixed(2) : "-"}
+                          {variant.sellingPricePaisa != null ? formatMoney(variant.sellingPricePaisa) : "—"}
                         </span>
                       )}
                     </td>

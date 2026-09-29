@@ -102,6 +102,8 @@ export const getAllProducts = async (req, res) => {
     await connectToDatabase();
     
     const query = req.query.query?.trim().slice(0, 80) || "";
+    const brand = req.query.brand?.trim() || "";
+    const category = req.query.category?.trim() || "";
     const search = query ? new RegExp(escapeRegExp(query), "i") : null;
     
     let match = {};
@@ -111,6 +113,22 @@ export const getAllProducts = async (req, res) => {
         { brandSnapshot: search },
         { categorySnapshot: search },
       ];
+    }
+    if (brand && brand !== "All" && brand !== "All Brands") {
+      if (mongoose.Types.ObjectId.isValid(brand)) {
+        match.$and = match.$and || [];
+        match.$and.push({ $or: [{ brandId: new mongoose.Types.ObjectId(brand) }, { brandSnapshot: brand }] });
+      } else {
+        match.brandSnapshot = brand;
+      }
+    }
+    if (category && category !== "All" && category !== "All Categories") {
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        match.$and = match.$and || [];
+        match.$and.push({ $or: [{ categoryId: new mongoose.Types.ObjectId(category) }, { categorySnapshot: category }] });
+      } else {
+        match.categorySnapshot = category;
+      }
     }
 
     // Aggregation to get products with their variant count and total stock
@@ -176,7 +194,7 @@ export const createProduct = async (req, res) => {
     session = await mongoose.startSession();
     session.startTransaction();
 
-    const { name, brandId, categoryId, description, variants } = req.body;
+    const { name, brandId, categoryId, description, variants, images } = req.body;
 
     const safeBrandId = brandId || null;
     const safeCategoryId = categoryId || null;
@@ -192,6 +210,7 @@ export const createProduct = async (req, res) => {
       categoryId: safeCategoryId,
       categorySnapshot: category ? category.name : null,
       description,
+      images: Array.isArray(images) ? images.filter(Boolean) : (images ? [images] : []),
       status: "ACTIVE",
     });
 
@@ -256,12 +275,13 @@ export const updateProduct = async (req, res) => {
     }
     await connectToDatabase();
 
-    const { name, brandId, categoryId, description, status } = req.body;
+    const { name, brandId, categoryId, description, status, images } = req.body;
     const updates = {};
 
     if (name !== undefined) updates.name = name;
     if (description !== undefined) updates.description = description;
     if (status !== undefined) updates.status = status;
+    if (images !== undefined) updates.images = Array.isArray(images) ? images.filter(Boolean) : (images ? [images] : []);
 
     if (brandId !== undefined) {
       updates.brandId = brandId || null;
@@ -542,14 +562,32 @@ export const deleteVariant = async (req, res) => {
     }
     await connectToDatabase();
 
-    const variant = await ProductVariant.findOneAndDelete({
+    const variant = await ProductVariant.findOne({
       _id: req.params.variantId,
       productId: req.params.id,
     });
+
     if (!variant)
       return res
         .status(404)
         .json({ success: false, message: "Variant not found" });
+
+    // Check if this variant appears in any historical order — preserve ledger integrity
+    const Order = (await import("../models/Order.js")).default;
+    const orderCount = await Order.countDocuments({ "items.variantId": variant._id });
+
+    if (orderCount > 0) {
+      // Soft-delete: mark as INACTIVE instead of hard deleting
+      await ProductVariant.findByIdAndUpdate(variant._id, { status: "INACTIVE" });
+      return res.json({
+        success: true,
+        message: `Variant has ${orderCount} historical order(s). It has been deactivated instead of deleted to preserve ledger integrity.`,
+        softDeleted: true,
+      });
+    }
+
+    // Safe to hard-delete (no order history)
+    await variant.deleteOne();
 
     return res.json({
       success: true,
