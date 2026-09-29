@@ -53,17 +53,17 @@ export default function WhatsAppPage() {
 
   return (
     <div className="space-y-7 pb-10">
-      <div className="flex items-end justify-between border-b border-[#dfd8cc] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#dfd8cc] pb-6 gap-4">
         <div>
           <p className="eyebrow flex items-center gap-2" style={{ color: '#1a3a7a' }}>
             <span style={{ width: 16, height: 1, background: '#1a3a7a', display: 'inline-block' }} />
             Customer Communications
           </p>
-          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+          <h2 className="page-headline mt-2 text-2xl sm:text-3xl md:text-4xl">
             WhatsApp Invoices
           </h2>
         </div>
-        <Button variant="outline" onClick={fetchMessages} disabled={loading}>
+        <Button variant="outline" onClick={fetchMessages} disabled={loading} className="w-full sm:w-auto justify-center">
           <RefreshCcw size={16} className={`mr-2 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>

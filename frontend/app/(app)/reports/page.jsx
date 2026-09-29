@@ -181,27 +181,27 @@ export default function ReportsPage() {
           <h2 className="text-3xl font-bold tracking-tight text-[#151515] mt-1">Store Reports</h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 bg-white p-2 rounded-md border border-[#e6e0d5] shadow-sm">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 bg-white p-2.5 rounded-md border border-[#e6e0d5] shadow-sm">
           <select 
             value={preset} 
             onChange={handlePresetChange}
-            className="h-9 rounded border border-[#e6e0d5] bg-[#faf9f6] px-3 text-xs font-medium text-[#151515] outline-none focus:border-[#c9963e]"
+            className="h-9 rounded border border-[#e6e0d5] bg-[#faf9f6] px-3 text-xs font-medium text-[#151515] outline-none focus:border-[#c9963e] w-full sm:w-auto"
           >
             {PRESET_DATES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
           
-          <form onSubmit={handleCustomFilter} className="flex items-center gap-2">
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-auto h-9 text-xs bg-[#faf9f6]" required />
+          <form onSubmit={handleCustomFilter} className="flex items-center gap-2 flex-1 sm:flex-initial flex-wrap sm:flex-nowrap">
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="flex-1 sm:w-auto min-w-[125px] h-9 text-xs bg-[#faf9f6]" required />
             <span className="text-[#8a847a] text-xs">to</span>
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-auto h-9 text-xs bg-[#faf9f6]" required />
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="flex-1 sm:w-auto min-w-[125px] h-9 text-xs bg-[#faf9f6]" required />
             <Button type="submit" variant="outline" size="sm" className="h-9 px-3 bg-[#faf9f6]">
               <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
             </Button>
           </form>
           
-          <div className="w-px h-6 bg-[#dfd8cc] mx-1"></div>
+          <div className="hidden sm:block w-px h-6 bg-[#dfd8cc] mx-1"></div>
           
-          <Button onClick={handleExport} className="h-9 bg-[#1a6b3a] text-white hover:bg-[#134d2a] transition-colors shadow-sm">
+          <Button onClick={handleExport} className="w-full sm:w-auto h-9 bg-[#1a6b3a] text-white hover:bg-[#134d2a] transition-colors shadow-sm justify-center">
             <Download size={14} className="mr-2" /> Export CSV
           </Button>
         </div>
@@ -344,27 +344,27 @@ export default function ReportsPage() {
 
       {/* ── PRODUCT PERFORMANCE ────────────────────────────────────────── */}
       <section className="rounded-lg border border-[#e6e0d5] bg-white shadow-sm">
-        <div className="border-b border-[#f0ede7] px-6 py-5 flex items-center justify-between">
+        <div className="border-b border-[#f0ede7] px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-[#151515]">Product Performance</h3>
             <p className="text-xs text-[#8a847a] mt-1">Identify which items drive your business</p>
           </div>
-          <div className="flex bg-[#faf9f6] p-1 rounded-md border border-[#e6e0d5]">
+          <div className="flex flex-wrap bg-[#faf9f6] p-1 rounded-md border border-[#e6e0d5] w-full sm:w-auto">
             <button 
               onClick={() => setProductTab("units")} 
-              className={`px-3 py-1.5 text-xs font-semibold rounded ${productTab === 'units' ? 'bg-white shadow-sm text-[#151515]' : 'text-[#8a847a]'}`}
+              className={`flex-1 sm:flex-initial text-center px-3 py-1.5 text-xs font-semibold rounded ${productTab === 'units' ? 'bg-white shadow-sm text-[#151515]' : 'text-[#8a847a]'}`}
             >
               Best Sellers
             </button>
             <button 
               onClick={() => setProductTab("profit")} 
-              className={`px-3 py-1.5 text-xs font-semibold rounded ${productTab === 'profit' ? 'bg-white shadow-sm text-[#1a6b3a]' : 'text-[#8a847a]'}`}
+              className={`flex-1 sm:flex-initial text-center px-3 py-1.5 text-xs font-semibold rounded ${productTab === 'profit' ? 'bg-white shadow-sm text-[#1a6b3a]' : 'text-[#8a847a]'}`}
             >
               Most Profitable
             </button>
             <button 
               onClick={() => setProductTab("slow")} 
-              className={`px-3 py-1.5 text-xs font-semibold rounded ${productTab === 'slow' ? 'bg-white shadow-sm text-[#a53a2d]' : 'text-[#8a847a]'}`}
+              className={`flex-1 sm:flex-initial text-center px-3 py-1.5 text-xs font-semibold rounded ${productTab === 'slow' ? 'bg-white shadow-sm text-[#a53a2d]' : 'text-[#8a847a]'}`}
             >
               Slow Sellers
             </button>
@@ -591,9 +591,9 @@ function ExpandedBillDetails({ bill, onUpdated }) {
 
   return (
     <div className="rounded border border-[#dfd8cc] bg-white overflow-hidden">
-      <div className="bg-[#f5f2ee] px-4 py-2 flex justify-between items-center border-b border-[#dfd8cc]">
+      <div className="bg-[#f5f2ee] px-4 py-2.5 flex flex-wrap justify-between items-center gap-2 border-b border-[#dfd8cc]">
         <h4 className="font-bold text-xs text-[#5f584e] uppercase tracking-wider">Bill Items</h4>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {/* Full edit → opens BillingPOS edit mode */}
           <a
             href={`/billing?editOrderId=${bill.id}`}
@@ -630,59 +630,61 @@ function ExpandedBillDetails({ bill, onUpdated }) {
         </div>
       )}
 
-      <table className="w-full text-xs text-left sub-table">
-        <thead className="bg-[#faf9f6] text-[#8a847a]">
-          <tr>
-            <th className="px-4 py-2 font-semibold">Item</th>
-            <th className="px-4 py-2 font-semibold text-center w-16">Qty</th>
-            <th className="px-4 py-2 font-semibold text-right w-28">
-              {isEditing ? "Cost Price (edit)" : "Cost Price"}
-            </th>
-            <th className="px-4 py-2 font-semibold text-right w-28">Selling Price</th>
-            <th className="px-4 py-2 font-semibold text-right">Item Profit</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#f5f2ee]">
-          {(isEditing ? items : bill.items).map((item, idx) => {
-            const unitCost = isEditing
-              ? item._unitCostPaisa
-              : getUnitCostPrice(item);
-            const unitSelling = isEditing
-              ? item._unitSellingPaisa
-              : getUnitSellingPrice(item);
-            const qty = item.quantity;
-            const itemProfit = (unitSelling - unitCost) * qty;
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs text-left sub-table">
+          <thead className="bg-[#faf9f6] text-[#8a847a]">
+            <tr>
+              <th className="px-4 py-2 font-semibold">Item</th>
+              <th className="px-4 py-2 font-semibold text-center w-16">Qty</th>
+              <th className="px-4 py-2 font-semibold text-right w-28">
+                {isEditing ? "Cost Price (edit)" : "Cost Price"}
+              </th>
+              <th className="px-4 py-2 font-semibold text-right w-28">Selling Price</th>
+              <th className="px-4 py-2 font-semibold text-right">Item Profit</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#f5f2ee]">
+            {(isEditing ? items : bill.items).map((item, idx) => {
+              const unitCost = isEditing
+                ? item._unitCostPaisa
+                : getUnitCostPrice(item);
+              const unitSelling = isEditing
+                ? item._unitSellingPaisa
+                : getUnitSellingPrice(item);
+              const qty = item.quantity;
+              const itemProfit = (unitSelling - unitCost) * qty;
 
-            return (
-              <tr key={idx} className={isEditing ? "bg-[#fdf8ff]" : ""}>
-                <td className="px-4 py-2 font-medium">
-                  {item.productName} <span className="text-[#8a847a]">({item.sku})</span>
-                </td>
-                <td className="px-4 py-2 text-center">{qty}</td>
-                <td className="px-4 py-2 text-right font-financial text-[#777169]">
-                  {isEditing ? (
-                    <div className="flex items-center justify-end">
-                      <span className="mr-1 text-[#8a847a]">₹</span>
-                      <Input
-                        type="number" step="0.01" min="0"
-                        value={unitCost / 100}
-                        onChange={e => handleCostChange(idx, e.target.value)}
-                        className="h-7 text-xs text-right bg-white border-[#c9b0e8] w-20"
-                      />
-                    </div>
-                  ) : formatMoney(unitCost)}
-                </td>
-                <td className="px-4 py-2 text-right font-financial text-[#777169]">
-                  {formatMoney(unitSelling)}
-                </td>
-                <td className={`px-4 py-2 text-right font-financial font-semibold ${itemProfit < 0 ? 'text-[#a53a2d]' : 'text-[#1a6b3a]'}`}>
-                  {formatMoney(itemProfit)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+              return (
+                <tr key={idx} className={isEditing ? "bg-[#fdf8ff]" : ""}>
+                  <td className="px-4 py-2 font-medium">
+                    {item.productName} <span className="text-[#8a847a]">({item.sku})</span>
+                  </td>
+                  <td className="px-4 py-2 text-center">{qty}</td>
+                  <td className="px-4 py-2 text-right font-financial text-[#777169]">
+                    {isEditing ? (
+                      <div className="flex items-center justify-end">
+                        <span className="mr-1 text-[#8a847a]">₹</span>
+                        <Input
+                          type="number" step="0.01" min="0"
+                          value={unitCost / 100}
+                          onChange={e => handleCostChange(idx, e.target.value)}
+                          className="h-7 text-xs text-right bg-white border-[#c9b0e8] w-20"
+                        />
+                      </div>
+                    ) : formatMoney(unitCost)}
+                  </td>
+                  <td className="px-4 py-2 text-right font-financial text-[#777169]">
+                    {formatMoney(unitSelling)}
+                  </td>
+                  <td className={`px-4 py-2 text-right font-financial font-semibold ${itemProfit < 0 ? 'text-[#a53a2d]' : 'text-[#1a6b3a]'}`}>
+                    {formatMoney(itemProfit)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

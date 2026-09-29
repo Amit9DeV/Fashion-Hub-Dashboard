@@ -28,7 +28,7 @@ export default async function CustomersPage(props) {
             <span style={{ width: 16, height: 1, background: '#1a5a5a', display: 'inline-block' }} />
             Clientele
           </p>
-          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+          <h2 className="page-headline mt-2 text-2xl sm:text-3xl md:text-4xl">
             Customers
           </h2>
         </div>

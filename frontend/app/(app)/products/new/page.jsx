@@ -138,7 +138,7 @@ export default function NewProductWizard() {
   }
 
   const StepIndicator = () => (
-    <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
+    <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2 no-scrollbar">
       {['Basic Info', 'Pricing', 'Variants', 'Images', 'Review'].map((label, i) => {
         const num = i + 1;
         const active = step === num;

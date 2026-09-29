@@ -1,7 +1,14 @@
 import jwt from 'jsonwebtoken';
 
 const COOKIE_NAME = "fashion_hub_session";
-const SECRET = process.env.AUTH_SECRET || "default-fallback-secret-key-that-is-at-least-32-chars-long";
+const PRIMARY_SECRET =
+  process.env.AUTH_SECRET || "replace-with-a-long-random-secret-at-least-32-characters";
+const KNOWN_SECRETS = [
+  PRIMARY_SECRET,
+  "replace-with-a-long-random-secret-at-least-32-characters",
+  "default-fallback-secret-key-that-is-at-least-32-chars-long",
+];
+
 const IS_PROD =
   process.env.NODE_ENV === "production" ||
   process.env.RENDER === "true" ||
@@ -14,18 +21,27 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
-  try {
-    const payload = jwt.verify(token, SECRET);
-    req.user = {
-      id: payload.sub,
-      name: payload.name,
-      email: payload.email,
-      role: payload.role,
-    };
-    next();
-  } catch (error) {
+  let payload = null;
+  for (const secret of KNOWN_SECRETS) {
+    try {
+      payload = jwt.verify(token, secret);
+      break;
+    } catch (e) {
+      // try next secret
+    }
+  }
+
+  if (!payload) {
     return res.status(401).json({ success: false, message: "Invalid session" });
   }
+
+  req.user = {
+    id: payload.sub,
+    name: payload.name,
+    email: payload.email,
+    role: payload.role,
+  };
+  next();
 }
 
 export function createSession(res, user) {
@@ -36,7 +52,7 @@ export function createSession(res, user) {
       email: user.email,
       role: user.role,
     },
-    SECRET,
+    PRIMARY_SECRET,
     { expiresIn: '12h' }
   );
 

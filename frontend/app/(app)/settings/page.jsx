@@ -58,7 +58,7 @@ export default function SettingsPage() {
           <span style={{ width: 16, height: 1, background: '#1a3a7a', display: 'inline-block' }} />
           Configuration
         </p>
-        <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+        <h2 className="page-headline mt-2 text-2xl sm:text-3xl md:text-4xl">
           System Settings
         </h2>
       </section>
@@ -142,7 +142,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex justify-end pt-4 border-t">
-          <Button variant="gold" type="submit" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
+          <Button variant="gold" type="submit" disabled={saving} className="w-full sm:w-auto">{saving ? "Saving..." : "Save Changes"}</Button>
         </div>
       </form>
 

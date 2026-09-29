@@ -30,20 +30,22 @@ export default async function OrdersPage(props) {
 
   return (
     <div className="overflow-hidden rounded-md border bg-white">
-      <div className="flex items-end justify-between border-b px-5 py-5">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b px-4 sm:px-6 py-5 gap-4">
         <div>
           <p className="eyebrow flex items-center gap-2">
             <span style={{ width: 16, height: 1, background: '#5a2a7a', display: 'inline-block' }} />
             Immutable sales ledger
           </p>
-          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+          <h2 className="page-headline mt-2 text-2xl sm:text-3xl md:text-4xl">
             Completed orders
           </h2>
-          <p className="mt-1 text-sm text-[#756e64]" style={{ fontFamily: "'Inter', sans-serif" }}>Sales ledger with historical records.</p>
+          <p className="mt-1 text-xs sm:text-sm text-[#756e64]" style={{ fontFamily: "'Inter', sans-serif" }}>Sales ledger with historical records.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <SearchInput placeholder="Search invoice or customer..." />
-          <span className="hidden rounded-full bg-[#f0ede7] px-3 py-1 text-xs font-semibold text-[#5f584e] sm:block">{orders.length} recent</span>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex-1 sm:w-64">
+            <SearchInput placeholder="Search invoice or customer..." />
+          </div>
+          <span className="hidden rounded-full bg-[#f0ede7] px-3 py-1 text-xs font-semibold text-[#5f584e] sm:block shrink-0">{orders.length} recent</span>
         </div>
       </div>
       {orders.length ? (

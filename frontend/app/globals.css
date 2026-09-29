@@ -79,6 +79,13 @@ h1, h2, h3, .font-serif {
   border-radius: 4px;
   padding: 18px 20px 20px;
   position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (max-width: 640px) {
+  .metric-card {
+    padding: 12px 14px 14px;
+  }
 }
 
 .metric-label {
@@ -96,17 +103,33 @@ h1, h2, h3, .font-serif {
   letter-spacing: -0.02em;
   color: var(--fh-black);
   margin-top: 14px;
-  line-height: 1;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
   font-family: 'Inter', sans-serif;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .metric-value {
+    font-size: 20px;
+    margin-top: 8px;
+  }
 }
 
 .metric-icon {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 16px;
+  right: 16px;
   color: var(--fh-gold);
   opacity: 0.85;
+}
+
+@media (max-width: 640px) {
+  .metric-icon {
+    top: 12px;
+    right: 12px;
+    size: 13px;
+  }
 }
 
 /* Content card */
@@ -147,12 +170,22 @@ h1, h2, h3, .font-serif {
 
 /* Page headline */
 .page-headline {
-  font-size: 48px;
+  font-size: clamp(24px, 5.5vw, 42px);
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.03;
+  line-height: 1.15;
   color: var(--fh-black);
   font-family: 'Playfair Display', Georgia, serif;
+  word-break: break-word;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Invoice Print Mode */

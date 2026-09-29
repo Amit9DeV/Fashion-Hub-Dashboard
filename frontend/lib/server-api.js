@@ -23,9 +23,20 @@ export async function serverFetch(endpoint, init = {}) {
     ? endpoint
     : `${apiBase()}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
-  return fetch(url, {
-    cache: "no-store",
-    ...init,
-    headers,
-  });
+  try {
+    return await fetch(url, {
+      cache: "no-store",
+      ...init,
+      headers,
+    });
+  } catch (err) {
+    console.error(`serverFetch error for ${url}:`, err.message);
+    return new Response(
+      JSON.stringify({ success: false, message: err.message, data: {} }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 }

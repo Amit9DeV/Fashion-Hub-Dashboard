@@ -146,7 +146,7 @@ export default function ReturnsPage() {
           <span style={{ width: 16, height: 1, background: '#5a2a7a', display: 'inline-block' }} />
           Reverse Logistics
         </p>
-        <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+        <h2 className="page-headline mt-2 text-2xl sm:text-3xl md:text-4xl">
           Returns & Exchanges
         </h2>
       </div>
@@ -173,12 +173,12 @@ export default function ReturnsPage() {
 
           {order && (
             <div className="rounded-md border bg-white overflow-hidden">
-              <div className="border-b px-5 py-4 bg-[#faf9f6] flex justify-between items-center">
+              <div className="border-b px-4 sm:px-5 py-3 sm:py-4 bg-[#faf9f6] flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                 <div>
                   <h3 className="font-semibold">Invoice: {order.invoiceNumber}</h3>
                   <p className="text-xs text-[#706a61] mt-1">{formatDate(order.completedAt)} · {order.customerSnapshot?.name || "Walk-in"}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <p className="font-financial font-semibold">{formatMoney(order.totalPaisa)}</p>
                   <p className="text-[10px] uppercase tracking-wider text-[#9b7740] mt-1">Paid via {order.payments.map(p => p.method).join(", ")}</p>
                 </div>
@@ -197,7 +197,7 @@ export default function ReturnsPage() {
                     if (maxAllowed <= 0) return null;
 
                     return (
-                      <div key={item.variantId} className={`flex items-center justify-between border rounded-md p-3 transition ${returnQty > 0 ? 'border-[#c9963e] bg-[#fffbf5]' : ''}`}>
+                      <div key={item.variantId} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border rounded-md p-3 transition ${returnQty > 0 ? 'border-[#c9963e] bg-[#fffbf5]' : ''}`}>
                         <div>
                           <p className="font-medium text-sm">{item.productName}</p>
                           <p className="text-xs text-[#706a61] mt-0.5">{item.sku} {item.size && `· ${item.size}`} {item.color && `· ${item.color}`}</p>
@@ -238,12 +238,12 @@ export default function ReturnsPage() {
                       />
                     </div>
                     
-                    <div className="flex items-center justify-between bg-[#0b0b0b] text-white p-4 rounded-md">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0b0b0b] text-white p-4 rounded-md">
                       <div>
                         <p className="text-xs text-gray-400">Total Refund</p>
                         <p className="font-financial text-xl font-semibold">{formatMoney(totalRefund)}</p>
                       </div>
-                      <Button variant="gold" onClick={submitReturn} disabled={processing}>
+                      <Button variant="gold" onClick={submitReturn} disabled={processing} className="w-full sm:w-auto justify-center">
                         {processing ? "Processing..." : "Issue Refund"}
                       </Button>
                     </div>

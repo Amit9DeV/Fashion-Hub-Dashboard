@@ -27,12 +27,12 @@ export default async function ProductsPage(props) {
             <span style={{ width: 16, height: 1, background: '#8a5a10', display: 'inline-block' }} />
             Product Catalog
           </p>
-          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+          <h2 className="page-headline mt-2 text-2xl sm:text-3xl md:text-4xl">
             Manage your items
           </h2>
         </div>
-        <div className="flex gap-3">
-          <Button variant="gold" asChild>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <Button variant="gold" asChild className="w-full sm:w-auto justify-center">
             <Link href="/products/new">
               Add Product <Plus size={17} className="ml-2" />
             </Link>

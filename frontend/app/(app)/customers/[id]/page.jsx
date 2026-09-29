@@ -20,17 +20,19 @@ export default async function CustomerDetailPage(props) {
 
   return (
     <div className="space-y-7">
-      <section className="border-b border-[#dfd8cc] pb-6 flex justify-between items-start">
+      <section className="border-b border-[#dfd8cc] pb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b7740]">Customer Profile</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight">{customer.name || "Unknown"}</h2>
-          <div className="mt-2 text-sm text-[#706a61] space-x-4">
+          <h2 className="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight">{customer.name || "Unknown"}</h2>
+          <div className="mt-2 text-sm text-[#706a61] flex flex-wrap gap-x-4 gap-y-1">
             {customer.mobile && <span>{customer.mobile}</span>}
             {customer.email && <span>{customer.email}</span>}
             {customer.gstin && <span>GSTIN: {customer.gstin}</span>}
           </div>
         </div>
-        <EditCustomerButton customer={customer} />
+        <div className="w-full sm:w-auto flex justify-start sm:justify-end">
+          <EditCustomerButton customer={customer} />
+        </div>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">

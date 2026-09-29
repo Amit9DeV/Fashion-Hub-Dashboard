@@ -51,11 +51,10 @@ function LoginForm() {
         localStorage.setItem("fashion_hub_user", JSON.stringify(data.data));
       }
 
-      router.replace(params.get("next") || "/dashboard");
-      router.refresh();
+      const target = params.get("next") || "/dashboard";
+      window.location.href = target;
     } catch (err) {
       setError(err.message || "Could not sign in.");
-    } finally {
       setBusy(false);
     }
   }

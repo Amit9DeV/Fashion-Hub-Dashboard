@@ -36,16 +36,18 @@ export default async function InventoryPage(props) {
             <span style={{ width: 16, height: 1, background: "#8a1a1a", display: "inline-block" }} />
             Stock Control
           </p>
-          <h2 className="page-headline" style={{ marginTop: 10, fontSize: 36 }}>
+          <h2 className="page-headline mt-2 text-2xl sm:text-3xl md:text-4xl">
             Inventory
           </h2>
-          <p className="mt-1 text-sm text-[#756e64]">
+          <p className="mt-1 text-xs sm:text-sm text-[#756e64]">
             Live stock levels for all active product variants.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <SearchInput placeholder="Search by SKU, name, or colour..." />
-          <Button variant="gold" asChild>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="flex-1 sm:w-64">
+            <SearchInput placeholder="Search by SKU, name, or colour..." />
+          </div>
+          <Button variant="gold" asChild className="justify-center shrink-0">
             <Link href="/products/new">
               <Plus size={16} className="mr-2" /> Add Product
             </Link>

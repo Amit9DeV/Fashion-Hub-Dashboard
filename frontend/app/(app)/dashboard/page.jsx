@@ -29,23 +29,23 @@ export default async function DashboardPage() {
   const needsAttention = inventoryAttention.outOfStockCount > 0 || inventoryAttention.lowStockCount > 0;
 
   return (
-    <div style={{ paddingBottom: 48 }} className="space-y-8">
+    <div style={{ paddingBottom: 48 }} className="space-y-6 sm:space-y-8">
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section style={{ borderBottom: '1px solid #e8e3da', paddingBottom: 28 }} className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+      <section style={{ borderBottom: '1px solid #e8e3da', paddingBottom: 24 }} className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow flex items-center gap-2">
             <span style={{ width: 16, height: 1, background: '#c9963e', display: 'inline-block' }} />
             Today at Fashion Hub
           </p>
-          <h2 className="page-headline" style={{ marginTop: 10, maxWidth: 540 }}>
+          <h2 className="page-headline" style={{ marginTop: 8, maxWidth: 540 }}>
             Make every counter moment count.
           </h2>
         </div>
         <Link
           href="/billing"
           style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             background: '#0b0b0b', color: '#d8b46a',
             padding: '11px 22px', borderRadius: 3,
             fontSize: 13, fontWeight: 600, letterSpacing: '0.04em',
@@ -53,13 +53,14 @@ export default async function DashboardPage() {
             border: '1px solid #2a2520', whiteSpace: 'nowrap',
             flexShrink: 0,
           }}
+          className="w-full sm:w-auto"
         >
           New sale <ArrowRight size={14} />
         </Link>
       </section>
 
       {/* ── KPI Row ───────────────────────────────────────────────── */}
-      <section className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
         <MetricCard label="Total Sales" value={formatMoney(totalSales)} icon={ReceiptText} theme={{ bg: '#f0f9f4', text: '#1a6b3a', border: '#1a6b3a' }} />
         <MetricCard label="Today's Sales" value={formatMoney(today.sales)} icon={Banknote} theme={{ bg: '#f0f4fc', text: '#1a3a7a', border: '#1a3a7a' }} />
         <MetricCard label="Today's Orders" value={today.orders.toString()} icon={Package} theme={{ bg: '#fdf8f0', text: '#8a5a10', border: '#c9963e' }} />
@@ -80,9 +81,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* ── Chart + Payment Summary ───────────────────────────────── */}
-      <section className="grid gap-5" style={{ gridTemplateColumns: '1fr', alignItems: 'start' }}>
-        <div className="grid gap-5" style={{ gridTemplateColumns: '1fr', alignItems: 'start' }}>
-          <div className="grid gap-5 xl:grid-cols-[1.5fr_0.75fr]">
+      <section className="grid gap-5 xl:grid-cols-[1.5fr_0.75fr]">
             {/* Sales Chart */}
             <div className="content-card">
               <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0ede7' }}>
@@ -113,8 +112,6 @@ export default async function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
       </section>
 
       {/* ── Recent Sales + Inventory Attention ───────────────────── */}
@@ -136,29 +133,29 @@ export default async function DashboardPage() {
                 <thead>
                   <tr style={{ background: '#faf9f6' }}>
                     {["Invoice", "Customer", "Payment", "Amount"].map(h => (
-                      <th key={h} style={{ padding: '10px 20px', fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#81796d', textAlign: h === 'Amount' ? 'right' : 'left', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{h}</th>
+                      <th key={h} className="px-3 py-2.5 sm:px-5 sm:py-3" style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#81796d', textAlign: h === 'Amount' ? 'right' : 'left', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {recentSales.slice(0, 6).map((order) => (
                     <tr key={order._id.toString()} style={{ borderTop: '1px solid #f5f2ee' }}>
-                      <td style={{ padding: '13px 20px' }}>
+                      <td className="px-3 py-2.5 sm:px-5 sm:py-3.5">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <FileText size={13} style={{ color: '#c9963e' }} />
                           <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, fontWeight: 600, color: '#0b0b0b', letterSpacing: '0.04em' }}>{order.invoiceNumber}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '13px 20px' }}>
+                      <td className="px-3 py-2.5 sm:px-5 sm:py-3.5">
                         <p style={{ fontSize: 13, color: '#3d3830', fontWeight: 500 }}>{order.customerSnapshot?.name || "Walk-in"}</p>
                         {order.customerSnapshot?.mobile && (
                           <p style={{ fontSize: 10, color: '#81796d', marginTop: 2 }}>{order.customerSnapshot.mobile}</p>
                         )}
                       </td>
-                      <td style={{ padding: '13px 20px', fontSize: 11, color: '#81796d', fontFamily: "'Inter', sans-serif" }}>
+                      <td className="px-3 py-2.5 sm:px-5 sm:py-3.5 text-xs text-[#81796d]">
                         {(order.payments || []).map(p => p.method).join(" + ") || "—"}
                       </td>
-                      <td style={{ padding: '13px 20px', textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#1a6b3a', fontVariantNumeric: 'tabular-nums', fontFamily: "'Inter', sans-serif" }}>{formatMoney(order.totalPaisa)}</td>
+                      <td className="px-3 py-2.5 sm:px-5 sm:py-3.5 text-right text-xs sm:text-sm font-semibold text-[#1a6b3a] font-financial">{formatMoney(order.totalPaisa)}</td>
                     </tr>
                   ))}
                 </tbody>

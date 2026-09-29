@@ -79,10 +79,10 @@ export default function AddStaffButton() {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-150">
           <div
-            className="w-full max-w-md rounded-xl bg-white shadow-2xl overflow-hidden border border-[#e8e3da]"
+            className="w-full max-w-md rounded-xl bg-white shadow-2xl overflow-hidden border border-[#e8e3da] flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b bg-[#faf9f6] px-6 py-4">
+            <div className="flex items-center justify-between border-b bg-[#faf9f6] px-6 py-4 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="size-8 rounded-full bg-[#fdf8f0] border border-[#e6c97a] flex items-center justify-center text-[#8a5a10]">
                   <UserPlus size={16} />
@@ -101,7 +101,7 @@ export default function AddStaffButton() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
               {error && (
                 <div className="rounded-md border border-[#e0ae9f] bg-[#fff4f0] p-3 text-xs text-[#852c21]">
                   {error}

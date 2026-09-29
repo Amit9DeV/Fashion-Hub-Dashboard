@@ -549,7 +549,7 @@ export function BillingPOS() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_430px] pb-24 xl:pb-6">
       {/* ── Left: search + catalogue ── */}
       <section className="min-w-0 space-y-5">
         <div className="rounded-md border bg-white p-4 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
@@ -677,7 +677,7 @@ export function BillingPOS() {
       </section>
 
       {/* ── Right: bill sidebar ── */}
-      <aside className="h-fit rounded-md border bg-white shadow-[0_10px_40px_rgba(36,30,20,0.06)] xl:sticky xl:top-5">
+      <aside id="checkout-sidebar" className="h-fit rounded-md border bg-white shadow-[0_10px_40px_rgba(36,30,20,0.06)] xl:sticky xl:top-5">
         <div className="border-b bg-[#151515] px-5 py-4 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -962,7 +962,7 @@ export function BillingPOS() {
                 </span>
                 <Input
                   type="date"
-                  className="w-32 h-8 text-xs bg-white"
+                  className="w-36 h-8 text-xs bg-white"
                   value={completedAt}
                   onChange={(e) => setCompletedAt(e.target.value)}
                 />
@@ -1024,6 +1024,32 @@ export function BillingPOS() {
           </Button>
         </div>
       </aside>
+
+      {/* ── Mobile Floating Cart Bar ── */}
+      {cart.length > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-[#151515]/95 backdrop-blur-md text-white px-4 py-3 border-t border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] flex items-center justify-between xl:hidden">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[#d8b46a]">
+              {cart.reduce((sum, item) => sum + item.quantity, 0)} {cart.reduce((sum, item) => sum + item.quantity, 0) === 1 ? "item" : "items"} in bill
+            </span>
+            <span className="font-financial text-lg font-bold text-white leading-tight">
+              {formatMoney(totalPaisa)}
+            </span>
+          </div>
+          <Button
+            variant="gold"
+            size="sm"
+            className="h-9 px-4 text-xs font-semibold shadow-md active:scale-95 transition-transform"
+            onClick={() => {
+              const el = document.getElementById("checkout-sidebar");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Review & Pay
+            <ChevronDown className="ml-1 rotate-[-90deg]" size={14} />
+          </Button>
+        </div>
+      )}
 
       {/* ── Success modal ── */}
       {success && (

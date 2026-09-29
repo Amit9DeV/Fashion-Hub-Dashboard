@@ -169,11 +169,11 @@ export default function ProductDetailPage(props) {
               </span>
               <p className="text-sm font-medium text-[#706a61]">{product.brandSnapshot || "No Brand"}</p>
             </div>
-            <h2 className="text-3xl font-semibold tracking-tight text-[#0b0b0b]">{product.name}</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#0b0b0b] break-words">{product.name}</h2>
             <p className="text-sm text-[#706a61] mt-1">{product.categorySnapshot}</p>
           </div>
-          <div className="flex gap-3">
-             <Button variant="outline" onClick={() => {
+          <div className="flex flex-wrap gap-2.5 w-full sm:w-auto">
+             <Button variant="outline" className="flex-1 sm:flex-initial justify-center" onClick={() => {
               if (editingBasic) {
                 setBasicForm({
                   name: product.name || "",
@@ -190,7 +190,7 @@ export default function ProductDetailPage(props) {
             }}>
               {editingBasic ? "Cancel Edit" : "Edit Details"}
             </Button>
-            <Button variant="destructive" onClick={handleDeleteProduct} className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100">
+            <Button variant="destructive" onClick={handleDeleteProduct} className="flex-1 sm:flex-initial justify-center bg-red-50 text-red-600 border border-red-100 hover:bg-red-100">
               Delete Product
             </Button>
           </div>
@@ -198,7 +198,7 @@ export default function ProductDetailPage(props) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-6 border-b border-[#dfd8cc] overflow-x-auto">
+      <div className="flex gap-4 sm:gap-6 border-b border-[#dfd8cc] overflow-x-auto no-scrollbar">
         <button 
           className={`pb-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'border-[#0b0b0b] text-[#0b0b0b]' : 'border-transparent text-[#81796d] hover:text-[#0b0b0b]'}`}
           onClick={() => setActiveTab('overview')}

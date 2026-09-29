@@ -109,51 +109,55 @@ export default function ProductTable({ initialProducts, searchComponent }) {
   return (
     <div className="space-y-4">
       {/* Dynamic Filters Bar */}
-      <div className="flex flex-wrap items-center gap-3">
-        {searchComponent}
-        <select 
-          className="border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
-          value={selectedBrand}
-          onChange={(e) => setSelectedBrand(e.target.value)}
-        >
-          <option value="">All Brands</option>
-          {brands.map((b) => (
-            <option key={b._id} value={b._id}>{b.name}</option>
-          ))}
-        </select>
-        <select 
-          className="border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>{c.name}</option>
-          ))}
-        </select>
-        <select 
-          className="border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="IN_STOCK">In Stock (&gt;10)</option>
-          <option value="LOW_STOCK">Low Stock (1-10)</option>
-          <option value="OUT_OF_STOCK">Out of Stock</option>
-          <option value="ACTIVE">Status: Active</option>
-          <option value="DRAFT">Status: Draft</option>
-          <option value="ARCHIVED">Status: Archived</option>
-        </select>
-        {(selectedBrand || selectedCategory || selectedStatus) && (
-          <button 
-            type="button"
-            onClick={() => { setSelectedBrand(""); setSelectedCategory(""); setSelectedStatus(""); }}
-            className="text-xs text-[#8a1a1a] hover:underline"
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
+        <div className="w-full sm:w-auto flex-1">
+          {searchComponent}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <select 
+            className="flex-1 sm:flex-initial border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+            value={selectedBrand}
+            onChange={(e) => setSelectedBrand(e.target.value)}
           >
-            Clear filters
-          </button>
-        )}
-        <div className="ml-auto text-xs text-[#8a847a]">
+            <option value="">All Brands</option>
+            {brands.map((b) => (
+              <option key={b._id} value={b._id}>{b.name}</option>
+            ))}
+          </select>
+          <select 
+            className="flex-1 sm:flex-initial border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c._id} value={c._id}>{c.name}</option>
+            ))}
+          </select>
+          <select 
+            className="flex-1 sm:flex-initial border border-[#dfd8cc] rounded-md px-3 py-2 text-sm text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="IN_STOCK">In Stock (&gt;10)</option>
+            <option value="LOW_STOCK">Low Stock (1-10)</option>
+            <option value="OUT_OF_STOCK">Out of Stock</option>
+            <option value="ACTIVE">Status: Active</option>
+            <option value="DRAFT">Status: Draft</option>
+            <option value="ARCHIVED">Status: Archived</option>
+          </select>
+          {(selectedBrand || selectedCategory || selectedStatus) && (
+            <button 
+              type="button"
+              onClick={() => { setSelectedBrand(""); setSelectedCategory(""); setSelectedStatus(""); }}
+              className="text-xs text-[#8a1a1a] hover:underline px-1 py-1"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+        <div className="w-full sm:w-auto sm:ml-auto text-xs text-[#8a847a] text-right">
           Showing {filteredProducts.length} of {products.length} products
         </div>
       </div>

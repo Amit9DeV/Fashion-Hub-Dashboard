@@ -61,7 +61,7 @@ export default function ExpensesPage() {
         </div>
         <Button
           onClick={() => setIsModalOpen(true)}
-          className="bg-[#0b0b0b] text-[#d8b46a] hover:bg-[#1a1a1a]"
+          className="bg-[#0b0b0b] text-[#d8b46a] hover:bg-[#1a1a1a] w-full sm:w-auto justify-center"
         >
           <Plus size={16} className="mr-2" /> Record Expense
         </Button>
