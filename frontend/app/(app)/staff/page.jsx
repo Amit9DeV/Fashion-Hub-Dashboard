@@ -1,16 +1,15 @@
-import { apiBase } from "@/lib/backend";
-import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { serverFetch } from "@/lib/server-api";
 import { ShieldCheck, Users, UserPlus } from "lucide-react";
 import AddStaffButton from "@/components/staff/AddStaffButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function StaffPage() {
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiBase()}/staff`, {
-    cache: "no-store",
-    headers: { cookie: cookieStore.toString() },
-  });
+  const res = await serverFetch("/staff");
+  if (res.status === 401) {
+    redirect("/login");
+  }
 
   const payload = await res.json().catch(() => ({}));
   const staff = payload.data?.staff || [];

@@ -11,15 +11,17 @@ function sessionSecret() {
 }
 
 export async function createSession(user) {
-  const token = await new SignJWT({
-    name: user.name,
-    email: user.email,
-    role: user.role,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject((user._id || user.id).toString())
-    .setExpirationTime("12h")
-    .sign(sessionSecret());
+  const token =
+    user.token ||
+    (await new SignJWT({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setSubject((user._id || user.id).toString())
+      .setExpirationTime("12h")
+      .sign(sessionSecret()));
 
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
@@ -29,6 +31,8 @@ export async function createSession(user) {
     path: "/",
     maxAge: 60 * 60 * 12,
   });
+
+  return token;
 }
 
 export async function clearSession() {
@@ -37,11 +41,11 @@ export async function clearSession() {
 }
 
 export async function getCurrentUser() {
-  const store = await cookies();
-  const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return { error: "No token found" };
-
   try {
+    const store = await cookies();
+    const token = store.get(COOKIE_NAME)?.value;
+    if (!token) return null;
+
     const { payload } = await jwtVerify(token, sessionSecret(), { clockTolerance: 60 });
     return {
       id: payload.sub,
@@ -51,6 +55,6 @@ export async function getCurrentUser() {
       token: token,
     };
   } catch (err) {
-    return { error: err.message || "JWT Verify failed" };
+    return null;
   }
 }

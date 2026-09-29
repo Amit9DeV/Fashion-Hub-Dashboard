@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
-import { apiBase } from "@/lib/backend";
+import { serverFetch } from "@/lib/server-api";
 import { Button } from "@/components/ui/button";
-import { cookies } from "next/headers";
 import { SearchInput } from "@/components/ui/SearchInput";
 import ProductTable from "./ProductTable";
 
@@ -11,11 +11,10 @@ export const dynamic = "force-dynamic";
 export default async function ProductsPage(props) {
   const searchParams = await props.searchParams;
   const q = searchParams?.q || "";
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiBase()}/products/all?query=${encodeURIComponent(q)}`, {
-    cache: 'no-store',
-    headers: { cookie: cookieStore.toString() },
-  });
+  const res = await serverFetch(`/products/all?query=${encodeURIComponent(q)}`);
+  if (res.status === 401) {
+    redirect("/login");
+  }
   
   const payload = await res.json().catch(() => ({}));
   const products = payload.data?.products || [];

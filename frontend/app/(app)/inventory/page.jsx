@@ -1,5 +1,5 @@
-import { apiBase } from "@/lib/backend";
-import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { serverFetch } from "@/lib/server-api";
 import Link from "next/link";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Boxes, Plus } from "lucide-react";
@@ -11,11 +11,10 @@ export const dynamic = "force-dynamic";
 export default async function InventoryPage(props) {
   const searchParams = await props.searchParams;
   const q = searchParams?.q || "";
-  const cookieStore = await cookies();
-  const res = await fetch(
-    `${apiBase()}/inventory${q ? `?query=${encodeURIComponent(q)}` : ""}`,
-    { cache: "no-store", headers: { cookie: cookieStore.toString() } }
-  );
+  const res = await serverFetch(`/inventory${q ? `?query=${encodeURIComponent(q)}` : ""}`);
+  if (res.status === 401) {
+    redirect("/login");
+  }
 
   const payload = await res.json().catch(() => ({}));
   const variants = payload.data?.variants || [];

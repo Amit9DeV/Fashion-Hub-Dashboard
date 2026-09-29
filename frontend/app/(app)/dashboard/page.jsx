@@ -1,18 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, CircleAlert, Package, ReceiptText, UsersRound, FileText, TriangleAlert, Banknote, CreditCard, ScanLine, ClipboardList } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
-import { apiBase } from "@/lib/backend";
+import { serverFetch } from "@/lib/server-api";
 import { SalesChart } from "@/components/dashboard/SalesChart";
-import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiBase()}/dashboard/stats`, {
-    cache: "no-store",
-    headers: { cookie: cookieStore.toString() },
-  });
+  const res = await serverFetch("/dashboard/stats");
+  if (res.status === 401) {
+    redirect("/login");
+  }
   const payload = await res.json().catch(() => ({}));
   const {
     today = { sales: 0, orders: 0, itemsSold: 0 },

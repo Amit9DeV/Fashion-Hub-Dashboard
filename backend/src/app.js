@@ -44,7 +44,11 @@ const allowedOrigins = [
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/fashion-hub-dashboard.*\.vercel\.app$/.test(origin)
+      ) {
         return callback(null, true);
       }
       return callback(null, false);
@@ -58,6 +62,14 @@ app.use(
 app.use(express.json());
 app.use(cookieParser()); // Required for reading JWT from HttpOnly cookie
 app.use(requestLogger);
+
+// Public root and health routes (no auth required)
+app.get("/", (req, res) => {
+  res.json({ success: true, message: "Fashion Hub API is running", version: "1.0.0" });
+});
+app.head("/", (req, res) => {
+  res.status(200).end();
+});
 
 // Public routes (no auth required)
 app.use("/api/auth", authRoutes);

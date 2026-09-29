@@ -1,16 +1,15 @@
-import { apiBase } from "@/lib/backend";
+import { redirect } from "next/navigation";
+import { serverFetch } from "@/lib/server-api";
 import { PricingEditor } from "@/features/pricing/PricingEditor";
-import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
   // We use the existing getAllProducts API which includes product.variants due to aggregation
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiBase()}/products/all`, {
-    cache: 'no-store',
-    headers: { cookie: cookieStore.toString() },
-  });
+  const res = await serverFetch("/products/all");
+  if (res.status === 401) {
+    redirect("/login");
+  }
   
   const payload = await res.json().catch(() => ({}));
   const products = payload.data?.products || [];

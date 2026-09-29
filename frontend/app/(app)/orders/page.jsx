@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { FileText, MessageCircle } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { apiBase } from "@/lib/backend";
+import { serverFetch } from "@/lib/server-api";
 import DeleteOrderButton from "@/components/orders/DeleteOrderButton";
-import { cookies } from "next/headers";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 export const dynamic = "force-dynamic";
@@ -11,11 +12,10 @@ export const dynamic = "force-dynamic";
 export default async function OrdersPage(props) {
   const searchParams = await props.searchParams;
   const q = searchParams?.q || "";
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiBase()}/orders?query=${encodeURIComponent(q)}`, {
-    cache: 'no-store',
-    headers: { cookie: cookieStore.toString() },
-  });
+  const res = await serverFetch(`/orders?query=${encodeURIComponent(q)}`);
+  if (res.status === 401) {
+    redirect("/login");
+  }
   
   const payload = await res.json().catch(() => ({}));
   const { orders = [], invoices = [], messages = [] } = payload.data || {};

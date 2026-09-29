@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { UsersRound } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
-import { apiBase } from "@/lib/backend";
+import { serverFetch } from "@/lib/server-api";
 import DeleteCustomerButton from "@/components/customers/DeleteCustomerButton";
-import { cookies } from "next/headers";
 import { SearchInput } from "@/components/ui/SearchInput";
 import CustomerTable from "./CustomerTable";
 
@@ -12,11 +12,10 @@ export const dynamic = "force-dynamic";
 export default async function CustomersPage(props) {
   const searchParams = await props.searchParams;
   const q = searchParams?.q || "";
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiBase()}/customers/all?query=${encodeURIComponent(q)}`, {
-    cache: 'no-store',
-    headers: { cookie: cookieStore.toString() },
-  });
+  const res = await serverFetch(`/customers/all?query=${encodeURIComponent(q)}`);
+  if (res.status === 401) {
+    redirect("/login");
+  }
   
   const payload = await res.json().catch(() => ({}));
   const customers = payload.data?.customers || [];

@@ -37,6 +37,20 @@ function LoginForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Invalid credentials.");
+
+      // 1. Sync session cookie into Next.js domain (for Server Components like Dashboard)
+      const { syncSession } = await import("./actions");
+      const actionResult = await syncSession(data.data);
+      if (actionResult && !actionResult.success) {
+        console.warn("Session cookie sync warning:", actionResult.error);
+      }
+
+      // 2. Store token in localStorage (for client-side API requests)
+      if (data.data?.token) {
+        localStorage.setItem("fashion_hub_token", data.data.token);
+        localStorage.setItem("fashion_hub_user", JSON.stringify(data.data));
+      }
+
       router.replace(params.get("next") || "/dashboard");
       router.refresh();
     } catch (err) {

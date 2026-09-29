@@ -25,6 +25,13 @@ async function fetchAPI(endpoint, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("fashion_hub_token");
+    if (token && !headers["Authorization"]) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -33,6 +40,11 @@ async function fetchAPI(endpoint, options = {}) {
     });
 
     const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("fashion_hub_token");
+      localStorage.removeItem("fashion_hub_user");
+    }
 
     if (!response.ok) {
       throw new Error(data.message || data.error || "API request failed");

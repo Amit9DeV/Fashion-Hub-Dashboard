@@ -1,19 +1,17 @@
 import { formatMoney, formatDate } from "@/lib/utils";
-import { apiBase } from "@/lib/backend";
+import { serverFetch } from "@/lib/server-api";
 import { redirect } from "next/navigation";
 import { FileText } from "lucide-react";
 import EditCustomerButton from "@/components/customers/EditCustomerButton";
-import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomerDetailPage(props) {
   const params = await props.params;
-  const cookieStore = await cookies();
-  const res = await fetch(`${apiBase()}/customers/${params.id}`, {
-    cache: 'no-store',
-    headers: { cookie: cookieStore.toString() },
-  });
+  const res = await serverFetch(`/customers/${params.id}`);
+  if (res.status === 401) {
+    redirect("/login");
+  }
   
   const payload = await res.json().catch(() => ({}));
   if (!payload.success || !payload.data?.customer) redirect("/customers");

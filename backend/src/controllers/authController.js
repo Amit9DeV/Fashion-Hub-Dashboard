@@ -17,11 +17,17 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid email or password." });
     }
     
-    createSession(res, user);
+    const token = createSession(res, user);
     
     return res.json({ 
       success: true, 
-      data: { id: user._id, name: user.name, role: user.role, email: user.email } 
+      data: { 
+        id: user._id, 
+        name: user.name, 
+        role: user.role, 
+        email: user.email,
+        token,
+      } 
     });
   } catch (error) {
     console.error(error);
