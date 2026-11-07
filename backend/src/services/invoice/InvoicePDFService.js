@@ -1,11 +1,14 @@
 import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
+import mongoose from "mongoose";
 import PDFDocument from "pdfkit";
 import connectToDatabase from "../../config/db.js";
 import Invoice from "../../models/Invoice.js";
+import Order from "../../models/Order.js";
 import Settings from "../../models/Settings.js";
-import { STORE } from "../../utils/store.js";
+import { STORE, STORE_SNAPSHOT } from "../../utils/store.js";
 
 const INVOICE_DIR = path.join(process.cwd(), "storage", "invoices");
 
@@ -504,9 +507,65 @@ export async function generateInvoicePdf(invoiceId) {
 
 export async function readInvoicePdf(invoiceId) {
   await connectToDatabase();
-  let invoice = await Invoice.findById(invoiceId);
+  let invoice = null;
+
+  if (mongoose.Types.ObjectId.isValid(invoiceId)) {
+    invoice = await Invoice.findById(invoiceId);
+    if (!invoice) {
+      invoice = await Invoice.findOne({ orderId: invoiceId });
+    }
+  }
+
+  if (!invoice) {
+    invoice = await Invoice.findOne({ invoiceNumber: invoiceId });
+  }
+
+  // If no Invoice record exists yet, check if a matching Order exists
+  if (!invoice) {
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(invoiceId)) {
+      order = await Order.findById(invoiceId);
+    }
+    if (!order) {
+      order = await Order.findOne({ invoiceNumber: invoiceId });
+    }
+
+    if (order) {
+      const settings = await Settings.findOne().lean();
+      const invoiceSnapshot = {
+        invoiceNumber: order.invoiceNumber,
+        orderNumber: order.orderNumber,
+        issuedAt: order.completedAt || new Date(),
+        store: { 
+          ...STORE_SNAPSHOT, 
+          gstin: settings?.gstin || STORE_SNAPSHOT.gstin,
+          phone: settings?.phone || STORE_SNAPSHOT.phone,
+          address: settings?.address || STORE_SNAPSHOT.address,
+        },
+        customer: order.customerSnapshot,
+        items: order.items,
+        subtotalPaisa: order.subtotalPaisa,
+        discountPaisa: order.discountPaisa || 0,
+        taxPaisa: order.taxPaisa || 0,
+        cgstPaisa: order.cgstPaisa || 0,
+        sgstPaisa: order.sgstPaisa || 0,
+        totalPaisa: order.totalPaisa,
+        duePaisa: order.duePaisa || 0,
+        payments: order.payments,
+      };
+
+      invoice = await Invoice.create({
+        invoiceNumber: order.invoiceNumber,
+        orderId: order._id,
+        customerId: order.customerId,
+        publicToken: randomBytes(32).toString("base64url"),
+        snapshot: invoiceSnapshot,
+      });
+    }
+  }
+
   if (!invoice) throw new Error("Invoice not found.");
-  await generateInvoicePdf(invoiceId);
-  invoice = await Invoice.findById(invoiceId);
+  await generateInvoicePdf(invoice._id);
+  invoice = await Invoice.findById(invoice._id);
   return fs.readFile(path.join(INVOICE_DIR, path.basename(invoice.pdfPath)));
 }

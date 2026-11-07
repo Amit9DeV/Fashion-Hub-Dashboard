@@ -12,13 +12,25 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
     whatsappNumber: "",
     email: "",
     gstin: "",
+    address: "",
+    city: "",
+    postalCode: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!isOpen) {
-      setFormData({ name: "", mobile: "", whatsappNumber: "", email: "", gstin: "" });
+      setFormData({
+        name: "",
+        mobile: "",
+        whatsappNumber: "",
+        email: "",
+        gstin: "",
+        address: "",
+        city: "",
+        postalCode: "",
+      });
       setError("");
     }
   }, [isOpen]);
@@ -50,6 +62,11 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
         whatsappNumber: formData.whatsappNumber.trim() || formData.mobile.trim() || undefined,
         email: formData.email.trim() || undefined,
         gstin: formData.gstin.trim() || undefined,
+        address: formData.address.trim() || formData.city.trim() ? {
+          line1: formData.address.trim(),
+          city: formData.city.trim(),
+          postalCode: formData.postalCode.trim(),
+        } : undefined,
       });
       onCustomerAdded?.(data.customer);
       onClose();
@@ -118,8 +135,36 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
             <Input
               placeholder="e.g. 29ABCDE1234F1Z5"
               value={formData.gstin}
-              onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[#5f584e]">Street Address <span className="text-[#8a847a] font-normal">(optional)</span></label>
+            <Input
+              placeholder="e.g. Main Market, Near Clock Tower"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[#5f584e]">City / Town</label>
+              <Input
+                placeholder="e.g. Mairwa"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[#5f584e]">Postal PIN Code</label>
+              <Input
+                placeholder="e.g. 841437"
+                value={formData.postalCode}
+                onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="mt-6 flex justify-end gap-3 pt-2 border-t border-[#f0ede7]">

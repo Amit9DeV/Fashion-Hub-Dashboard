@@ -6,7 +6,6 @@ import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiBase } from "@/lib/backend";
 
 export default function LoginPage() {
   return (
@@ -30,7 +29,7 @@ function LoginForm() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`${apiBase()}/auth/login`, {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -42,8 +41,8 @@ function LoginForm() {
       // Sync session cookie into Next.js domain (for Server Components)
       const { syncSession } = await import("./actions");
       const actionResult = await syncSession(data.data);
-      if (actionResult && !actionResult.success) {
-        console.warn("Session cookie sync warning:", actionResult.error);
+      if (!actionResult?.success) {
+        throw new Error(actionResult?.error || "Could not create your session. Please try again.");
       }
 
       // ── Validate the redirect target to prevent open redirect attacks ──────

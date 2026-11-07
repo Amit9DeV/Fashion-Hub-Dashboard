@@ -47,7 +47,9 @@ export async function createSession(user) {
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: isHttps,
-    sameSite: isHttps ? "none" : "lax",
+    // The browser talks to the same-origin Next.js API proxy, so a cross-site
+    // cookie is unnecessary and would make state-changing requests CSRF-prone.
+    sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 12, // 12 hours
   });

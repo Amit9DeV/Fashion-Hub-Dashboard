@@ -8,7 +8,7 @@ export const getExpenses = async (req, res) => {
   try {
     await connectToDatabase();
     
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, category } = req.query;
     let query = {};
     
     if (startDate && endDate) {
@@ -17,6 +17,10 @@ export const getExpenses = async (req, res) => {
       end.setHours(23, 59, 59, 999);
       start.setHours(0, 0, 0, 0);
       query.date = { $gte: start, $lte: end };
+    }
+
+    if (category && category !== "ALL") {
+      query.category = category.toUpperCase();
     }
     
     const expenses = await Expense.find(query).sort({ date: -1 }).lean();

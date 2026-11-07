@@ -8,6 +8,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdate 
     mobile: customer?.mobile || "",
     email: customer?.email || "",
     gstin: customer?.gstin || "",
+    address: customer?.address?.line1 || (typeof customer?.address === "string" ? customer.address : "") || "",
+    city: customer?.address?.city || "",
+    postalCode: customer?.address?.postalCode || "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,6 +23,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdate 
         mobile: customer.mobile || "",
         email: customer.email || "",
         gstin: customer.gstin || "",
+        address: customer.address?.line1 || (typeof customer.address === "string" ? customer.address : "") || "",
+        city: customer.address?.city || "",
+        postalCode: customer.address?.postalCode || "",
       });
       setError("");
     }
@@ -42,7 +48,18 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdate 
     setError("");
 
     try {
-      await onUpdate(formData);
+      const payload = {
+        name: formData.name,
+        mobile: formData.mobile,
+        email: formData.email,
+        gstin: formData.gstin,
+        address: {
+          line1: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+        },
+      };
+      await onUpdate(payload);
       onClose();
     } catch (err) {
       setError(err.message || "Failed to update customer");
@@ -91,8 +108,36 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdate 
             <label className="text-sm font-medium">GSTIN (Optional)</label>
             <Input
               value={formData.gstin}
-              onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Street Address (Optional)</label>
+            <Input
+              placeholder="e.g. Main Market, Near Clock Tower"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">City / Town</label>
+              <Input
+                placeholder="e.g. Mairwa"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Postal PIN Code</label>
+              <Input
+                placeholder="e.g. 841437"
+                value={formData.postalCode}
+                onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="mt-6 flex justify-end gap-3">

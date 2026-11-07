@@ -2,26 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Boxes, ClipboardList, LayoutDashboard, MessageCircle, PackageSearch, Receipt, ReceiptText, RotateCcw, Settings, Shirt, Tags, Users, UsersRound } from "lucide-react";
+import { BarChart3, Boxes, ClipboardList, LayoutDashboard, MessageCircle, PackageSearch, Receipt, ReceiptText, RotateCcw, Settings, Shirt, Tags, Truck, Users, UsersRound } from "lucide-react";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { can } from "@/lib/permissions";
 
 const nav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Billing", href: "/billing", icon: ReceiptText },
-  { label: "Orders", href: "/orders", icon: ClipboardList },
-  { label: "Products", href: "/products", icon: Shirt },
-  { label: "Pricing", href: "/pricing", icon: Tags },
-  { label: "Inventory", href: "/inventory", icon: Boxes },
-  { label: "Expenses", href: "/expenses", icon: Receipt },
-  { label: "Customers", href: "/customers", icon: UsersRound },
-  { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw },
-  { label: "Reports", href: "/reports", icon: BarChart3 },
-  { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
-  { label: "Staff", href: "/staff", icon: Users },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard:view" },
+  { label: "Billing", href: "/billing", icon: ReceiptText, permission: "billing:use" },
+  { label: "Orders", href: "/orders", icon: ClipboardList, permission: "orders:view" },
+  { label: "Products", href: "/products", icon: Shirt, permission: "products:view" },
+  { label: "Pricing", href: "/pricing", icon: Tags, permission: "pricing:manage" },
+  { label: "Inventory", href: "/inventory", icon: Boxes, permission: "inventory:view" },
+  { label: "Purchases", href: "/purchases", icon: Truck, permission: "purchases:manage" },
+  { label: "Expenses", href: "/expenses", icon: Receipt, permission: "expenses:manage" },
+  { label: "Customers", href: "/customers", icon: UsersRound, permission: "customers:view" },
+  { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw, permission: "returns:manage" },
+  { label: "Reports", href: "/reports", icon: BarChart3, permission: "reports:view" },
+  { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle, permission: "whatsapp:manage" },
+  { label: "Staff", href: "/staff", icon: Users, permission: "staff:manage" },
+  { label: "Settings", href: "/settings", icon: Settings, permission: "settings:manage" },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ user }) {
   const pathname = usePathname();
   return (
     <aside style={{ width: 240, background: '#0b0b0b', borderRight: '1px solid #1e1e1e', flexShrink: 0 }} className="hidden h-screen sticky top-0 flex-col lg:flex">
@@ -37,7 +39,7 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-5 space-y-0.5">
-        {nav.map((item) => {
+        {nav.filter((item) => can(user, item.permission)).map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
           return (

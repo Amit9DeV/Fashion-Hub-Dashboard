@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiBase } from "@/lib/backend";
+import { api } from "@/src/services/api";
 import { clearFrontendSession } from "@/app/(auth)/login/actions";
 
 export function SignOutButton() {
@@ -11,10 +11,7 @@ export function SignOutButton() {
 
   async function signOut() {
     try {
-      await fetch(`${apiBase()}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      }).catch(() => {});
+      await api.auth.logout().catch(() => {});
 
       await clearFrontendSession().catch(() => {});
 

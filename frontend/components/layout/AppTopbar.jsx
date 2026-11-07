@@ -3,35 +3,37 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Search, Menu, X, LayoutDashboard, ReceiptText, ClipboardList, Shirt, Boxes, UsersRound, RotateCcw, BarChart3, MessageCircle, Users, Settings, ArrowRight, Tags, Receipt } from "lucide-react";
+import { Bell, Search, Menu, X, LayoutDashboard, ReceiptText, ClipboardList, Shirt, Boxes, UsersRound, RotateCcw, BarChart3, MessageCircle, Users, Settings, ArrowRight, Tags, Receipt, Truck } from "lucide-react";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { api } from "@/src/services/api";
+import { can } from "@/lib/permissions";
 
 const nav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Billing", href: "/billing", icon: ReceiptText },
-  { label: "Orders", href: "/orders", icon: ClipboardList },
-  { label: "Products", href: "/products", icon: Shirt },
-  { label: "Pricing", href: "/pricing", icon: Tags },
-  { label: "Inventory", href: "/inventory", icon: Boxes },
-  { label: "Expenses", href: "/expenses", icon: Receipt },
-  { label: "Customers", href: "/customers", icon: UsersRound },
-  { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw },
-  { label: "Reports", href: "/reports", icon: BarChart3 },
-  { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
-  { label: "Staff", href: "/staff", icon: Users },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard:view" },
+  { label: "Billing", href: "/billing", icon: ReceiptText, permission: "billing:use" },
+  { label: "Orders", href: "/orders", icon: ClipboardList, permission: "orders:view" },
+  { label: "Products", href: "/products", icon: Shirt, permission: "products:view" },
+  { label: "Pricing", href: "/pricing", icon: Tags, permission: "pricing:manage" },
+  { label: "Inventory", href: "/inventory", icon: Boxes, permission: "inventory:view" },
+  { label: "Purchases", href: "/purchases", icon: Truck, permission: "purchases:manage" },
+  { label: "Expenses", href: "/expenses", icon: Receipt, permission: "expenses:manage" },
+  { label: "Customers", href: "/customers", icon: UsersRound, permission: "customers:view" },
+  { label: "Returns & Exchanges", href: "/returns", icon: RotateCcw, permission: "returns:manage" },
+  { label: "Reports", href: "/reports", icon: BarChart3, permission: "reports:view" },
+  { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle, permission: "whatsapp:manage" },
+  { label: "Staff", href: "/staff", icon: Users, permission: "staff:manage" },
+  { label: "Settings", href: "/settings", icon: Settings, permission: "settings:manage" },
 ];
 
 const titles = {
   "/dashboard": "Dashboard", "/billing": "Billing", "/orders": "Orders",
-  "/products": "Products", "/inventory": "Inventory", "/customers": "Customers",
-  "/returns": "Returns & Exchanges", "/reports": "Reports", "/whatsapp": "WhatsApp",
-  "/settings": "Settings", "/staff": "Staff", "/pricing": "Pricing", "/expenses": "Expenses",
+  "/products": "Products", "/inventory": "Inventory", "/purchases": "Purchases & Suppliers",
+  "/customers": "Customers", "/returns": "Returns & Exchanges", "/reports": "Reports",
+  "/whatsapp": "WhatsApp", "/settings": "Settings", "/staff": "Staff", "/pricing": "Pricing", "/expenses": "Expenses",
 };
 
-export function AppTopbar() {
+export function AppTopbar({ user }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,16 +41,24 @@ export function AppTopbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifData, setNotifData] = useState(null);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(null);
 
   const pageTitle = Object.entries(titles).find(([k]) => pathname === k || pathname.startsWith(k + '/'))?.[1] || "Fashion Hub";
 
   const fetchNotifications = async () => {
     setLoadingNotifs(true);
     try {
-      const [productsRes, whatsappRes] = await Promise.allSettled([
-        api.products.getAll(),
-        api.whatsapp.getMessages()
+      const [productsRes, whatsappRes, drawerRes] = await Promise.allSettled([
+        can(user, "inventory:view") ? api.products.getAll() : Promise.resolve(null),
+        can(user, "whatsapp:manage") ? api.whatsapp.getMessages() : Promise.resolve(null),
+        can(user, "billing:use") ? api.cashDrawer.getStatus() : Promise.resolve(null),
       ]);
+
+      if (drawerRes.status === "fulfilled" && drawerRes.value?.data) {
+        setDrawerOpen(drawerRes.value.data.status === "OPEN");
+      } else if (drawerRes.status === "fulfilled") {
+        setDrawerOpen(false);
+      }
 
       let outOfStockCount = 0;
       let lowStockCount = 0;
@@ -118,8 +128,13 @@ export function AppTopbar() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (searchQuery.trim()) {
-                router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+              const q = searchQuery.trim();
+              if (q) {
+                if (/^(FH|INV|ORD|\d{6})/i.test(q)) {
+                  router.push(`/orders?q=${encodeURIComponent(q)}`);
+                } else {
+                  router.push(`/products?q=${encodeURIComponent(q)}`);
+                }
                 setSearchQuery("");
               }
             }}
@@ -129,10 +144,10 @@ export function AppTopbar() {
               <Search size={14} className="text-[#9c9489]" />
               <input
                 type="text"
-                placeholder="Search products, orders..."
+                placeholder="Search products, orders (FH/)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="text-xs text-[#0b0b0b] placeholder:text-[#9c9489] outline-none w-44 bg-transparent"
+                className="text-xs text-[#0b0b0b] placeholder:text-[#9c9489] outline-none w-48 bg-transparent"
               />
               {searchQuery && (
                 <button
@@ -145,6 +160,22 @@ export function AppTopbar() {
               )}
             </div>
           </form>
+
+          {/* Cash Drawer Status Pill */}
+          {can(user, "billing:use") && drawerOpen !== null && (
+            <Link
+              href="/billing"
+              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-medium border transition-colors ${
+                drawerOpen
+                  ? "bg-[#edf7ed] border-[#c8e6c9] text-[#1b5e20] hover:bg-[#e8f5e9]"
+                  : "bg-[#fff8e1] border-[#ffe082] text-[#b78103] hover:bg-[#ffecb3]"
+              }`}
+              title={drawerOpen ? "Cash drawer is OPEN for today's shift" : "Cash drawer is CLOSED. Tap to open in POS."}
+            >
+              <span className={`size-1.5 rounded-full ${drawerOpen ? "bg-[#2e7d32]" : "bg-[#f59e0b]"}`} />
+              <span>Register: {drawerOpen ? "Open" : "Closed"}</span>
+            </Link>
+          )}
 
           {/* Notifications Dropdown */}
           <div className="relative">
@@ -244,20 +275,16 @@ export function AppTopbar() {
                   </div>
 
                   <div className="border-t border-[#f0ede7] bg-[#faf9f6] px-3 py-2 flex justify-between items-center text-[11px]">
-                    <Link
-                      href="/inventory"
-                      onClick={() => setNotifOpen(false)}
-                      className="text-[#9b7740] font-semibold hover:underline"
-                    >
-                      View Inventory &rarr;
-                    </Link>
-                    <Link
-                      href="/reports"
-                      onClick={() => setNotifOpen(false)}
-                      className="text-[#5f584e] hover:underline"
-                    >
-                      Store Reports
-                    </Link>
+                    {can(user, "inventory:view") && (
+                      <Link href="/inventory" onClick={() => setNotifOpen(false)} className="text-[#9b7740] font-semibold hover:underline">
+                        View Inventory &rarr;
+                      </Link>
+                    )}
+                    {can(user, "reports:view") && (
+                      <Link href="/reports" onClick={() => setNotifOpen(false)} className="text-[#5f584e] hover:underline">
+                        Store Reports
+                      </Link>
+                    )}
                   </div>
                 </div>
               </>
@@ -317,7 +344,7 @@ export function AppTopbar() {
 
             {/* Navigation links */}
             <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-              {nav.map((item) => {
+              {nav.filter((item) => can(user, item.permission)).map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href || pathname.startsWith(item.href + '/');
                 return (

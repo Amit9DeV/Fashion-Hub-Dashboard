@@ -4,16 +4,16 @@ Premium fashion-retail POS foundation built with Next.js App Router, JavaScript,
 
 ## Start locally
 
-1. Copy `.env.example` to `.env.local` and set `MONGODB_URI` to a MongoDB replica set / Atlas connection. A standalone MongoDB server cannot guarantee the atomic sale transaction this POS requires.
+1. Copy `.env.example` to `.env.local`. Set `BACKEND_API_URL` to the Express API, and set `AUTH_SECRET` to the same unique value used by the backend. A MongoDB replica set or Atlas cluster is recommended for atomic multi-document sales; standalone MongoDB uses best-effort writes.
 2. Run `npm install`.
-3. Run `npm run seed` to create the first admin and a small product catalogue.
+3. Run `npm run seed` to create the first admin and master data. Set `SEED_DEMO_CATALOG=true` only if you also want a disposable sample product.
 4. Run `npm run dev`, then sign in at `http://localhost:3000/login`.
 
-Seed sign-in: `admin@fashionhub.local` / `FashionHub@123` (change it before real use).
+Local seed sign-in: `admin@fashionhub.local` / `FashionHub@123` (change it before using real store data). Production seed requires explicit `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` values.
 
 ## First implemented slice
 
-- Cookie-session authentication and role-aware navigation
+- HttpOnly cookie sessions, same-origin API proxy, role-aware navigation, and backend role checks
 - Product variants, customers, orders, invoices, inventory movements, audit logs, and WhatsApp message models
 - Billing screen with barcode/SKU/name search, cart, customer lookup/creation, payment choice, and checkout
 - Server-side calculation with integer paisa amounts

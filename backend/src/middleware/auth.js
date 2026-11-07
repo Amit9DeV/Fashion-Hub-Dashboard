@@ -51,6 +51,15 @@ export function requireAuth(req, res, next) {
   next();
 }
 
+export function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: "You do not have access to this action." });
+    }
+    next();
+  };
+}
+
 export function createSession(res, user) {
   const secret = getPrimarySecret();
   const token = jwt.sign(
@@ -67,7 +76,7 @@ export function createSession(res, user) {
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: IS_PROD,
-    sameSite: IS_PROD ? "none" : "lax",
+    sameSite: "lax",
     path: "/",
     maxAge: 12 * 60 * 60 * 1000,
   });
@@ -79,7 +88,7 @@ export function clearSession(res) {
   res.cookie(COOKIE_NAME, "", {
     httpOnly: true,
     secure: IS_PROD,
-    sameSite: IS_PROD ? "none" : "lax",
+    sameSite: "lax",
     path: "/",
     maxAge: 0,
   });

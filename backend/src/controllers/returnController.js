@@ -1,18 +1,24 @@
 import mongoose from "mongoose";
-import connectToDatabase from "../config/db.js";
+import connectToDatabase, { supportsTransactions } from "../config/db.js";
 import Return from "../models/Return.js";
 import Order from "../models/Order.js";
 import crypto from "crypto";
 import ProductVariant from "../models/ProductVariant.js";
 import InventoryMovement from "../models/InventoryMovement.js";
-import { completeSale } from "../services/sales/completeSale.js";
+import Customer from "../models/Customer.js";
+import { completeSale, saleInputSchema } from "../services/sales/completeSale.js";
 
 // @desc    Core return logic (shared between processReturn and processExchange)
 // @access  Internal
 export const executeReturn = async (input, user) => {
   await connectToDatabase();
 
-  const isStandalone = !process.env.MONGODB_URI?.includes("replicaSet");
+  if (input.idempotencyKey) {
+    const existingReturn = await Return.findOne({ idempotencyKey: input.idempotencyKey });
+    if (existingReturn) return existingReturn;
+  }
+
+  const isStandalone = !supportsTransactions();
   let session = await mongoose.startSession();
   let result;
 
@@ -128,11 +134,41 @@ export const executeReturn = async (input, user) => {
         customerSnapshot: order.customerSnapshot,
         items: returnItems,
         totalRefundPaisa,
+        cashRefundPaisa: totalRefundPaisa,
+        idempotencyKey: input.idempotencyKey,
         reason,
         staffSnapshot: { id: user.id, name: user.name, role: user.role },
       });
 
       await newReturn.save({ session });
+
+      // Update Order status based on returned quantities
+      const allItemsReturned = order.items.every((item) => {
+        const returnedTotal =
+          (alreadyReturnedQty[item.variantId.toString()] || 0) +
+          (items.find((ri) => ri.variantId.toString() === item.variantId.toString())?.quantity || 0);
+        return returnedTotal >= item.quantity;
+      });
+      order.status = allItemsReturned ? "RETURNED" : "PARTIALLY_RETURNED";
+      await order.save({ session });
+
+      // Revert customer lifetime spent stats proportionally (floor at 0)
+      if (order.customerId && totalRefundPaisa > 0) {
+        await Customer.findByIdAndUpdate(
+          order.customerId,
+          [
+            {
+              $set: {
+                "stats.totalSpentPaisa": {
+                  $max: [0, { $subtract: [{ $ifNull: ["$stats.totalSpentPaisa", 0] }, totalRefundPaisa] }],
+                },
+              },
+            },
+          ],
+          { session }
+        );
+      }
+
       result = newReturn;
     }, {
       readConcern: { level: "snapshot" },
@@ -176,20 +212,40 @@ export const processExchange = async (req, res) => {
       });
     }
 
-    const returnResult = await executeReturn(returnPayload, req.user);
-    const refundCredit = returnResult.totalRefundPaisa;
-
-    if (refundCredit > 0) {
-      salePayload.payments = salePayload.payments || [];
-      salePayload.payments.push({
-        method: "OTHER",
-        amountPaisa: refundCredit,
-        reference: `Exchange Credit (RTN: ${returnResult.returnNumber})`,
+    if (!returnPayload.idempotencyKey || !salePayload.idempotencyKey ||
+        returnPayload.idempotencyKey !== salePayload.idempotencyKey) {
+      return res.status(400).json({
+        success: false,
+        message: "A shared idempotency key is required for this exchange.",
       });
-      salePayload.notes = `Exchange for Order ${returnPayload.orderId}. ` + (salePayload.notes || "");
     }
 
-    const saleResult = await completeSale(salePayload, req.user);
+    // Validate the replacement sale before applying the return so malformed
+    // payloads cannot restock an item without issuing the replacement invoice.
+    const validatedSalePayload = saleInputSchema.parse(salePayload);
+
+    const returnResult = await executeReturn(returnPayload, req.user);
+    const refundCredit = returnResult.totalRefundPaisa;
+    const replacementTotalPaisa = validatedSalePayload.items.reduce(
+      (sum, item) => sum + (item.overriddenPricePaisa || 0) * item.quantity,
+      0
+    );
+    const exchangeCreditPaisa = Math.min(refundCredit, replacementTotalPaisa);
+    returnResult.exchangeCreditPaisa = exchangeCreditPaisa;
+    returnResult.cashRefundPaisa = refundCredit - exchangeCreditPaisa;
+    await returnResult.save();
+
+    if (exchangeCreditPaisa > 0) {
+      validatedSalePayload.payments = validatedSalePayload.payments || [];
+      validatedSalePayload.payments.push({
+        method: "OTHER",
+        amountPaisa: exchangeCreditPaisa,
+        reference: `Exchange Credit (RTN: ${returnResult.returnNumber})`,
+      });
+      validatedSalePayload.notes = `Exchange for Order ${returnPayload.orderId}. ` + (validatedSalePayload.notes || "");
+    }
+
+    const saleResult = await completeSale(validatedSalePayload, req.user);
 
     return res.status(201).json({
       success: true,

@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  box-sizing: border-box;
 }
 
 .invoice-content {
@@ -93,44 +94,112 @@
 }
 .fh-corner-br::after { bottom: 2mm; right: 2mm; }
 
+/* Eco Light / Paper Friendly Theme (Ink Saver) */
+.fh-invoice-container.fh-theme-light {
+  background-color: #FFFFFF !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.fh-invoice-container.fh-theme-light .fh-corner::after {
+  background: #FFFFFF !important;
+  border-color: #8c6820 !important;
+}
+.fh-invoice-container.fh-theme-light .fh-outer-border {
+  border-color: #bfa15f !important;
+}
+.fh-invoice-container.fh-theme-light .fh-inner-border {
+  border-color: rgba(191, 161, 95, 0.4) !important;
+}
+.fh-invoice-container.fh-theme-light .text-white {
+  color: #0b0b0b !important;
+}
+.fh-invoice-container.fh-theme-light .text-\[\#D6D6D6\] {
+  color: #4a453e !important;
+}
+.fh-invoice-container.fh-theme-light .text-\[\#a09a8f\] {
+  color: #635d53 !important;
+}
+.fh-invoice-container.fh-theme-light .text-\[\#C99532\] {
+  color: #8c6317 !important;
+}
+.fh-invoice-container.fh-theme-light .border-\[\#C99532\]\/30 {
+  border-color: rgba(140, 99, 23, 0.3) !important;
+}
+.fh-invoice-container.fh-theme-light .border-\[\#C99532\]\/40 {
+  border-color: rgba(140, 99, 23, 0.4) !important;
+}
+.fh-invoice-container.fh-theme-light .border-\[\#C99532\]\/50 {
+  border-color: rgba(140, 99, 23, 0.5) !important;
+}
+.fh-invoice-container.fh-theme-light .bg-\[\#C99532\]\/10 {
+  background-color: rgba(140, 99, 23, 0.08) !important;
+}
+.fh-invoice-container.fh-theme-light .bg-\[\#080808\] {
+  background-color: #f7f5f0 !important;
+}
+
 @media print {
   @page {
     size: A4 portrait;
     margin: 0;
   }
   
+  /* Hide non-invoice elements */
+  body * {
+    visibility: hidden;
+  }
+
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Make printable invoice visible */
+  .fh-printable,
+  .fh-printable * {
+    visibility: visible;
+  }
+
+  .fh-printable {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background-color: #080808 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .fh-printable.fh-theme-light {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .fh-printable.fh-theme-light .fh-corner::after {
+    background: #FFFFFF !important;
+    border-color: #8c6820 !important;
+  }
+  .fh-printable.fh-theme-light .text-white {
+    color: #000000 !important;
+  }
+  .fh-printable.fh-theme-light .text-\[\#D6D6D6\] {
+    color: #2b2723 !important;
+  }
+  .fh-printable.fh-theme-light .text-\[\#C99532\] {
+    color: #7a5410 !important;
+  }
+
   body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     background-color: white !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
     min-height: 100vh !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
   
-  .print\:m-0 {
-    margin: 0 !important;
-  }
-  
-  .print\:shadow-none {
-    box-shadow: none !important;
-  }
-  
-  /* Ensure background and colors are printed exactly */
-  .fh-invoice-container {
-    background-color: #080808 !important;
-    box-shadow: none !important;
-    margin: 0 auto !important;
-    width: 210mm !important;
-    height: 297mm !important;
-    min-height: 297mm !important;
-    position: relative !important;
-    left: 0 !important;
-    right: 0 !important;
-  }
-
   /* Force borders in print */
   .fh-outer-border { border-color: #C99532 !important; }
   .fh-inner-border { border-color: rgba(201, 149, 50, 0.4) !important; }
@@ -149,4 +218,31 @@
   .bg-\[\#C99532\] { background-color: #C99532 !important; }
   .bg-\[\#000000\] { background-color: #000000 !important; }
   .border-\[\#C99532\] { border-color: #C99532 !important; }
+
+  /* ── Thermal 80mm Roll Print Overrides ── */
+  body.print-thermal {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  body.print-thermal .fh-thermal-receipt {
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 2mm 3mm !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11px !important;
+  }
+
+  body.print-thermal .fh-thermal-receipt * {
+    visibility: visible !important;
+  }
 }

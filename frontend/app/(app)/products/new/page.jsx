@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Image as ImageIcon, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Image as ImageIcon, Sparkles, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
 import { toast } from "sonner";
+import { readFileAsOptimizedDataUrl } from "@/lib/image-utils";
 
 const COMMON_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "28", "30", "32", "34", "36", "38", "40", "42", "6", "7", "8", "9", "10", "11", "12"];
 const COMMON_COLORS = ["Black", "White", "Navy", "Grey", "Olive", "Red", "Blue", "Beige", "Cream", "Brown"];
@@ -446,11 +447,45 @@ export default function NewProductWizard() {
                 <ImageIcon className="text-[#c9963e]" size={24} />
                 <div>
                   <h3 className="font-semibold text-lg">Product Images</h3>
-                  <p className="text-xs text-[#706a61]">Add URLs for product photos or catalog imagery.</p>
+                  <p className="text-xs text-[#706a61]">Upload photos from your computer/device or enter web image URLs.</p>
                 </div>
               </div>
 
               <div className="space-y-4">
+                {/* Upload Local File Box */}
+                <div className="rounded-lg border-2 border-dashed border-[#dfd8cc] p-6 text-center bg-[#faf9f6] hover:bg-[#f6f3ed] transition-colors relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    id="new-product-file-upload"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (!files.length) return;
+                      for (const file of files) {
+                        try {
+                          const dataUrl = await readFileAsOptimizedDataUrl(file);
+                          setImages((prev) => [...prev, dataUrl]);
+                        } catch (err) {
+                          toast.error(err.message || "Failed to process image file");
+                        }
+                      }
+                      e.target.value = "";
+                    }}
+                  />
+                  <label htmlFor="new-product-file-upload" className="cursor-pointer block">
+                    <UploadCloud className="mx-auto text-[#c9963e] mb-2" size={32} />
+                    <p className="text-sm font-semibold text-[#0b0b0b]">Click to Browse / Upload Local Photos</p>
+                    <p className="text-xs text-[#8a847a] mt-1">Supports JPEG, PNG, WebP (auto-optimized for fast POS catalog loading)</p>
+                  </label>
+                </div>
+
+                <div className="relative flex items-center justify-center my-2">
+                  <div className="border-t border-[#dfd8cc] w-full"></div>
+                  <span className="bg-white px-3 text-xs text-[#8a847a] uppercase font-semibold">Or enter image URL</span>
+                </div>
+
                 <div className="flex gap-2">
                   <Input 
                     placeholder="Enter image URL (e.g. https://images.unsplash.com/...)"
@@ -497,10 +532,8 @@ export default function NewProductWizard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-lg border-2 border-dashed border-[#dfd8cc] p-8 text-center bg-[#faf9f6]">
-                    <ImageIcon className="mx-auto text-[#c2bcaf] mb-2" size={32} />
-                    <p className="text-sm text-[#706a61]">No images added yet.</p>
-                    <p className="text-xs text-[#8a847a] mt-1">Paste a link above or continue without an image (can be added later).</p>
+                  <div className="p-4 text-center text-xs text-[#8a847a]">
+                    No images added yet. You can continue and add them later.
                   </div>
                 )}
               </div>

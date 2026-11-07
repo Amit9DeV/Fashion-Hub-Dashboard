@@ -4,9 +4,10 @@
 // No tokens are stored in localStorage (XSS-vulnerable).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://fashion-hub-dashboard.onrender.com/api";
+// Client requests stay on the Next.js origin. The catch-all Route Handler
+// forwards them to Express with the server-only session cookie as a bearer.
+// This avoids relying on third-party cookies between Vercel and Render.
+const API_URL = "https://fashion-hub-dashboard.onrender.com/api";
 
 // Tracks active AbortControllers per endpoint to cancel stale GET requests
 const activeRequests = new Map();
@@ -43,7 +44,7 @@ async function fetchAPI(endpoint, options = {}) {
       if (currentPath !== "/login") {
         window.location.href = `/login?next=${encodeURIComponent(currentPath)}`;
       }
-      return new Promise(() => {}); // Prevent React state updates during redirect
+      return new Promise(() => { }); // Prevent React state updates during redirect
     }
 
     const data = await response.json().catch(() => ({}));
@@ -56,7 +57,7 @@ async function fetchAPI(endpoint, options = {}) {
   } catch (error) {
     if (error.name === "AbortError") {
       // Stale request was cancelled — return a pending promise to halt updates
-      return new Promise(() => {});
+      return new Promise(() => { });
     }
     throw error;
   } finally {
@@ -88,6 +89,8 @@ export const api = {
       return fetchAPI(`/products/all${qs ? `?${qs}` : ""}`);
     },
     getById: (id) => fetchAPI(`/products/${id}`),
+    getMovements: (id) => fetchAPI(`/products/${id}/movements`),
+    getSales: (id) => fetchAPI(`/products/${id}/sales`),
     create: (data) =>
       fetchAPI("/products", { method: "POST", body: JSON.stringify(data) }),
     update: (id, data) =>
@@ -110,11 +113,29 @@ export const api = {
       fetchAPI(`/products/${productId}/variants/${variantId}`, {
         method: "DELETE",
       }),
+    bulkUpdateVariants: (updates) =>
+      fetchAPI("/products/variants/bulk-update", {
+        method: "POST",
+        body: JSON.stringify({ updates }),
+      }),
     generateBarcodes: (data) =>
       fetchAPI("/products/barcodes", {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    downloadBarcodesPdf: async (items) => {
+      const response = await fetch(`${API_URL}/products/barcodes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ items }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to generate barcode labels");
+      }
+      return await response.blob();
+    },
   },
   customers: {
     search: (query) =>
@@ -132,6 +153,11 @@ export const api = {
         body: JSON.stringify(data),
       }),
     delete: (id) => fetchAPI(`/customers/${id}`, { method: "DELETE" }),
+    settleDues: (id, data) =>
+      fetchAPI(`/customers/${id}/dues/settle`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
   sales: {
     complete: (saleData) =>
@@ -144,6 +170,7 @@ export const api = {
   },
   invoices: {
     getPdfUrl: (invoiceId) => `${API_URL}/invoices/${invoiceId}/pdf`,
+    getById: (invoiceId) => fetchAPI(`/invoices/${invoiceId}`),
   },
   settings: {
     get: () => fetchAPI("/settings"),
@@ -184,6 +211,16 @@ export const api = {
   whatsapp: {
     getMessages: () => fetchAPI("/whatsapp/messages"),
     retry: (id) => fetchAPI(`/whatsapp/retry/${id}`, { method: "POST" }),
+    send: (data) =>
+      fetchAPI("/whatsapp/send", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    sendCustom: (data) =>
+      fetchAPI("/whatsapp/send-custom", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
   expenses: {
     getAll: (queryString = "") =>
@@ -217,11 +254,22 @@ export const api = {
         body: JSON.stringify(data),
       }),
     getSuppliers: () => fetchAPI("/purchase/suppliers"),
+    updateSupplier: (id, data) =>
+      fetchAPI(`/purchase/suppliers/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    deleteSupplier: (id) =>
+      fetchAPI(`/purchase/suppliers/${id}`, { method: "DELETE" }),
     createOrder: (data) =>
       fetchAPI("/purchase/orders", {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    getOrders: () => fetchAPI("/purchase/orders"),
+    getOrderById: (id) => fetchAPI(`/purchase/orders/${id}`),
+    deleteOrder: (id) =>
+      fetchAPI(`/purchase/orders/${id}`, { method: "DELETE" }),
     receiveOrder: (id) =>
       fetchAPI(`/purchase/orders/${id}/receive`, { method: "POST" }),
   },
@@ -238,6 +286,7 @@ export const api = {
       fetchAPI("/staff", { method: "POST", body: JSON.stringify(data) }),
     update: (id, data) =>
       fetchAPI(`/staff/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id) => fetchAPI(`/staff/${id}`, { method: "DELETE" }),
   },
   auth: {
     login: (email, password) =>
@@ -247,5 +296,10 @@ export const api = {
       }),
     logout: () => fetchAPI("/auth/logout", { method: "POST" }),
     me: () => fetchAPI("/auth/me"),
+    changePassword: (data) =>
+      fetchAPI("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
 };

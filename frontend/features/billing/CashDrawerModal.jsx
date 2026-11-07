@@ -74,7 +74,10 @@ export function CashDrawerModal({ isOpen, onClose }) {
 
   const isOpenShift = drawer?.status === "OPEN";
   const expectedCashPaisa = isOpenShift
-    ? (drawer.openingBalancePaisa || 0) + (drawer.cashSalesPaisa || 0) - (drawer.cashExpensesPaisa || 0)
+    ? (drawer.openingBalancePaisa || 0) + 
+      (drawer.cashSalesPaisa || 0) - 
+      (drawer.cashExpensesPaisa || 0) - 
+      (drawer.cashRefundsPaisa || 0)
     : 0;
 
   return (
@@ -243,6 +246,14 @@ export function CashDrawerModal({ isOpen, onClose }) {
                     </span>
                     <strong className="font-financial text-[#8a1a1a]">−{formatMoney(drawer.cashExpensesPaisa || 0)}</strong>
                   </div>
+                  {drawer.cashRefundsPaisa > 0 && (
+                    <div className="flex justify-between py-1.5 text-[#5f584e]">
+                      <span className="flex items-center gap-1 text-[#8a5a10]">
+                        <ArrowUpRight size={13} /> Cash Refunds (Out):
+                      </span>
+                      <strong className="font-financial text-[#8a5a10]">−{formatMoney(drawer.cashRefundsPaisa || 0)}</strong>
+                    </div>
+                  )}
                   <div className="flex justify-between pt-2 font-bold text-sm text-[#0b0b0b]">
                     <span>Expected Total Cash:</span>
                     <span className="font-financial text-[#1a6b3a] text-base">{formatMoney(expectedCashPaisa)}</span>

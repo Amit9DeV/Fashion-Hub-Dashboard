@@ -2,6 +2,7 @@ import connectToDatabase from "../config/db.js";
 import Order from "../models/Order.js";
 import ProductVariant from "../models/ProductVariant.js";
 import Customer from "../models/Customer.js";
+import Expense from "../models/Expense.js";
 
 export const getDashboardStats = async (req, res) => {
   try {
@@ -26,8 +27,8 @@ export const getDashboardStats = async (req, res) => {
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // 1. Today's orders & metrics
-    const todayOrders = await Order.find({ completedAt: { $gte: todayStart } }).lean();
+    // 1. Today's orders & metrics (exclude fully returned orders)
+    const todayOrders = await Order.find({ completedAt: { $gte: todayStart }, status: { $ne: "RETURNED" } }).lean();
     
     let todaySales = 0;
     let todayItemsSold = 0;
@@ -96,7 +97,7 @@ export const getDashboardStats = async (req, res) => {
     ]);
 
     // 4. Sales Chart Data (Last 30 Days) — using IST-aware date keys
-    const thirtyDayOrders = await Order.find({ completedAt: { $gte: thirtyDaysAgo } }).lean();
+    const thirtyDayOrders = await Order.find({ completedAt: { $gte: thirtyDaysAgo }, status: { $ne: "RETURNED" } }).lean();
     
     // Build date keys in IST so they match the server-side locale
     const salesByDate = {};
@@ -123,6 +124,7 @@ export const getDashboardStats = async (req, res) => {
     // Group by productId+productName composite to prevent old placeholder orders
     // with the same productId but different product names from collapsing into one row.
     const topProductsAgg = await Order.aggregate([
+      { $match: { status: { $ne: "RETURNED" } } },
       { $unwind: "$items" },
       {
         $group: {
@@ -144,10 +146,24 @@ export const getDashboardStats = async (req, res) => {
 
     // 5. All-time totals
     const allTimeAgg = await Order.aggregate([
+      { $match: { status: { $ne: "RETURNED" } } },
       { $group: { _id: null, totalSales: { $sum: "$totalPaisa" }, totalOrders: { $sum: 1 } } }
     ]);
     const totalSales = allTimeAgg[0]?.totalSales || 0;
     const totalOrders = allTimeAgg[0]?.totalOrders || 0;
+
+    // 6. Today's Expenses and Net Collections
+    const todayExpensesAgg = await Expense.aggregate([
+      { $match: { date: { $gte: todayStart } } },
+      { $group: { _id: null, total: { $sum: "$amountPaisa" } } }
+    ]);
+    const todayExpenses = todayExpensesAgg[0]?.total || 0;
+
+    // 7. Store-wide Outstanding Customer Dues (Khata)
+    const duesAgg = await Customer.aggregate([
+      { $group: { _id: null, totalDues: { $sum: "$stats.totalDuesPaisa" } } }
+    ]);
+    const totalDuesAll = duesAgg[0]?.totalDues || 0;
 
     return res.json({ 
       success: true, 
@@ -155,10 +171,13 @@ export const getDashboardStats = async (req, res) => {
         today: {
           sales: todaySales,
           orders: todayOrders.length,
-          itemsSold: todayItemsSold
+          itemsSold: todayItemsSold,
+          expenses: todayExpenses,
+          netSales: Math.max(0, todaySales - todayExpenses),
         },
         totalSales,
         totalOrders,
+        totalDues: totalDuesAll,
         newCustomers: newCustomersCount,
         totalCustomers: totalCustomersCount,
         paymentSummary,

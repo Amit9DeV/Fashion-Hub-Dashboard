@@ -33,6 +33,7 @@ const paymentSchema = new mongoose.Schema(
     method: { type: String, enum: ["CASH", "UPI", "CARD", "OTHER"], required: true },
     amountPaisa: { type: Number, required: true, min: 0 },
     reference: String,
+    paidAt: { type: Date, default: Date.now },
   },
   { _id: false }
 );
@@ -41,7 +42,11 @@ const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true },
     invoiceNumber: { type: String, required: true, unique: true },
-    status: { type: String, enum: ["COMPLETED"], default: "COMPLETED" },
+    status: { 
+      type: String, 
+      enum: ["COMPLETED", "RETURNED", "EXCHANGED", "PARTIALLY_RETURNED", "CANCELLED"], 
+      default: "COMPLETED" 
+    },
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
     customerSnapshot: {
       name: String,

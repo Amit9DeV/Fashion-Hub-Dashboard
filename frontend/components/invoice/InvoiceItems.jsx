@@ -1,12 +1,37 @@
 import React from 'react';
 
 export default function InvoiceItems({ items = [] }) {
-  const defaultItems = [
-    { name: 'Signature Piqué Polo', sku: 'FH-POLO-CREAM-L', size: 'L', color: 'Cream', qty: 1, rate: 1499, amount: 1499 },
-    { name: 'Peter England Formal Shirt', sku: 'FH-SHIRT-WHT-M', size: 'M', color: 'White', qty: 1, rate: 1899, amount: 1899 }
-  ];
+  const displayItems = Array.isArray(items) ? items : [];
 
-  const displayItems = items.length > 0 ? items : defaultItems;
+  function getQty(item) {
+    return item.quantity || item.qty || 1;
+  }
+
+  function getRate(item) {
+    if (item.unitPricePaisa !== undefined && item.unitPricePaisa !== null) {
+      return item.unitPricePaisa / 100;
+    }
+    if (item.sellingPricePaisa !== undefined && item.sellingPricePaisa !== null) {
+      return item.sellingPricePaisa / 100;
+    }
+    if (item.rate !== undefined && item.rate !== null) {
+      return item.rate;
+    }
+    if (item.price !== undefined && item.price !== null) {
+      return item.price;
+    }
+    return 0;
+  }
+
+  function getAmount(item, qty, rate) {
+    if (item.totalPaisa !== undefined && item.totalPaisa !== null) {
+      return item.totalPaisa / 100;
+    }
+    if (item.amount !== undefined && item.amount !== null) {
+      return item.amount;
+    }
+    return rate * qty;
+  }
 
   return (
     <div className="w-full mb-6 font-sans">
@@ -20,41 +45,55 @@ export default function InvoiceItems({ items = [] }) {
 
       {/* Rows */}
       <div className="flex flex-col">
-        {displayItems.map((item, index) => (
-          <div 
-            key={index} 
-            className="grid grid-cols-[minmax(0,1fr)_45px_90px_100px] gap-0 border-b border-[#C99532]/10 items-start"
-            style={{ minHeight: '38px', padding: '8px 0' }}
-          >
-            <div className="flex flex-col pr-4">
-              <div className="text-white font-medium text-[11px] leading-tight mb-[2px]">
-                {item.name || item.title || 'Product'}
+        {displayItems.length === 0 ? (
+          <div className="py-4 text-center text-xs text-[#a09a8f]">No items listed</div>
+        ) : (
+          displayItems.map((item, index) => {
+            const qty = getQty(item);
+            const rate = getRate(item);
+            const amount = getAmount(item, qty, rate);
+            const itemName = item.productName || item.name || item.title || 'Product';
+            const color = item.color || '';
+            const size = item.size || '';
+            const sku = item.sku || '';
+
+            return (
+              <div 
+                key={index} 
+                className="grid grid-cols-[minmax(0,1fr)_45px_90px_100px] gap-0 border-b border-[#C99532]/10 items-start"
+                style={{ minHeight: '38px', padding: '8px 0' }}
+              >
+                <div className="flex flex-col pr-4">
+                  <div className="text-white font-medium text-xs leading-tight mb-[2px]">
+                    {itemName}
+                  </div>
+                  {(color || size) && (
+                    <div className="text-[#D6D6D6] text-[10px]">
+                      {[color, size].filter(Boolean).join(" / ")}
+                    </div>
+                  )}
+                  {sku && (
+                    <div className="text-gray-400 font-mono text-[9px] mt-0.5 tracking-wide">
+                      {sku}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="text-white text-right text-xs sm:text-sm font-mono">
+                  {qty}
+                </div>
+                
+                <div className="text-white text-right text-xs sm:text-sm font-mono">
+                  ₹{rate.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                </div>
+                
+                <div className="text-white text-right text-xs sm:text-sm font-mono font-medium">
+                  ₹{amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                </div>
               </div>
-              {(item.color || item.size) && (
-                <div className="text-[#D6D6D6] text-[9px]">
-                  ({item.color}{item.color && item.size ? ' / ' : ''}{item.size})
-                </div>
-              )}
-              {item.sku && (
-                <div className="text-gray-500 text-[8px] mt-1 tracking-wide">
-                  {item.sku}
-                </div>
-              )}
-            </div>
-            
-            <div className="text-white text-right text-sm">
-              {item.qty || item.quantity || 1}
-            </div>
-            
-            <div className="text-white text-right text-sm">
-              ₹{(item.rate || item.price || 0).toLocaleString()}
-            </div>
-            
-            <div className="text-white text-right text-sm">
-              ₹{(item.amount || item.total || 0).toLocaleString()}
-            </div>
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </div>
   );

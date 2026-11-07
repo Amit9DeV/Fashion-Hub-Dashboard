@@ -6,16 +6,26 @@ import {
   Check,
   ChevronDown,
   CircleUserRound,
+  Clock,
+  HandCoins,
   Minus,
   PackageSearch,
   Plus,
   Pencil,
+  Receipt,
+  RotateCcw,
   ScanBarcode,
   Search,
   Trash2,
   UserPlus,
   Vault,
+  Volume2,
+  VolumeX,
   X,
+  Keyboard,
+  QrCode,
+  Percent,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,12 +34,48 @@ import { api } from "@/src/services/api";
 import { toast } from "sonner";
 import { AddProductModal } from "./AddProductModal";
 import { CashDrawerModal } from "./CashDrawerModal";
+import { HeldCartsModal } from "./HeldCartsModal";
+import { UpiQrModal } from "./UpiQrModal";
+import { KeyboardShortcutsModal } from "./KeyboardShortcutsModal";
+import { CameraScannerModal } from "./CameraScannerModal";
+import InvoiceModal from "@/components/invoice/InvoiceModal";
+import SettleDuesModal from "@/components/customers/SettleDuesModal";
 
 const paymentOptions = ["CASH", "UPI", "CARD", "OTHER"];
 
 function toPaisa(value) {
   const amount = Number(value || 0);
   return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 100) : 0;
+}
+
+function playPosBeep(type = "success", enabled = true) {
+  if (!enabled || typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === "success") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } else {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+    }
+  } catch {}
 }
 
 // ─── Inline editable field ───────────────────────────────────────────────────
@@ -279,6 +325,12 @@ export function BillingPOS() {
   const searchParams = useSearchParams();
   const editOrderId = searchParams?.get("editOrderId");
   const customerId = searchParams?.get("customerId");
+  const exchangeCreditParam = searchParams?.get("exchangeCredit");
+  const exchangeCreditPaisa = useMemo(() => {
+    const p = parseInt(exchangeCreditParam, 10);
+    return !isNaN(p) && p > 0 ? p : 0;
+  }, [exchangeCreditParam]);
+  const [exchangeApplied, setExchangeApplied] = useState(false);
   const inputRef = useRef(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -296,6 +348,8 @@ export function BillingPOS() {
   const [completedAt, setCompletedAt] = useState("");
   const originalCompletedAt = useRef(null);
   const [discount, setDiscount] = useState("");
+  const [discountMode, setDiscountMode] = useState("FLAT"); // "FLAT" | "PERCENT"
+  const [discountPercent, setDiscountPercent] = useState("");
   const [payments, setPayments] = useState([{ method: "UPI", amount: "" }]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -303,6 +357,204 @@ export function BillingPOS() {
   const [lastSaleSummary, setLastSaleSummary] = useState(null);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isCashDrawerOpen, setIsCashDrawerOpen] = useState(false);
+  const [isUpiQrModalOpen, setIsUpiQrModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [heldCarts, setHeldCarts] = useState([]);
+  const [isHeldCartsModalOpen, setIsHeldCartsModalOpen] = useState(false);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [storeSettings, setStoreSettings] = useState(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("fh_held_carts");
+      if (saved) setHeldCarts(JSON.parse(saved));
+    } catch {}
+    api.settings.get().then((res) => {
+      if (res?.settings) setStoreSettings(res.settings);
+    }).catch(() => {});
+  }, []);
+
+  const handleHoldCart = () => {
+    if (!cart.length) {
+      toast.warning("Cart is empty. Add products before parking.");
+      return;
+    }
+    const newHeld = {
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      cart,
+      customer,
+      customerDraft,
+      discount,
+      payments,
+      totalPaisa,
+    };
+    const updated = [newHeld, ...heldCarts];
+    setHeldCarts(updated);
+    try {
+      localStorage.setItem("fh_held_carts", JSON.stringify(updated));
+    } catch {}
+    setCart([]);
+    setCustomer(null);
+    setCustomerDraft({
+      name: "",
+      mobile: "",
+      whatsappNumber: "",
+      billingWhatsAppConsent: true,
+      marketingWhatsAppConsent: false,
+    });
+    setDiscount("");
+    setPayments([{ method: "UPI", amount: "" }]);
+    toast.success("Bill parked on hold. You can resume it anytime.");
+  };
+
+  const handleResumeCart = (held) => {
+    if (cart.length > 0) {
+      if (!confirm("Your current bill has items. Replace it with the parked bill?")) {
+        return;
+      }
+    }
+    setCart(held.cart || []);
+    setCustomer(held.customer || null);
+    if (held.customerDraft) setCustomerDraft(held.customerDraft);
+    if (held.discount) setDiscount(held.discount);
+    if (held.payments?.length) setPayments(held.payments);
+
+    const updated = heldCarts.filter((h) => h.id !== held.id);
+    setHeldCarts(updated);
+    try {
+      localStorage.setItem("fh_held_carts", JSON.stringify(updated));
+    } catch {}
+    setIsHeldCartsModalOpen(false);
+    toast.success("Parked bill restored to register!");
+  };
+
+  const handleDeleteHeldCart = (heldId) => {
+    const updated = heldCarts.filter((h) => h.id !== heldId);
+    setHeldCarts(updated);
+    try {
+      localStorage.setItem("fh_held_carts", JSON.stringify(updated));
+    } catch {}
+    toast.success("Parked bill removed.");
+  };
+
+  const handleClearAllHeld = () => {
+    if (!confirm("Are you sure you want to clear all parked bills?")) return;
+    setHeldCarts([]);
+    try {
+      localStorage.removeItem("fh_held_carts");
+    } catch {}
+    setIsHeldCartsModalOpen(false);
+    toast.success("All parked bills cleared.");
+  };
+
+  const handleClearCart = () => {
+    if (!cart.length) return;
+    if (!confirm("Are you sure you want to clear the current bill?")) return;
+    setCart([]);
+    setDiscount("");
+    setPayments([{ method: "UPI", amount: "" }]);
+    setCustomer(null);
+    setQuery("");
+    setResults([]);
+    toast.info("Cart cleared.");
+  };
+
+  const handleScannedBarcode = async (scannedCode) => {
+    if (!scannedCode) return;
+    const clean = scannedCode.trim();
+    try {
+      const data = await api.products.search(clean);
+      const exact =
+        data.items?.find(
+          (item) =>
+            item.barcode === clean ||
+            item.sku?.toLowerCase() === clean.toLowerCase()
+        ) || data.items?.[0];
+
+      if (exact) {
+        addItem(exact);
+        playPosBeep("success", soundEnabled);
+        toast.success(`Scanned: ${exact.productName} (${exact.sku})`);
+        setIsCameraModalOpen(false);
+      } else {
+        playPosBeep("error", soundEnabled);
+        toast.error(`Barcode "${clean}" not found`);
+      }
+    } catch {
+      playPosBeep("error", soundEnabled);
+      toast.error(`Barcode scan failed for "${clean}"`);
+    }
+  };
+
+  useEffect(() => {
+    let barcodeBuffer = "";
+    let lastKeyTime = Date.now();
+
+    function handleGlobalKeyDown(e) {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      const isInputFocused = activeTag === "input" || activeTag === "textarea" || activeTag === "select";
+
+      // 1. Hotkeys
+      if (e.key === "F1") {
+        e.preventDefault();
+        setIsShortcutsModalOpen((prev) => !prev);
+        return;
+      } else if (e.key === "F2") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        return;
+      } else if (e.key === "F4") {
+        e.preventDefault();
+        if (cart.length > 0 && !busy) completeSale();
+        return;
+      } else if (e.key === "F8") {
+        e.preventDefault();
+        setIsCashDrawerOpen((prev) => !prev);
+        return;
+      } else if (e.key === "F9") {
+        e.preventDefault();
+        if (totalPaisa > 0) setIsUpiQrModalOpen((prev) => !prev);
+        return;
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        return;
+      }
+
+      // 2. Hardware Barcode Scanner burst detection (when not typing in an input)
+      if (!isInputFocused) {
+        const now = Date.now();
+        const timeDiff = now - lastKeyTime;
+        lastKeyTime = now;
+
+        if (e.key === "Enter") {
+          if (barcodeBuffer.length >= 3 && timeDiff < 200) {
+            e.preventDefault();
+            const scannedCode = barcodeBuffer.trim();
+            barcodeBuffer = "";
+            handleScannedBarcode(scannedCode);
+          }
+          barcodeBuffer = "";
+          return;
+        }
+
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          if (timeDiff > 120) {
+            barcodeBuffer = e.key;
+          } else {
+            barcodeBuffer += e.key;
+          }
+        }
+      }
+    }
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [cart, busy, totalPaisa, soundEnabled]);
 
   useEffect(() => {
     if (!customerId) return;
@@ -372,8 +624,22 @@ export function BillingPOS() {
       ),
     [cart],
   );
-  const discountPaisa = Math.min(toPaisa(discount), subtotalPaisa);
+  const discountPaisa = useMemo(() => {
+    if (discountMode === "PERCENT") {
+      const pct = parseFloat(discountPercent) || 0;
+      return Math.min(Math.round((subtotalPaisa * pct) / 100), subtotalPaisa);
+    }
+    return Math.min(toPaisa(discount), subtotalPaisa);
+  }, [discountMode, discountPercent, discount, subtotalPaisa]);
   const totalPaisa = subtotalPaisa - discountPaisa;
+
+  const taxRate = storeSettings?.taxRate ?? 5;
+  const estimatedTaxPaisa = useMemo(() => {
+    if (totalPaisa <= 0 || !taxRate) return 0;
+    return Math.round(totalPaisa - (totalPaisa / (1 + taxRate / 100)));
+  }, [totalPaisa, taxRate]);
+  const cgstPaisa = Math.round(estimatedTaxPaisa / 2);
+  const sgstPaisa = estimatedTaxPaisa - cgstPaisa;
 
   // Product search
   useEffect(() => {
@@ -410,13 +676,16 @@ export function BillingPOS() {
 
   function addItem(item) {
     setError("");
+    let added = false;
     setCart((current) => {
       const found = current.find((line) => line.variantId === item.variantId);
       if (found) {
         if (found.quantity >= item.stock) {
           setError("This variant has reached its available stock quantity.");
+          playPosBeep("error", soundEnabled);
           return current;
         }
+        added = true;
         return current.map((line) =>
           line.variantId === item.variantId
             ? { ...line, quantity: line.quantity + 1 }
@@ -425,10 +694,13 @@ export function BillingPOS() {
       }
       if (item.stock < 1) {
         setError("This variant is out of stock.");
+        playPosBeep("error", soundEnabled);
         return current;
       }
+      added = true;
       return [...current, { ...item, quantity: 1 }];
     });
+    if (added) playPosBeep("success", soundEnabled);
     inputRef.current?.focus();
   }
 
@@ -447,12 +719,16 @@ export function BillingPOS() {
       if (exact) {
         addItem(exact);
         setQuery("");
-      } else if (!data.items?.length)
+      } else if (!data.items?.length) {
+        playPosBeep("error", soundEnabled);
         setError(
           `Product not found for "${typed}". Search manually or add the product first.`,
         );
-      else setResults(data.items);
+      } else {
+        setResults(data.items);
+      }
     } catch {
+      playPosBeep("error", soundEnabled);
       setError(`Error searching for "${typed}".`);
     }
   }
@@ -613,12 +889,32 @@ export function BillingPOS() {
             <Button
               type="button"
               variant="outline"
+              onClick={() => setIsCameraModalOpen(true)}
+              className="h-11 border-[#dfd8cc] text-[#5f584e] hover:bg-[#faf9f6] flex items-center gap-1.5 px-2.5 sm:px-3"
+              title="Scan Barcode with Camera"
+            >
+              <Camera size={16} className="text-[#1a3a7a]" />
+              <span className="hidden lg:inline font-medium text-xs">Camera</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setIsCashDrawerOpen(true)}
-              className="h-11 border-[#d8c3a5] text-[#2c2724] hover:bg-[#faf7f2] flex items-center gap-2"
-              title="Open / Close Shift Cash Drawer"
+              className="h-11 border-[#d8c3a5] text-[#2c2724] hover:bg-[#faf7f2] flex items-center gap-1.5 px-3"
+              title="Open / Close Shift Cash Drawer (F8)"
             >
               <Vault size={16} className="text-[#c9963e]" />
               <span className="hidden sm:inline font-medium text-xs">Cash Drawer</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsShortcutsModalOpen(true)}
+              className="h-11 border-[#dfd8cc] text-[#5f584e] hover:bg-[#faf9f6] flex items-center gap-1.5 px-2.5 sm:px-3"
+              title="POS Keyboard Shortcuts (F1)"
+            >
+              <Keyboard size={15} className="text-[#8a847a]" />
+              <span className="hidden md:inline font-medium text-xs">Help (F1)</span>
             </Button>
           </div>
           <p className="mt-3 text-xs text-[#777169]">
@@ -736,10 +1032,60 @@ export function BillingPOS() {
                 {editOrderId ? "Edit mode" : "Counter sale"}
               </h2>
             </div>
-            <span className="font-financial text-sm text-[#d8b46a]">
-              {cart.reduce((sum, item) => sum + item.quantity, 0)} items
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSoundEnabled((prev) => !prev)}
+                className={`p-1.5 rounded transition-colors ${
+                  soundEnabled ? "text-[#d8b46a] hover:bg-white/10" : "text-[#706a61] hover:bg-white/5"
+                }`}
+                title={soundEnabled ? "Scanner sound on (click to mute)" : "Scanner sound muted (click to unmute)"}
+              >
+                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              </button>
+              <span className="font-financial text-sm text-[#d8b46a] bg-white/5 px-2 py-0.5 rounded">
+                {cart.reduce((sum, item) => sum + item.quantity, 0)} items
+              </span>
+            </div>
           </div>
+
+          {/* Quick Cart Actions Bar */}
+          <div className="mt-3 flex items-center justify-between gap-1.5 border-t border-white/10 pt-2.5 text-xs">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleHoldCart}
+                disabled={!cart.length}
+                className="inline-flex items-center gap-1 rounded bg-[#2a2520] hover:bg-[#3d352b] px-2.5 py-1 text-[11px] font-medium text-[#d8b46a] border border-[#4a3f30] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                title="Park current bill on hold"
+              >
+                <Clock size={12} />
+                Park Bill
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsHeldCartsModalOpen(true)}
+                className={`inline-flex items-center gap-1 rounded px-2.5 py-1 text-[11px] font-medium border transition-colors ${
+                  heldCarts.length > 0
+                    ? "bg-[#c9963e]/20 border-[#c9963e] text-[#f2d08a] hover:bg-[#c9963e]/30"
+                    : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
+                }`}
+                title="View parked bills"
+              >
+                Held Bills ({heldCarts.length})
+              </button>
+            </div>
+            {cart.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearCart}
+                className="text-[11px] text-[#ff8a80] hover:text-[#ff5252] hover:underline transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
           {editOrderId && (
             <div className="mt-2 rounded bg-[#2a1f00] border border-[#5a3e00] px-3 py-1.5 text-[10px] text-[#d8b46a]">
               ⚠ Modifying order — stock, customer stats & invoice will be recalculated on save.
@@ -779,6 +1125,39 @@ export function BillingPOS() {
         </div>
 
         <div className="space-y-4 border-t p-5">
+          {/* Exchange Credit Banner */}
+          {exchangeCreditPaisa > 0 && (
+            <div className="rounded-md border border-[#c9963e]/50 bg-[#fffcf5] p-3 text-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-[#8a5a10]">Garment Exchange Credit</p>
+                  <p className="font-financial font-bold text-sm text-[#0b0b0b] mt-0.5">
+                    {formatMoney(exchangeCreditPaisa)}
+                  </p>
+                </div>
+                {!exchangeApplied ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="gold"
+                    className="h-7 text-xs px-2.5 font-semibold"
+                    onClick={() => {
+                      setDiscount((exchangeCreditPaisa / 100).toString());
+                      setExchangeApplied(true);
+                      toast.success(`Applied ₹${(exchangeCreditPaisa / 100).toFixed(2)} exchange credit as bill discount`);
+                    }}
+                  >
+                    Apply Credit
+                  </Button>
+                ) : (
+                  <span className="rounded bg-[#eaf5ed] border border-[#a3d9b8] px-2 py-0.5 text-[10px] font-bold text-[#1a6b3a]">
+                    APPLIED
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Customer section */}
           <div className="rounded-md border border-[#e6e0d5] bg-[#faf9f6] p-3">
             <div className="flex items-center justify-between">
@@ -801,6 +1180,30 @@ export function BillingPOS() {
                   {customer.mobile || customer.whatsappNumber} ·{" "}
                   {customer.stats?.totalOrders || 0} previous orders
                 </p>
+                {customer.stats?.totalDuesPaisa > 0 && (
+                  <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between rounded bg-[#fff0f0] border border-[#f5c6cb] p-2.5 text-xs text-[#721c24] gap-2">
+                    <div>
+                      <span className="font-medium">Prior Outstanding Dues: </span>
+                      <span className="font-financial font-bold text-sm block sm:inline">
+                        {formatMoney(customer.stats.totalDuesPaisa)}
+                      </span>
+                    </div>
+                    <div className="shrink-0">
+                      <SettleDuesModal
+                        customer={customer}
+                        onSuccess={(data) => {
+                          setCustomer((prev) => ({
+                            ...prev,
+                            stats: {
+                              ...prev.stats,
+                              totalDuesPaisa: data.remainingDuesPaisa,
+                            },
+                          }));
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -900,6 +1303,37 @@ export function BillingPOS() {
                       />
                       Customer agrees to offers and new arrivals on WhatsApp
                     </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        if (!customerDraft.name && !customerDraft.mobile) {
+                          toast.warning("Please provide at least a customer name or mobile number");
+                          return;
+                        }
+                        try {
+                          const res = await api.customers.create(customerDraft);
+                          const created = res.data?.customer || res.customer || res;
+                          if (created) {
+                            setCustomer(created);
+                            setCustomerDraft({
+                              name: "",
+                              mobile: "",
+                              whatsappNumber: "",
+                              billingWhatsAppConsent: true,
+                              marketingWhatsAppConsent: false,
+                            });
+                            toast.success(`Customer ${created.name || created.mobile} saved & attached!`);
+                          }
+                        } catch (err) {
+                          toast.error(err.message || "Failed to save customer");
+                        }
+                      }}
+                      className="w-full h-8 text-xs border-[#c9963e] text-[#8a5a10] hover:bg-[#fffcf5] mt-1"
+                    >
+                      <UserPlus size={13} className="mr-1.5" /> Save &amp; Select Customer
+                    </Button>
                   </div>
                 </details>
               </>
@@ -915,23 +1349,94 @@ export function BillingPOS() {
             </div>
             
             {/* Discount */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-[#5f584e]">
-                Global Discount (₹)
-              </span>
-              <Input
-                className="w-32 h-9"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-              />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#5f584e]">
+                  Bill Discount
+                </span>
+                <div className="inline-flex rounded-md border border-[#dfd8cc] p-0.5 bg-white text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setDiscountMode("FLAT")}
+                    className={`px-2 py-0.5 rounded font-medium transition-colors ${
+                      discountMode === "FLAT" ? "bg-[#0b0b0b] text-white" : "text-[#706a61] hover:text-[#0b0b0b]"
+                    }`}
+                  >
+                    ₹ Flat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiscountMode("PERCENT")}
+                    className={`px-2 py-0.5 rounded font-medium transition-colors ${
+                      discountMode === "PERCENT" ? "bg-[#0b0b0b] text-white" : "text-[#706a61] hover:text-[#0b0b0b]"
+                    }`}
+                  >
+                    % Percent
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick % discount presets */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[5, 10, 15, 20].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => {
+                      setDiscountMode("PERCENT");
+                      setDiscountPercent(String(pct));
+                    }}
+                    className={`px-2 py-0.5 rounded text-[11px] font-semibold border transition-colors ${
+                      discountMode === "PERCENT" && discountPercent === String(pct)
+                        ? "bg-[#c9963e] text-white border-[#c9963e]"
+                        : "bg-white text-[#706a61] border-[#dfd8cc] hover:border-[#c9963e]"
+                    }`}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+                {(discount || discountPercent) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscount("");
+                      setDiscountPercent("");
+                    }}
+                    className="text-[10px] text-[#8a3a30] hover:underline ml-auto font-medium"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-2.5 top-2 text-xs text-[#8a847a] font-medium">
+                    {discountMode === "PERCENT" ? "%" : "₹"}
+                  </span>
+                  <Input
+                    className="h-8 pl-6 text-xs bg-white"
+                    inputMode="decimal"
+                    placeholder={discountMode === "PERCENT" ? "e.g. 10" : "0.00"}
+                    value={discountMode === "PERCENT" ? discountPercent : discount}
+                    onChange={(e) => {
+                      if (discountMode === "PERCENT") setDiscountPercent(e.target.value);
+                      else setDiscount(e.target.value);
+                    }}
+                  />
+                </div>
+                {discountPaisa > 0 && (
+                  <span className="font-financial text-xs font-semibold text-[#8a5a10] whitespace-nowrap">
+                    −{formatMoney(discountPaisa)}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Payments */}
-            <div className="space-y-2 pt-1 border-t border-[#e6e0d5]">
+            <div className="space-y-2 pt-2 border-t border-[#e6e0d5]">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#5f584e]">Payments</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#5f584e]">Payments</span>
                 {payments.length < 4 && (
                   <button
                     onClick={() => setPayments([...payments, { method: "CASH", amount: "" }])}
@@ -946,24 +1451,36 @@ export function BillingPOS() {
               <div className="flex items-center gap-1.5 flex-wrap pt-0.5 pb-1">
                 <button
                   type="button"
-                  onClick={() => setPayments([{ method: "UPI", amount: (totalPaisa / 100).toString() }])}
-                  className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#eef4ff] text-[#1a3a7a] border border-[#c5d7ff] hover:bg-[#dce8ff] transition-colors"
+                  onClick={() => {
+                    setPayments([{ method: "UPI", amount: (totalPaisa / 100).toString() }]);
+                    setIsUpiQrModalOpen(true);
+                  }}
+                  className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#eef4ff] text-[#1a3a7a] border border-[#c5d7ff] hover:bg-[#dce8ff] transition-colors flex items-center gap-1"
+                  title="Generate dynamic counter UPI QR Code (F9)"
                 >
-                  ⚡ Full UPI
+                  <QrCode size={12} />
+                  ⚡ UPI QR (F9)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayments([{ method: "UPI", amount: (totalPaisa / 100).toString() }])}
+                  className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#f0f4fc] text-[#1a3a7a] border border-[#d0dcf5] hover:bg-[#e4ecfb] transition-colors"
+                >
+                  Full UPI
                 </button>
                 <button
                   type="button"
                   onClick={() => setPayments([{ method: "CASH", amount: (totalPaisa / 100).toString() }])}
                   className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#f0f9f4] text-[#1a6b3a] border border-[#a3d9b8] hover:bg-[#dcf3e5] transition-colors"
                 >
-                  ⚡ Full Cash
+                  Full Cash
                 </button>
                 <button
                   type="button"
                   onClick={() => setPayments([{ method: "CARD", amount: (totalPaisa / 100).toString() }])}
                   className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#faf5ff] text-[#5a2a7a] border border-[#e2ccff] hover:bg-[#f3e8ff] transition-colors"
                 >
-                  ⚡ Full Card
+                  Full Card
                 </button>
               </div>
 
@@ -1058,6 +1575,20 @@ export function BillingPOS() {
                 <span>Discount</span>
                 <span className="font-financial font-medium">
                   −{formatMoney(discountPaisa)}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between text-xs text-[#706a61] pt-0.5">
+              <span>Included GST ({taxRate}%)</span>
+              <span className="font-financial font-medium">
+                {formatMoney(estimatedTaxPaisa)}
+              </span>
+            </div>
+            {estimatedTaxPaisa > 0 && (
+              <div className="flex justify-between text-[11px] text-[#8a847a]">
+                <span className="pl-2">CGST ({(taxRate / 2).toFixed(1)}%) + SGST ({(taxRate / 2).toFixed(1)}%)</span>
+                <span className="font-financial">
+                  {formatMoney(cgstPaisa)} + {formatMoney(sgstPaisa)}
                 </span>
               </div>
             )}
@@ -1170,25 +1701,34 @@ export function BillingPOS() {
                 {success.postSaleWarning}
               </p>
             )}
-            <div className="mt-6 flex justify-center gap-3">
-              <Button variant="outline" asChild>
+            <div className="mt-6 flex flex-wrap justify-center gap-2.5">
+              <Button
+                variant="gold"
+                onClick={() => setIsInvoiceModalOpen(true)}
+                className="flex items-center gap-1.5 font-semibold text-xs sm:text-sm h-9"
+              >
+                <Receipt size={15} /> Print / Preview Invoice
+              </Button>
+              <Button variant="outline" asChild className="text-xs sm:text-sm h-9">
                 <a
                   href={api.invoices.getPdfUrl(success.invoiceId)}
                   target="_blank"
                 >
-                  View invoice
+                  Download PDF
                 </a>
               </Button>
               {editOrderId ? (
-                <Button onClick={() => router.push("/orders")}>
+                <Button variant="outline" onClick={() => router.push("/orders")} className="text-xs sm:text-sm h-9">
                   Back to Orders
                 </Button>
               ) : (
                 <Button
+                  variant="outline"
                   onClick={() => {
                     setSuccess(null);
                     inputRef.current?.focus();
                   }}
+                  className="text-xs sm:text-sm h-9"
                 >
                   New bill
                 </Button>
@@ -1197,6 +1737,12 @@ export function BillingPOS() {
           </div>
         </div>
       )}
+      <InvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        invoiceId={success?.invoiceId}
+        orderId={success?.orderId}
+      />
       <AddProductModal
         isOpen={isAddProductModalOpen}
         onClose={() => setIsAddProductModalOpen(false)}
@@ -1210,6 +1756,34 @@ export function BillingPOS() {
       <CashDrawerModal
         isOpen={isCashDrawerOpen}
         onClose={() => setIsCashDrawerOpen(false)}
+      />
+      <HeldCartsModal
+        isOpen={isHeldCartsModalOpen}
+        onClose={() => setIsHeldCartsModalOpen(false)}
+        heldCarts={heldCarts}
+        onResume={handleResumeCart}
+        onDelete={handleDeleteHeldCart}
+        onClearAll={handleClearAllHeld}
+      />
+      <UpiQrModal
+        isOpen={isUpiQrModalOpen}
+        onClose={() => setIsUpiQrModalOpen(false)}
+        amountPaisa={totalPaisa}
+        upiId={storeSettings?.upiId}
+        storeName={storeSettings?.storeName || "Fashion Hub"}
+        onPaymentConfirmed={() => {
+          setPayments([{ method: "UPI", amount: (totalPaisa / 100).toString() }]);
+          toast.success("UPI payment recorded for this bill.");
+        }}
+      />
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+      />
+      <CameraScannerModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onScan={handleScannedBarcode}
       />
     </div>
   );

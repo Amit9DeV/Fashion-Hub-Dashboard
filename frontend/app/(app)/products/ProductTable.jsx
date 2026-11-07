@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ImageIcon, Shirt } from "lucide-react";
+import { ImageIcon, Shirt, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { api } from "@/src/services/api";
@@ -108,6 +108,43 @@ export default function ProductTable({ initialProducts, searchComponent }) {
     }
   };
 
+  const handleExportProductsCsv = () => {
+    if (!filteredProducts.length) return;
+    const headers = ["Product Name", "Brand", "Category", "Variants Count", "Total Stock", "Status", "Description"];
+    const rows = filteredProducts.map((p) => [
+      `"${(p.name || "").replace(/"/g, '""')}"`,
+      `"${(p.brandSnapshot || "").replace(/"/g, '""')}"`,
+      `"${(p.categorySnapshot || "").replace(/"/g, '""')}"`,
+      p.variantCount || 0,
+      p.totalStock || 0,
+      p.status || "ACTIVE",
+      `"${(p.description || "").replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `products_catalog_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Products catalog exported to CSV");
+  };
+
+  const handleDeleteProduct = async (e, product) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete "${product.name}"? All its variants and stock will be permanently removed.`)) {
+      return;
+    }
+    try {
+      await api.products.delete(product._id);
+      setProducts((prev) => prev.filter((p) => p._id !== product._id));
+      toast.success(`"${product.name}" deleted successfully`);
+    } catch (err) {
+      toast.error(err.message || "Failed to delete product");
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Dynamic Filters Bar */}
@@ -159,8 +196,18 @@ export default function ProductTable({ initialProducts, searchComponent }) {
             </button>
           )}
         </div>
-        <div className="w-full sm:w-auto sm:ml-auto text-xs text-[#8a847a] text-right">
-          Showing {filteredProducts.length} of {products.length} products
+        <div className="w-full sm:w-auto sm:ml-auto flex items-center justify-between sm:justify-end gap-3 text-xs text-[#8a847a]">
+          <span>Showing {filteredProducts.length} of {products.length} products</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportProductsCsv}
+            className="h-8 px-2.5 text-xs text-[#5f584e] flex items-center gap-1.5"
+            title="Export products catalog to CSV"
+          >
+            <Download size={13} /> Export CSV
+          </Button>
         </div>
       </div>
 
@@ -325,7 +372,17 @@ export default function ProductTable({ initialProducts, searchComponent }) {
                       <Button size="sm" variant="outline" className="h-6 px-3 text-[10px] w-16" onClick={cancelEdit}>Cancel</Button>
                     </div>
                   ) : (
-                    <Button size="sm" variant="outline" className="h-7 px-3 text-[10px]" onClick={e => startEdit(e, product)}>Edit</Button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button size="sm" variant="outline" className="h-7 px-3 text-[10px]" onClick={e => startEdit(e, product)}>Edit</Button>
+                      <button
+                        type="button"
+                        onClick={e => handleDeleteProduct(e, product)}
+                        className="p-1 text-[#8a2f20] hover:text-[#b83320] transition-colors rounded hover:bg-[#fff0f0]"
+                        title={`Delete ${product.name}`}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

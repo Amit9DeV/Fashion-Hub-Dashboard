@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import connectToDatabase from "../../config/db.js";
+import connectToDatabase, { supportsTransactions } from "../../config/db.js";
 import Product from "../../models/Product.js";
 import ProductVariant from "../../models/ProductVariant.js";
 import Customer from "../../models/Customer.js";
@@ -69,7 +69,7 @@ export async function updateSale(orderId, rawInput, user) {
   let result;
 
   try {
-    const isStandalone = !process.env.MONGODB_URI?.includes("replicaSet");
+    const isStandalone = !supportsTransactions();
     if (isStandalone) {
       session.endSession();
       session = undefined;

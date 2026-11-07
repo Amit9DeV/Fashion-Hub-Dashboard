@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, Edit2, CheckCircle2, XCircle, Users } from "lucide-react";
+import { ShieldCheck, Edit2, CheckCircle2, XCircle, Users, Trash2 } from "lucide-react";
 import EditStaffModal from "./EditStaffModal";
 import { api } from "@/src/services/api";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export default function StaffTable({ initialStaff }) {
   const [staff, setStaff] = useState(initialStaff || []);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const roleColors = {
     ADMIN: "bg-[#fdf8f0] text-[#8a5a10] border border-[#e6c97a]",
@@ -28,6 +29,20 @@ export default function StaffTable({ initialStaff }) {
     }
   };
 
+  const handleDelete = async (member) => {
+    if (!confirm(`Are you sure you want to permanently delete ${member.name}? This action cannot be undone.`)) return;
+    setDeletingId(member._id);
+    try {
+      await api.staff.delete(member._id);
+      setStaff(prev => prev.filter(s => s._id !== member._id));
+      toast.success(`${member.name} has been removed from staff.`);
+    } catch (err) {
+      toast.error(err.message || "Failed to delete staff member");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (staff.length === 0) {
     return (
       <div className="grid min-h-[300px] place-items-center p-6 text-center">
@@ -44,6 +59,11 @@ export default function StaffTable({ initialStaff }) {
 
   return (
     <>
+      <div className="flex items-center justify-between px-5 py-2.5 bg-[#faf9f6] border-b border-[#dfd8cc] text-xs">
+        <span className="text-[#81796d] font-medium">
+          {staff.filter(s => s.active).length} active · {staff.length} total members
+        </span>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-[0.12em] text-[#81796d]">
@@ -107,13 +127,27 @@ export default function StaffTable({ initialStaff }) {
                     : "—"}
                 </td>
                 <td className="px-5 py-3.5 text-right">
-                  <button
-                    type="button"
-                    onClick={() => setEditingStaff(member)}
-                    className="inline-flex items-center gap-1 rounded border border-[#dfd8cc] bg-white hover:bg-gray-100 px-2.5 py-1 text-xs font-medium text-[#5f584e] transition-colors"
-                  >
-                    <Edit2 size={12} /> Edit
-                  </button>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setEditingStaff(member)}
+                      className="inline-flex items-center gap-1 rounded border border-[#dfd8cc] bg-white hover:bg-gray-100 px-2.5 py-1 text-xs font-medium text-[#5f584e] transition-colors"
+                    >
+                      <Edit2 size={12} /> Edit
+                    </button>
+                    {member.role !== "ADMIN" && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(member)}
+                        disabled={deletingId === member._id}
+                        className="inline-flex items-center gap-1 rounded border border-[#f5c6cb] bg-white hover:bg-[#fff0f0] px-2 py-1 text-xs font-medium text-[#8a2f20] transition-colors disabled:opacity-50"
+                        title="Delete staff member"
+                      >
+                        <Trash2 size={12} />
+                        {deletingId === member._id ? "..." : "Delete"}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

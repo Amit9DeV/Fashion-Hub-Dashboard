@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CircleAlert, Package, ReceiptText, UsersRound, FileText, TriangleAlert, Banknote, CreditCard, ScanLine, ClipboardList } from "lucide-react";
+import { ArrowRight, CircleAlert, Package, ReceiptText, UsersRound, FileText, TriangleAlert, Banknote, CreditCard, ScanLine, ClipboardList, Wallet, TrendingUp, Plus, HandCoins } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { serverFetch } from "@/lib/server-api";
 import { SalesChart } from "@/components/dashboard/SalesChart";
@@ -14,9 +14,10 @@ export default async function DashboardPage() {
   }
   const payload = await res.json().catch(() => ({}));
   const {
-    today = { sales: 0, orders: 0, itemsSold: 0 },
+    today = { sales: 0, orders: 0, itemsSold: 0, expenses: 0, netSales: 0 },
     totalSales = 0,
     totalOrders = 0,
+    totalDues = 0,
     newCustomers = 0,
     totalCustomers = 0,
     paymentSummary = { UPI: 0, CASH: 0, CARD: 0 },
@@ -42,30 +43,33 @@ export default async function DashboardPage() {
             Make every counter moment count.
           </h2>
         </div>
-        <Link
-          href="/billing"
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            background: '#0b0b0b', color: '#d8b46a',
-            padding: '11px 22px', borderRadius: 3,
-            fontSize: 13, fontWeight: 600, letterSpacing: '0.04em',
-            fontFamily: "'Inter', sans-serif", textDecoration: 'none',
-            border: '1px solid #2a2520', whiteSpace: 'nowrap',
-            flexShrink: 0,
-          }}
-          className="w-full sm:w-auto"
-        >
-          New sale <ArrowRight size={14} />
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <Link
+            href="/billing"
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              background: '#0b0b0b', color: '#d8b46a',
+              padding: '11px 22px', borderRadius: 3,
+              fontSize: 13, fontWeight: 600, letterSpacing: '0.04em',
+              fontFamily: "'Inter', sans-serif", textDecoration: 'none',
+              border: '1px solid #2a2520', whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+            className="w-full sm:w-auto"
+          >
+            New sale <ArrowRight size={14} />
+          </Link>
+        </div>
       </section>
 
       {/* ── KPI Row ───────────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
-        <MetricCard label="Total Sales" value={formatMoney(totalSales)} icon={ReceiptText} theme={{ bg: '#f0f9f4', text: '#1a6b3a', border: '#1a6b3a' }} />
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-2.5 sm:gap-3">
         <MetricCard label="Today's Sales" value={formatMoney(today.sales)} icon={Banknote} theme={{ bg: '#f0f4fc', text: '#1a3a7a', border: '#1a3a7a' }} />
         <MetricCard label="Today's Orders" value={today.orders.toString()} icon={Package} theme={{ bg: '#fdf8f0', text: '#8a5a10', border: '#c9963e' }} />
-        <MetricCard label="Total Orders" value={totalOrders.toLocaleString('en-IN')} icon={ClipboardList} theme={{ bg: '#f5f0fa', text: '#5a2a7a', border: '#5a2a7a' }} />
-        <MetricCard label="Total Customers" value={totalCustomers.toString()} icon={UsersRound} theme={{ bg: '#f0f8f8', text: '#1a5a5a', border: '#1a5a5a' }} />
+        <MetricCard label="Today Expenses" value={formatMoney(today.expenses || 0)} icon={Wallet} theme={{ bg: '#fef7f6', text: '#8a3a30', border: '#8a3a30' }} />
+        <MetricCard label="Total Sales" value={formatMoney(totalSales)} icon={ReceiptText} theme={{ bg: '#f0f9f4', text: '#1a6b3a', border: '#1a6b3a' }} />
+        <MetricCard label="Total Dues" value={formatMoney(totalDues || 0)} icon={HandCoins} theme={{ bg: '#fff6f4', text: '#8a2f20', border: '#8a2f20' }} />
+        <MetricCard label="Customers" value={totalCustomers.toString()} icon={UsersRound} theme={{ bg: '#f0f8f8', text: '#1a5a5a', border: '#1a5a5a' }} />
         <MetricCard
           label="Low Stock"
           value={inventoryAttention.lowStockCount.toString()}
@@ -168,9 +172,14 @@ export default async function DashboardPage() {
 
         {/* Inventory Attention */}
         <div className="content-card flex flex-col">
-          <div style={{ padding: '18px 24px', borderBottom: '1px solid #f0ede7' }}>
-            <p className="card-eyebrow" style={{ color: '#8a1a1a' }}>Inventory Attention</p>
-            <p className="card-title">Action required</p>
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid #f0ede7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p className="card-eyebrow" style={{ color: '#8a1a1a' }}>Inventory Attention</p>
+              <p className="card-title">Action required</p>
+            </div>
+            <Link href="/inventory" style={{ fontSize: 11, fontWeight: 600, color: '#8a1a1a', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>
+              View inventory
+            </Link>
           </div>
           {inventoryAttention.outOfStockCount > 0 || inventoryAttention.lowStockCount > 0 ? (
             <div style={{ flex: 1, overflowY: 'auto', maxHeight: 320, divideColor: '#f5f2ee' }}>
@@ -212,9 +221,23 @@ export default async function DashboardPage() {
       {/* ── Top Products ─────────────────────────────────────────── */}
       {topProducts.length > 0 && (
         <section className="content-card">
-          <div style={{ padding: '18px 24px', borderBottom: '1px solid #f0ede7' }}>
-            <p className="card-eyebrow" style={{ color: '#1a5a5a' }}>Top Performers · Lifetime</p>
-            <p className="card-title">Best-selling products</p>
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <p className="card-eyebrow" style={{ color: '#1a5a5a' }}>Top Performers · Lifetime</p>
+              <p className="card-title">Best-selling products</p>
+            </div>
+            <Link
+              href="/reports"
+              style={{
+                fontSize: 11, fontWeight: 600, color: '#9b7740',
+                fontFamily: "'Inter', sans-serif", letterSpacing: '0.06em',
+                textDecoration: 'none', textTransform: 'uppercase',
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}
+              className="hover:text-[#7a5c2f] transition-colors shrink-0"
+            >
+              View All Reports <ArrowRight size={12} />
+            </Link>
           </div>
           <div className="overflow-x-auto">
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>

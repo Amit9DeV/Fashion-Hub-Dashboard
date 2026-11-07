@@ -18,7 +18,7 @@ export const getOrders = async (req, res) => {
     const limit = Math.min(100, parseInt(req.query.limit) || 50);
     const skip = (page - 1) * limit;
 
-    const query = req.query.query?.trim().slice(0, 80) || "";
+    const query = (req.query.query || req.query.q)?.trim().slice(0, 80) || "";
     let filter = {};
     if (query) {
       // Escape for regex
@@ -26,9 +26,36 @@ export const getOrders = async (req, res) => {
       const search = new RegExp(escapeRegExp(query), "i");
       filter.$or = [
         { invoiceNumber: search },
+        { orderNumber: search },
         { "customerSnapshot.name": search },
         { "customerSnapshot.mobile": search },
+        { "customerSnapshot.whatsappNumber": search },
       ];
+    }
+
+    if (req.query.startDate && req.query.endDate) {
+      filter.completedAt = {
+        $gte: new Date(req.query.startDate),
+        $lte: new Date(req.query.endDate + "T23:59:59.999Z")
+      };
+    } else if (req.query.startDate) {
+      filter.completedAt = { $gte: new Date(req.query.startDate) };
+    } else if (req.query.endDate) {
+      filter.completedAt = { $lte: new Date(req.query.endDate + "T23:59:59.999Z") };
+    }
+
+    if (req.query.paymentMethod && req.query.paymentMethod !== "ALL") {
+      filter["payments.method"] = req.query.paymentMethod.toUpperCase();
+    }
+
+    if (req.query.status && req.query.status !== "ALL") {
+      filter.status = req.query.status.toUpperCase();
+    }
+
+    if (req.query.dueStatus === "HAS_DUES") {
+      filter.duePaisa = { $gt: 0 };
+    } else if (req.query.dueStatus === "PAID") {
+      filter.duePaisa = { $lte: 0 };
     }
 
     const [orders, total] = await Promise.all([
@@ -135,17 +162,22 @@ export const updateOrder = async (req, res) => {
 // @access  Private
 export const searchOrders = async (req, res) => {
   try {
-    const { q } = req.query;
+    const q = (req.query.q || "").trim().slice(0, 80);
     if (!q) {
       return res.status(400).json({ success: false, message: "Query parameter 'q' is required" });
     }
     
     await connectToDatabase();
     
+    const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const search = new RegExp(escapeRegExp(q), "i");
     let query = {
       $or: [
-        { invoiceNumber: { $regex: new RegExp(q, "i") } },
-        { orderNumber: { $regex: new RegExp(q, "i") } }
+        { invoiceNumber: search },
+        { orderNumber: search },
+        { "customerSnapshot.mobile": search },
+        { "customerSnapshot.name": search },
+        { "customerSnapshot.whatsappNumber": search },
       ]
     };
     

@@ -8,45 +8,42 @@ import InvoiceTrustFeatures from "./InvoiceTrustFeatures";
 import InvoiceFooter from "./InvoiceFooter";
 import "./invoice.css";
 
-export default function FashionHubInvoice({ invoice, customer }) {
-  const invoiceData = invoice || {
-    invoiceNumber: "FH/26-27/000011",
-    date: "18 Aug 2026",
-    time: "09:17 PM",
-    items: [
-      {
-        name: "Signature Piqué Polo",
-        sku: "FH-POLO-CREAM-L",
-        size: "L",
-        color: "Cream",
-        qty: 1,
-        rate: 1499,
-        amount: 1499,
-      },
-      {
-        name: "Peter England Formal Shirt",
-        sku: "FH-SHIRT-WHT-M",
-        size: "M",
-        color: "White",
-        qty: 1,
-        rate: 1899,
-        amount: 1899,
-      },
-    ],
-    subtotal: 3398,
-    tax: 162,
-    total: 3398,
-    paymentMethod: "UPI",
-    paymentAmount: 3398,
+export default function FashionHubInvoice({ invoice, customer, store, theme = "dark" }) {
+  // Normalize items array
+  const rawItems = invoice?.items || invoice?.snapshot?.items || [];
+  const items = Array.isArray(rawItems) ? rawItems : [];
+
+  const invoiceData = {
+    invoiceNumber: invoice?.invoiceNumber || invoice?.snapshot?.invoiceNumber || "FH/26-27/000001",
+    date: invoice?.date,
+    time: invoice?.time,
+    issuedAt: invoice?.issuedAt || invoice?.snapshot?.issuedAt || invoice?.completedAt,
+    items,
+    subtotalPaisa: invoice?.subtotalPaisa ?? invoice?.snapshot?.subtotalPaisa,
+    subtotal: invoice?.subtotal ?? invoice?.snapshot?.subtotal,
+    taxPaisa: invoice?.taxPaisa ?? invoice?.snapshot?.taxPaisa,
+    tax: invoice?.tax ?? invoice?.snapshot?.tax,
+    cgstPaisa: invoice?.cgstPaisa ?? invoice?.snapshot?.cgstPaisa,
+    sgstPaisa: invoice?.sgstPaisa ?? invoice?.snapshot?.sgstPaisa,
+    discountPaisa: invoice?.discountPaisa ?? invoice?.snapshot?.discountPaisa,
+    discount: invoice?.discount ?? invoice?.snapshot?.discount,
+    totalPaisa: invoice?.totalPaisa ?? invoice?.snapshot?.totalPaisa,
+    total: invoice?.total ?? invoice?.snapshot?.total,
+    duePaisa: invoice?.duePaisa ?? invoice?.snapshot?.duePaisa,
+    due: invoice?.due ?? invoice?.snapshot?.due,
+    payments: invoice?.payments || invoice?.snapshot?.payments,
+    paymentMethod: invoice?.paymentMethod || invoice?.snapshot?.paymentMethod,
+    paymentAmount: invoice?.paymentAmount || invoice?.snapshot?.paymentAmount,
   };
 
-  const customerData = customer || {
-    name: "Amit Jee",
-    mobile: "9334135467",
+  const customerData = customer || invoice?.customer || invoice?.snapshot?.customer || invoice?.customerSnapshot || {
+    name: "Walk-in Customer",
   };
+
+  const storeData = store || invoice?.store || invoice?.snapshot?.store;
 
   return (
-    <div className="fh-invoice-container">
+    <div className={`fh-invoice-container fh-printable ${theme === "light" ? "fh-theme-light" : ""}`}>
       {/* Decorative Borders */}
       <div className="fh-outer-border"></div>
       <div className="fh-inner-border"></div>
@@ -55,26 +52,26 @@ export default function FashionHubInvoice({ invoice, customer }) {
       <div className="fh-corner fh-corner-bl"></div>
       <div className="fh-corner fh-corner-br"></div>
 
-      <InvoiceHeader />
+      <InvoiceHeader store={storeData} />
 
       {/* Invoice Title */}
-      <div className="w-full flex items-center justify-center mt-4 mb-8 z-10">
-        <div className="text-[#C99532] font-serif text-xl tracking-[0.3em] flex items-center gap-4">
+      <div className="w-full flex items-center justify-center mt-2 mb-6 z-10">
+        <div className="text-[#C99532] font-serif text-lg sm:text-xl tracking-[0.3em] flex items-center gap-3">
           <span className="opacity-90">✨</span>
-          <span className="font-bold pl-[0.3em]">INVOICE</span>
+          <span className="font-bold pl-[0.3em]">TAX INVOICE</span>
           <span className="opacity-90">✨</span>
         </div>
       </div>
 
       <div className="invoice-content z-10 relative">
         <InvoiceMeta invoice={invoiceData} customer={customerData} />
-        <InvoiceItems items={invoiceData.items} />
+        <InvoiceItems items={items} />
         <InvoiceSummary invoice={invoiceData} />
         <InvoicePayment invoice={invoiceData} />
         <InvoiceTrustFeatures />
       </div>
 
-      <InvoiceFooter />
+      <InvoiceFooter store={storeData} invoice={invoiceData} />
     </div>
   );
 }

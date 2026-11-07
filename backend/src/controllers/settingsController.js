@@ -11,8 +11,13 @@ export const getSettings = async (req, res) => {
         storeName: "Fashion Hub",
         tagline: "Premium Men's Fashion",
         taxRate: 5,
-        invoiceFooter: "Thank you for shopping with us!"
+        invoiceFooter: "Thank you for shopping with us!",
+        printFormat: "A4",
+        lowStockThreshold: 5,
       };
+    } else {
+      settings.printFormat = settings.printFormat || "A4";
+      settings.lowStockThreshold = settings.lowStockThreshold || 5;
     }
 
     return res.json({ 
@@ -33,17 +38,22 @@ export const updateSettings = async (req, res) => {
 
     await connectToDatabase();
     
-    const { storeName, tagline, gstin, taxRate, invoiceFooter, invoicePreferences } = req.body;
+    const { storeName, tagline, gstin, phone, address, upiId, taxRate, invoiceFooter, invoicePreferences, printFormat, lowStockThreshold } = req.body;
     
     let settings = await Settings.findOne();
     if (!settings) {
-      settings = new Settings({ storeName, tagline, gstin, taxRate, invoiceFooter, invoicePreferences });
+      settings = new Settings({ storeName, tagline, gstin, phone, address, upiId, taxRate, invoiceFooter, invoicePreferences, printFormat, lowStockThreshold });
     } else {
-      settings.storeName = storeName;
-      settings.tagline = tagline;
-      settings.gstin = gstin;
-      settings.taxRate = taxRate;
-      settings.invoiceFooter = invoiceFooter;
+      if (storeName !== undefined) settings.storeName = storeName;
+      if (tagline !== undefined) settings.tagline = tagline;
+      if (gstin !== undefined) settings.gstin = gstin;
+      if (phone !== undefined) settings.phone = phone;
+      if (address !== undefined) settings.address = address;
+      if (upiId !== undefined) settings.upiId = upiId;
+      if (taxRate !== undefined) settings.taxRate = taxRate;
+      if (invoiceFooter !== undefined) settings.invoiceFooter = invoiceFooter;
+      if (printFormat !== undefined && ["A4", "THERMAL_80MM"].includes(printFormat)) settings.printFormat = printFormat;
+      if (lowStockThreshold !== undefined) settings.lowStockThreshold = Math.max(1, parseInt(lowStockThreshold, 10) || 5);
       if (invoicePreferences) {
         settings.invoicePreferences = {
           ...settings.invoicePreferences,

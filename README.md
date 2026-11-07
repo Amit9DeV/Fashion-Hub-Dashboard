@@ -14,10 +14,11 @@ Fashion Hub POS is a premium, modern point-of-sale system built specifically for
 
 ## 🏗 Architecture
 
-The application uses a decoupled dual-port architecture:
+The application uses a Next.js frontend, an Express API, and MongoDB:
 
-1. **Frontend (Next.js - Port 3000)**: A 100% pure UI/Client layer built with React, Next.js (App Router), Tailwind CSS, and Shadcn UI. It communicates exclusively with the backend REST API. Mobile-first design for full responsiveness across all viewports.
-2. **Backend (Node.js/Express - Port 5000)**: A robust RESTful API handling all business logic, MongoDB connectivity via Mongoose, PDFKit rendering, and secure JSON Web Token (JWT) stateless auth.
+1. **Frontend (Next.js - Port 3000)**: React App Router UI. Browser API traffic goes through a same-origin Next.js route handler, which attaches the HttpOnly session token before forwarding to Express. This avoids third-party cookie dependencies.
+2. **Backend (Node.js/Express - Port 5000)**: REST API for business logic, authorization, MongoDB access, PDF invoices, and WhatsApp delivery.
+3. **Database (MongoDB)**: A replica set or Atlas cluster enables atomic sales and inventory transactions. Standalone local MongoDB is supported with best-effort multi-document writes.
 
 ## 🚀 Getting Started
 
@@ -32,10 +33,10 @@ cd backend
 npm install
 ```
 
-Ensure your `backend/.env` file contains:
+Create `backend/.env` with a MongoDB URI and a unique secret of at least 32 characters:
 ```env
 MONGODB_URI=mongodb://127.0.0.1:27017/fashion_hub
-AUTH_SECRET=your_super_secret_jwt_key
+AUTH_SECRET=
 PORT=5000
 FRONTEND_URL=http://localhost:3000
 ```
@@ -52,11 +53,11 @@ cd frontend
 npm install
 ```
 
-Configure environment variables in `frontend/.env.local`:
+Configure `frontend/.env.local` with the same auth secret:
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-AUTH_SECRET=your_super_secret_jwt_key
+BACKEND_API_URL=http://localhost:5000/api
+AUTH_SECRET=the-same-secret-as-backend
 ```
 
 Start the frontend:
@@ -64,13 +65,14 @@ Start the frontend:
 npm run dev
 ```
 
-### 3. Usage
-Navigate to `http://localhost:3000` in your browser. 
-Log in using the default admin credentials (e.g., `admin@fashionhub.local` / `password`).
+### 3. Seed and sign in
+From `frontend`, run `npm run seed`. This creates a local admin account and Fashion Hub brand/category master data. Local seed credentials are `admin@fashionhub.local` / `FashionHub@123`; change them before using real store data. Set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` to choose different credentials. For a disposable demo product, also set `SEED_DEMO_CATALOG=true` before seeding.
+
+Then open `http://localhost:3000/login`. Production seeding requires explicit admin credentials and does not create a demo catalogue by default.
 
 ## 🛠 Tech Stack
 
-- **Frontend**: Next.js 14, React 18, TailwindCSS, Lucide Icons, Recharts, Shadcn UI
+- **Frontend**: Next.js 16, React 19, Tailwind CSS, Lucide Icons, Recharts, Radix UI
 - **Backend**: Node.js, Express 5, Mongoose 9, PDFKit, Zod, JWT
 - **Database**: MongoDB
 

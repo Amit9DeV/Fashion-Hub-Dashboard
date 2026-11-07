@@ -1,4 +1,4 @@
-import connectToDatabase from "../config/db.js";
+import connectToDatabase, { supportsTransactions } from "../config/db.js";
 import CartReservation from "../models/CartReservation.js";
 import ProductVariant from "../models/ProductVariant.js";
 import mongoose from "mongoose";
@@ -14,7 +14,7 @@ export const cartHeartbeat = async (req, res) => {
     await connectToDatabase();
     
     const session = await mongoose.startSession();
-    const isStandalone = !process.env.MONGODB_URI?.includes("replicaSet");
+    const isStandalone = !supportsTransactions();
     if (isStandalone) {
       session.endSession();
     }

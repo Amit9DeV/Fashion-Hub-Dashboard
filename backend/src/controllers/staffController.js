@@ -96,3 +96,32 @@ export const updateStaff = async (req, res) => {
     return res.status(500).json({ success: false, message: "Could not update staff member." });
   }
 };
+
+export const deleteStaff = async (req, res) => {
+  try {
+    if (req.user?.role !== "ADMIN") {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { id } = req.params;
+
+    // Prevent deleting the currently logged-in admin
+    if (req.user.id?.toString() === id) {
+      return res.status(400).json({ success: false, message: "You cannot delete your own account." });
+    }
+
+    await connectToDatabase();
+    const deleted = await User.findByIdAndDelete(id).lean();
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Staff member not found." });
+    }
+
+    return res.json({
+      success: true,
+      message: "Staff member deleted successfully."
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not delete staff member." });
+  }
+};

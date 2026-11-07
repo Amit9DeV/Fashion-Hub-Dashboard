@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
 import { toast } from "sonner";
-import { ArrowLeft, Box, BarChart3, List, Settings, TrendingUp, PackageSearch, Plus, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Box, BarChart3, List, Settings, TrendingUp, PackageSearch, Plus, Image as ImageIcon, Printer, UploadCloud, Loader2, History, ArrowDownRight, ArrowUpRight, FileText } from "lucide-react";
+import BarcodePrintModal from "@/components/products/BarcodePrintModal";
+import InvoiceModal from "@/components/invoice/InvoiceModal";
+import { readFileAsOptimizedDataUrl } from "@/lib/image-utils";
 
 export default function ProductDetailPage(props) {
   const params = use(props.params);
@@ -20,6 +23,7 @@ export default function ProductDetailPage(props) {
   
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
   
   // Forms
   const [editingBasic, setEditingBasic] = useState(false);
@@ -29,6 +33,29 @@ export default function ProductDetailPage(props) {
   const [addingVariant, setAddingVariant] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [savingImage, setSavingImage] = useState(false);
+
+  // Live Audit Movements and Sales
+  const [movements, setMovements] = useState([]);
+  const [loadingMovements, setLoadingMovements] = useState(false);
+  const [salesHistory, setSalesHistory] = useState([]);
+  const [loadingSales, setLoadingSales] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
+
+  useEffect(() => {
+    if (activeTab === "inventory" && movements.length === 0) {
+      setLoadingMovements(true);
+      api.products.getMovements(params.id)
+        .then((res) => setMovements(res?.movements || []))
+        .catch(console.error)
+        .finally(() => setLoadingMovements(false));
+    } else if (activeTab === "sales" && salesHistory.length === 0) {
+      setLoadingSales(true);
+      api.products.getSales(params.id)
+        .then((res) => setSalesHistory(res?.sales || []))
+        .catch(console.error)
+        .finally(() => setLoadingSales(false));
+    }
+  }, [activeTab, params.id, movements.length, salesHistory.length]);
 
   useEffect(() => {
     Promise.all([
@@ -169,6 +196,28 @@ export default function ProductDetailPage(props) {
     }
   }
 
+  async function handleUploadLocalFiles(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setSavingImage(true);
+    try {
+      const newUrls = [];
+      for (const file of files) {
+        const dataUrl = await readFileAsOptimizedDataUrl(file);
+        newUrls.push(dataUrl);
+      }
+      const updatedImages = [...(product.images || []), ...newUrls];
+      await api.products.update(product._id, { images: updatedImages });
+      setProduct(prev => ({ ...prev, images: updatedImages }));
+      toast.success(`${newUrls.length} image(s) uploaded successfully`);
+    } catch (err) {
+      toast.error(err.message || "Failed to upload image(s)");
+    } finally {
+      setSavingImage(false);
+      e.target.value = "";
+    }
+  }
+
   async function handleDeleteImage(index) {
     if (!confirm("Are you sure you want to remove this image?")) return;
     try {
@@ -210,7 +259,16 @@ export default function ProductDetailPage(props) {
             <p className="text-sm text-[#706a61] mt-1">{product.categorySnapshot}</p>
           </div>
           <div className="flex flex-wrap gap-2.5 w-full sm:w-auto">
-             <Button variant="outline" className="flex-1 sm:flex-initial justify-center" onClick={() => {
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-initial justify-center gap-1.5 border-[#d8c3a5] text-[#2c2724] hover:bg-[#faf7f2]"
+              onClick={() => setIsBarcodeModalOpen(true)}
+              title="Generate and print barcode label sheet"
+            >
+              <Printer size={15} className="text-[#c9963e]" />
+              Print Barcodes
+            </Button>
+            <Button variant="outline" className="flex-1 sm:flex-initial justify-center" onClick={() => {
               if (editingBasic) {
                 setBasicForm({
                   name: product.name || "",
@@ -397,29 +455,60 @@ export default function ProductDetailPage(props) {
                   </div>
                 )}
 
-                {/* Add Image Form */}
-                <form onSubmit={handleAddImage} className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#5f584e]">
-                    Add Image by URL
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="https://images.unsplash.com/..."
-                      value={newImageUrl}
-                      onChange={(e) => setNewImageUrl(e.target.value)}
-                      className="h-9 text-xs"
+                {/* Add Image Section */}
+                <div className="space-y-4 pt-2 border-t border-[#f0ede7]">
+                  {/* Upload Local File Box */}
+                  <div className="rounded-lg border-2 border-dashed border-[#dfd8cc] p-5 text-center bg-[#faf9f6] hover:bg-[#f6f3ed] transition-colors relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      id="edit-product-file-upload"
+                      className="hidden"
+                      onChange={handleUploadLocalFiles}
+                      disabled={savingImage}
                     />
-                    <Button
-                      type="submit"
-                      variant="gold"
-                      size="sm"
-                      disabled={savingImage || !newImageUrl.trim()}
-                      className="h-9 text-xs px-4 shrink-0"
-                    >
-                      {savingImage ? "Adding..." : "Add"}
-                    </Button>
+                    <label htmlFor="edit-product-file-upload" className="cursor-pointer block">
+                      {savingImage ? (
+                        <div className="flex flex-col items-center">
+                          <Loader2 className="animate-spin text-[#c9963e] mb-2" size={28} />
+                          <p className="text-sm font-semibold text-[#0b0b0b]">Processing & Saving Images...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <UploadCloud className="mx-auto text-[#c9963e] mb-1.5" size={28} />
+                          <p className="text-sm font-semibold text-[#0b0b0b]">Upload Local Photos</p>
+                          <p className="text-[11px] text-[#8a847a] mt-0.5">Click to choose image files from computer or phone</p>
+                        </>
+                      )}
+                    </label>
                   </div>
-                </form>
+
+                  <div className="relative flex items-center justify-center my-1">
+                    <div className="border-t border-[#dfd8cc] w-full"></div>
+                    <span className="bg-white px-2.5 text-[10px] text-[#8a847a] uppercase font-semibold">Or enter image URL</span>
+                  </div>
+
+                  <form onSubmit={handleAddImage} className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="https://images.unsplash.com/..."
+                        value={newImageUrl}
+                        onChange={(e) => setNewImageUrl(e.target.value)}
+                        className="h-9 text-xs"
+                      />
+                      <Button
+                        type="submit"
+                        variant="gold"
+                        size="sm"
+                        disabled={savingImage || !newImageUrl.trim()}
+                        className="h-9 text-xs px-4 shrink-0"
+                      >
+                        {savingImage ? "Adding..." : "Add"}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -669,6 +758,88 @@ export default function ProductDetailPage(props) {
                 </table>
               </div>
             </div>
+
+            {/* Live Inventory Movements Audit Log */}
+            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+              <div className="border-b px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-base text-[#0b0b0b] flex items-center gap-2">
+                    <History size={16} className="text-[#9b7740]" />
+                    Inventory Audit Ledger
+                  </h3>
+                  <p className="text-xs text-[#8a847a] mt-0.5">Chronological movement history (sales, purchases, adjustments, returns)</p>
+                </div>
+                {movements.length > 0 && (
+                  <span className="text-xs text-[#5f584e] bg-[#f5f2ee] px-2.5 py-1 rounded-full font-medium">
+                    {movements.length} log entry{movements.length > 1 ? "ies" : "y"}
+                  </span>
+                )}
+              </div>
+
+              {loadingMovements ? (
+                <div className="p-8 text-center text-xs text-[#706a61]">Loading movements log...</div>
+              ) : movements.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#8a847a]">
+                  No movement logs recorded yet for this product.
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-wider text-[#81796d] sticky top-0">
+                      <tr>
+                        <th className="px-6 py-3 font-semibold">Date &amp; Time</th>
+                        <th className="px-6 py-3 font-semibold">Type</th>
+                        <th className="px-6 py-3 font-semibold">SKU / Variant</th>
+                        <th className="px-6 py-3 font-semibold text-right">Change</th>
+                        <th className="px-6 py-3 font-semibold">Reason</th>
+                        <th className="px-6 py-3 font-semibold">Staff</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f0ede7]">
+                      {movements.map((m) => {
+                        const isPositive = m.quantityDelta > 0;
+                        return (
+                          <tr key={m._id} className="hover:bg-[#faf9f6]">
+                            <td className="px-6 py-3 text-[#5f584e] whitespace-nowrap">
+                              {new Date(m.occurredAt).toLocaleString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </td>
+                            <td className="px-6 py-3">
+                              <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                m.type === "SALE" ? "bg-[#f0f4fc] text-[#1a3a7a]" :
+                                m.type === "PURCHASE" ? "bg-[#f0f9f4] text-[#1a6b3a]" :
+                                m.type === "RETURN" ? "bg-[#fdf8f0] text-[#8a5a10]" :
+                                "bg-[#f5f2ee] text-[#5f584e]"
+                              }`}>
+                                {m.type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-3 font-mono text-[11px] font-medium text-[#0b0b0b]">
+                              {m.skuSnapshot || "Variant"}
+                            </td>
+                            <td className={`px-6 py-3 text-right font-financial font-bold ${
+                              isPositive ? "text-[#1a6b3a]" : "text-[#8a1a1a]"
+                            }`}>
+                              {isPositive ? `+${m.quantityDelta}` : m.quantityDelta}
+                            </td>
+                            <td className="px-6 py-3 text-[#5f584e] max-w-xs truncate" title={m.reason}>
+                              {m.reason}
+                            </td>
+                            <td className="px-6 py-3 text-[#706a61]">
+                              {m.performedBy?.name || "System"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -767,10 +938,104 @@ export default function ProductDetailPage(props) {
                 </table>
               </div>
             </div>
+
+            {/* Historical Invoices For This Product */}
+            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+              <div className="border-b px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-base text-[#0b0b0b] flex items-center gap-2">
+                    <FileText size={16} className="text-[#1a6b3a]" />
+                    Customer Sales Orders History
+                  </h3>
+                  <p className="text-xs text-[#8a847a] mt-0.5">Recent retail orders containing this product</p>
+                </div>
+                {salesHistory.length > 0 && (
+                  <span className="text-xs text-[#5f584e] bg-[#f5f2ee] px-2.5 py-1 rounded-full font-medium">
+                    {salesHistory.length} bill{salesHistory.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              {loadingSales ? (
+                <div className="p-8 text-center text-xs text-[#706a61]">Loading sales history...</div>
+              ) : salesHistory.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#8a847a]">
+                  No sales recorded yet for this product.
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-wider text-[#81796d] sticky top-0">
+                      <tr>
+                        <th className="px-6 py-3 font-semibold">Invoice No</th>
+                        <th className="px-6 py-3 font-semibold">Date</th>
+                        <th className="px-6 py-3 font-semibold">Customer</th>
+                        <th className="px-6 py-3 font-semibold text-center">Units Sold</th>
+                        <th className="px-6 py-3 font-semibold text-right">Revenue</th>
+                        <th className="px-6 py-3 font-semibold text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f0ede7]">
+                      {salesHistory.map((s) => (
+                        <tr key={s.orderId} className="hover:bg-[#faf9f6]">
+                          <td className="px-6 py-3 font-mono font-bold text-[#0b0b0b]">
+                            {s.invoiceNumber}
+                          </td>
+                          <td className="px-6 py-3 text-[#5f584e]">
+                            {new Date(s.completedAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </td>
+                          <td className="px-6 py-3 text-[#0b0b0b] font-medium">
+                            {s.customerName}
+                            {s.customerMobile && (
+                              <span className="text-[10px] text-[#8a847a] block">{s.customerMobile}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-3 text-center font-bold text-[#0b0b0b]">
+                            {s.totalUnits}
+                          </td>
+                          <td className="px-6 py-3 text-right font-financial font-bold text-[#1a6b3a]">
+                            {formatMoney(s.totalRevenuePaisa)}
+                          </td>
+                          <td className="px-6 py-3 text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2.5 text-[11px]"
+                              onClick={() => setSelectedInvoiceId(s.orderId)}
+                            >
+                              View Bill
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
       </div>
+
+      <BarcodePrintModal
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        variants={product.variants || []}
+        productName={product.name}
+      />
+
+      {selectedInvoiceId && (
+        <InvoiceModal
+          isOpen={!!selectedInvoiceId}
+          onClose={() => setSelectedInvoiceId(null)}
+          orderId={selectedInvoiceId}
+        />
+      )}
     </div>
   );
 }

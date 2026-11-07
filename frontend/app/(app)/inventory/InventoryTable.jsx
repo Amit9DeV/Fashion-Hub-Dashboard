@@ -2,20 +2,25 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Boxes, Plus, Minus, ArrowUpDown, Check, X, SlidersHorizontal, PackagePlus, AlertCircle } from "lucide-react";
+import { Boxes, Plus, Minus, ArrowUpDown, Check, X, SlidersHorizontal, PackagePlus, AlertCircle, Printer, Download, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatMoney } from "@/lib/utils";
 import { api } from "@/src/services/api";
 import { toast } from "sonner";
+import BarcodePrintModal from "@/components/products/BarcodePrintModal";
 
 export default function InventoryTable({ initialVariants, searchComponent }) {
   const [variants, setVariants] = useState(initialVariants || []);
   const [activeFilter, setActiveFilter] = useState("ALL"); // ALL, LOW, OUT, IN
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [adjustingVariant, setAdjustingVariant] = useState(null);
   const [adjustType, setAdjustType] = useState("ADD"); // ADD, DEDUCT, SET
   const [adjustQty, setAdjustQty] = useState("");
   const [saving, setSaving] = useState(false);
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+  const [barcodeVariants, setBarcodeVariants] = useState([]);
 
   // Compute live KPIs from current state
   const totalVariants = variants.length;
@@ -23,9 +28,29 @@ export default function InventoryTable({ initialVariants, searchComponent }) {
   const lowStock = variants.filter((v) => v.stock > 0 && v.stock <= (v.reorderLevel || 5)).length;
   const inStock = variants.filter((v) => v.stock > (v.reorderLevel || 5)).length;
   const totalUnits = variants.reduce((s, v) => s + (v.stock || 0), 0);
+  const totalValuationSellingPaisa = variants.reduce(
+    (sum, v) => sum + (v.stock || 0) * (v.sellingPricePaisa || 0),
+    0
+  );
+
+  const { availableBrands, availableCategories } = useMemo(() => {
+    const bSet = new Set();
+    const cSet = new Set();
+    variants.forEach((v) => {
+      if (v.brand) bSet.add(v.brand);
+      if (v.category) cSet.add(v.category);
+    });
+    return {
+      availableBrands: Array.from(bSet).sort(),
+      availableCategories: Array.from(cSet).sort(),
+    };
+  }, [variants]);
 
   const filteredVariants = useMemo(() => {
     return variants.filter((v) => {
+      if (selectedBrand && v.brand !== selectedBrand) return false;
+      if (selectedCategory && v.category !== selectedCategory) return false;
+
       const isOut = v.stock === 0;
       const isLow = v.stock > 0 && v.stock <= (v.reorderLevel || 5);
       if (activeFilter === "LOW") return isLow;
@@ -33,7 +58,34 @@ export default function InventoryTable({ initialVariants, searchComponent }) {
       if (activeFilter === "IN") return !isOut && !isLow;
       return true;
     });
-  }, [variants, activeFilter]);
+  }, [variants, activeFilter, selectedBrand, selectedCategory]);
+
+  const handleExportCsv = () => {
+    if (!filteredVariants.length) return;
+    const headers = ["Product Name", "SKU", "Barcode", "Brand", "Category", "Color", "Size", "Stock Qty", "Cost (Rs)", "Selling Price (Rs)", "Total Stock Value (Rs)"];
+    const rows = filteredVariants.map((v) => [
+      `"${(v.productName || "").replace(/"/g, '""')}"`,
+      `"${v.sku || ""}"`,
+      `"${v.barcode || ""}"`,
+      `"${(v.brand || "").replace(/"/g, '""')}"`,
+      `"${(v.category || "").replace(/"/g, '""')}"`,
+      `"${v.color || ""}"`,
+      `"${v.size || ""}"`,
+      v.stock || 0,
+      ((v.costPricePaisa || 0) / 100).toFixed(2),
+      ((v.sellingPricePaisa || 0) / 100).toFixed(2),
+      (((v.stock || 0) * (v.sellingPricePaisa || 0)) / 100).toFixed(2),
+    ]);
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `inventory_stock_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Inventory stock exported to CSV");
+  };
 
   const handleOpenAdjust = (variant, defaultType = "ADD") => {
     setAdjustingVariant(variant);
@@ -86,7 +138,7 @@ export default function InventoryTable({ initialVariants, searchComponent }) {
   return (
     <div className="space-y-6">
       {/* ── KPI Row ── */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <button
           type="button"
           onClick={() => setActiveFilter("ALL")}
@@ -130,15 +182,84 @@ export default function InventoryTable({ initialVariants, searchComponent }) {
           <p className="mt-2 text-2xl font-bold font-financial text-[#1a6b3a]">{inStock}</p>
           <p className="text-[11px] text-[#706a61] mt-1">Sufficient level</p>
         </button>
+
+        <div
+          className="rounded-md border p-4 text-left bg-white col-span-2 sm:col-span-1"
+          style={{ borderLeft: "3px solid #5a2a7a" }}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5a2a7a]">Retail Valuation</p>
+          <p className="mt-2 text-2xl font-bold font-financial text-[#5a2a7a] truncate">{formatMoney(totalValuationSellingPaisa)}</p>
+          <p className="text-[11px] text-[#706a61] mt-1">Live merchandise value</p>
+        </div>
       </section>
 
       {/* ── Toolbar: Search & Filter Tabs ── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {searchComponent}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 flex-1">
+            <div className="flex-1 min-w-[220px]">
+              {searchComponent}
+            </div>
+
+            {availableBrands.length > 0 && (
+              <select
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+                className="h-10 border border-[#dfd8cc] rounded-md px-3 text-xs text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+              >
+                <option value="">All Brands</option>
+                {availableBrands.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            )}
+
+            {availableCategories.length > 0 && (
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="h-10 border border-[#dfd8cc] rounded-md px-3 text-xs text-[#5f584e] bg-white focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+              >
+                <option value="">All Categories</option>
+                {availableCategories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              className="h-10 text-xs border-[#dfd8cc] text-[#5f584e] hover:text-[#0b0b0b] flex items-center gap-1.5 shrink-0"
+              title="Export inventory to CSV"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setBarcodeVariants(filteredVariants.slice(0, 50));
+                setIsBarcodeModalOpen(true);
+              }}
+              className="h-10 text-xs border-[#d8c3a5] text-[#2c2724] hover:bg-[#faf7f2] flex items-center gap-1.5 shrink-0"
+              title="Print barcode labels for filtered items"
+            >
+              <Printer size={14} className="text-[#c9963e]" />
+              <span className="hidden sm:inline">Print Barcodes</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          <span className="text-xs text-[#8a847a] font-medium mr-1 sm:inline hidden">Filter:</span>
+
+        {/* Status filter tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          <span className="text-xs text-[#8a847a] font-medium mr-1 hidden sm:inline">Status:</span>
           {[
             { id: "ALL", label: `All (${variants.length})` },
             { id: "LOW", label: `Low Stock (${lowStock})` },
@@ -157,6 +278,19 @@ export default function InventoryTable({ initialVariants, searchComponent }) {
               {tab.label}
             </button>
           ))}
+          {(selectedBrand || selectedCategory || activeFilter !== "ALL") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBrand("");
+                setSelectedCategory("");
+                setActiveFilter("ALL");
+              }}
+              className="text-xs text-[#9b7740] hover:underline font-semibold ml-2 whitespace-nowrap"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -255,6 +389,17 @@ export default function InventoryTable({ initialVariants, searchComponent }) {
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBarcodeVariants([v]);
+                              setIsBarcodeModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 rounded border border-[#dfd8cc] bg-white hover:bg-gray-100 px-2 py-1 text-[11px] font-semibold text-[#5f584e] transition-colors"
+                            title="Print Barcode Tag"
+                          >
+                            <Printer size={12} className="text-[#c9963e]" /> Tag
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleOpenAdjust(v, "ADD")}
@@ -399,6 +544,12 @@ export default function InventoryTable({ initialVariants, searchComponent }) {
           </div>
         </div>
       )}
+
+      <BarcodePrintModal
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        variants={barcodeVariants}
+      />
     </div>
   );
 }

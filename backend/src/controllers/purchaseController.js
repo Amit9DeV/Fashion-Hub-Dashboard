@@ -1,4 +1,4 @@
-import connectToDatabase from "../config/db.js";
+import connectToDatabase, { supportsTransactions } from "../config/db.js";
 import PurchaseOrder from "../models/PurchaseOrder.js";
 import Supplier from "../models/Supplier.js";
 import ProductVariant from "../models/ProductVariant.js";
@@ -26,10 +26,87 @@ export const createSupplier = async (req, res) => {
 export const getSuppliers = async (req, res) => {
   try {
     await connectToDatabase();
-    const suppliers = await Supplier.find({ status: "ACTIVE" }).lean();
+    const suppliers = await Supplier.find({ status: { $ne: "INACTIVE" } }).sort({ name: 1 }).lean();
     return res.json({ success: true, data: suppliers });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Could not fetch suppliers" });
+  }
+};
+
+// @route   PUT /api/purchase/suppliers/:id
+// @desc    Update a supplier
+// @access  Private
+export const updateSupplier = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const supplier = await Supplier.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!supplier) return res.status(404).json({ success: false, message: "Supplier not found" });
+    return res.json({ success: true, data: supplier });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Could not update supplier" });
+  }
+};
+
+// @route   DELETE /api/purchase/suppliers/:id
+// @desc    Deactivate a supplier
+// @access  Private
+export const deleteSupplier = async (req, res) => {
+  try {
+    await connectToDatabase();
+    await Supplier.findByIdAndUpdate(req.params.id, { status: "INACTIVE" });
+    return res.json({ success: true, message: "Supplier deactivated" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Could not delete supplier" });
+  }
+};
+
+// @route   GET /api/purchase/orders
+// @desc    Get all purchase orders
+// @access  Private
+export const getPurchaseOrders = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const orders = await PurchaseOrder.find()
+      .populate("supplierId", "name mobile email gstin")
+      .sort({ createdAt: -1 })
+      .lean();
+    return res.json({ success: true, data: { orders } });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Could not fetch purchase orders" });
+  }
+};
+
+// @route   GET /api/purchase/orders/:id
+// @desc    Get a single purchase order
+// @access  Private
+export const getPurchaseOrderById = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const order = await PurchaseOrder.findById(req.params.id)
+      .populate("supplierId")
+      .lean();
+    if (!order) return res.status(404).json({ success: false, message: "Purchase order not found" });
+    return res.json({ success: true, data: { order } });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Could not fetch purchase order" });
+  }
+};
+
+// @route   DELETE /api/purchase/orders/:id
+// @desc    Delete a purchase order
+// @access  Private
+export const deletePurchaseOrder = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const po = await PurchaseOrder.findById(req.params.id);
+    if (!po) return res.status(404).json({ success: false, message: "Purchase order not found" });
+    if (po.status === "RECEIVED") {
+      return res.status(400).json({ success: false, message: "Cannot delete a received purchase order" });
+    }
+    await PurchaseOrder.findByIdAndDelete(req.params.id);
+    return res.json({ success: true, message: "Purchase order deleted" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Could not delete purchase order" });
   }
 };
 
@@ -74,7 +151,7 @@ export const receivePurchaseOrder = async (req, res) => {
     const { id } = req.params;
     
     const session = await mongoose.startSession();
-    const isStandalone = !process.env.MONGODB_URI?.includes("replicaSet");
+    const isStandalone = !supportsTransactions();
     if (isStandalone) {
       session.endSession();
     }
@@ -96,14 +173,13 @@ export const receivePurchaseOrder = async (req, res) => {
       const bulkOps = po.items.map(item => ({
         updateOne: {
           filter: { _id: item.variantId },
-          // Use an aggregation pipeline to dynamically calculate WAC
           update: [
             {
               $set: {
                 costPricePaisa: {
                   $cond: {
                     if: { $lte: ["$stock", 0] },
-                    then: item.costPricePaisa, // If no old stock, new WAC is just the PO cost
+                    then: item.costPricePaisa,
                     else: {
                       $round: [
                         {
@@ -153,7 +229,7 @@ export const receivePurchaseOrder = async (req, res) => {
         title: `Stock Purchase - ${po.poNumber}`,
         amountPaisa: po.totalAmountPaisa,
         category: "STOCK",
-        paymentMethod: "OTHER", // Accounts payable
+        paymentMethod: "OTHER",
         notes: `Supplier: ${po.supplierSnapshot.name}`,
         createdBy: req.user.id
       }], { session: isStandalone ? null : session });

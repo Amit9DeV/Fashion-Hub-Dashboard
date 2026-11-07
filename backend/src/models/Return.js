@@ -26,6 +26,9 @@ const returnSchema = new mongoose.Schema(
     },
     items: { type: [returnItemSchema], required: true },
     totalRefundPaisa: { type: Number, required: true },
+    cashRefundPaisa: { type: Number, min: 0 },
+    exchangeCreditPaisa: { type: Number, min: 0, default: 0 },
+    idempotencyKey: { type: String, trim: true, unique: true, sparse: true },
     reason: { type: String, trim: true },
     staffSnapshot: {
       id: { type: String },

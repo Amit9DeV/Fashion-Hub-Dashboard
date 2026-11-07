@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import connectToDatabase from "../config/db.js";
+import connectToDatabase, { supportsTransactions } from "../config/db.js";
 import Product from "../models/Product.js";
 import ProductVariant from "../models/ProductVariant.js";
 import Brand from "../models/Brand.js";
@@ -192,7 +192,13 @@ export const createProduct = async (req, res) => {
   try {
     await connectToDatabase();
     session = await mongoose.startSession();
-    session.startTransaction();
+    const useTransaction = supportsTransactions();
+    if (!useTransaction) {
+      await session.endSession();
+      session = undefined;
+    } else {
+      session.startTransaction();
+    }
 
     const { name, brandId, categoryId, description, variants, images } = req.body;
 
@@ -200,8 +206,10 @@ export const createProduct = async (req, res) => {
     const safeCategoryId = categoryId || null;
 
     // Fetch snapshots
-    const brand = safeBrandId ? await Brand.findById(safeBrandId).session(session) : null;
-    const category = safeCategoryId ? await Category.findById(safeCategoryId).session(session) : null;
+    const brandQuery = safeBrandId ? Brand.findById(safeBrandId) : null;
+    const categoryQuery = safeCategoryId ? Category.findById(safeCategoryId) : null;
+    const brand = brandQuery ? await brandQuery.session(session) : null;
+    const category = categoryQuery ? await categoryQuery.session(session) : null;
 
     const product = new Product({
       name,
@@ -214,7 +222,7 @@ export const createProduct = async (req, res) => {
       status: "ACTIVE",
     });
 
-    await product.save({ session });
+    await product.save(session ? { session } : {});
 
     if (variants && variants.length > 0) {
       const variantDocs = variants.map((v) => ({
@@ -230,7 +238,7 @@ export const createProduct = async (req, res) => {
         status: "ACTIVE",
       }));
 
-      const insertedVariants = await ProductVariant.insertMany(variantDocs, { session });
+      const insertedVariants = await ProductVariant.insertMany(variantDocs, session ? { session } : {});
 
       // Log initial inventory movements
       const movements = insertedVariants
@@ -250,18 +258,20 @@ export const createProduct = async (req, res) => {
         }));
 
       if (movements.length > 0) {
-        await InventoryMovement.insertMany(movements, { session });
+        await InventoryMovement.insertMany(movements, session ? { session } : {});
       }
     }
 
-    await session.commitTransaction();
-    session.endSession();
+    if (session) {
+      await session.commitTransaction();
+      await session.endSession();
+    }
 
     return res.json({ success: true, data: { product } });
   } catch (error) {
     if (session) {
-      await session.abortTransaction();
-      session.endSession();
+      if (session.inTransaction()) await session.abortTransaction();
+      await session.endSession();
     }
     console.error(error);
     return res.status(500).json({ success: false, message: error.message || "Could not create product." });
@@ -323,12 +333,20 @@ export const addVariant = async (req, res) => {
   try {
     await connectToDatabase();
     session = await mongoose.startSession();
-    session.startTransaction();
+    const useTransaction = supportsTransactions();
+    if (!useTransaction) {
+      await session.endSession();
+      session = undefined;
+    } else {
+      session.startTransaction();
+    }
 
     const product = await Product.findById(req.params.id).session(session);
     if (!product) {
-      await session.abortTransaction();
-      session.endSession();
+      if (session) {
+        await session.abortTransaction();
+        await session.endSession();
+      }
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
@@ -347,7 +365,7 @@ export const addVariant = async (req, res) => {
       status: "ACTIVE",
     });
 
-    await variant.save({ session });
+    await variant.save(session ? { session } : {});
 
     if (variant.stock > 0) {
       await InventoryMovement.create(
@@ -364,18 +382,20 @@ export const addVariant = async (req, res) => {
           performedBy: { id: req.user.id, name: req.user.name || "Admin" },
           occurredAt: new Date(),
         }],
-        { session },
+        session ? { session } : {},
       );
     }
 
-    await session.commitTransaction();
-    session.endSession();
+    if (session) {
+      await session.commitTransaction();
+      await session.endSession();
+    }
 
     return res.json({ success: true, data: { variant } });
   } catch (error) {
     if (session) {
-      await session.abortTransaction();
-      session.endSession();
+      if (session.inTransaction()) await session.abortTransaction();
+      await session.endSession();
     }
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not add variant." });
@@ -465,6 +485,48 @@ export const updateVariant = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not update variant." });
+  }
+};
+
+// @route   POST /api/products/variants/bulk-update
+// @desc    Bulk update prices or fields for multiple variants
+// @access  Private (ADMIN/MANAGER only)
+export const bulkUpdateVariants = async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+    await connectToDatabase();
+
+    const { updates } = req.body;
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ success: false, message: "No updates provided." });
+    }
+
+    const bulkOps = updates.map((item) => {
+      const setFields = {};
+      if (item.costPricePaisa !== undefined) setFields.costPricePaisa = Math.round(Number(item.costPricePaisa));
+      if (item.sellingPricePaisa !== undefined) setFields.sellingPricePaisa = Math.round(Number(item.sellingPricePaisa));
+      if (item.mrpPaisa !== undefined) setFields.mrpPaisa = Math.round(Number(item.mrpPaisa));
+      if (item.status !== undefined) setFields.status = item.status;
+
+      return {
+        updateOne: {
+          filter: { _id: item.variantId },
+          update: { $set: setFields },
+        },
+      };
+    });
+
+    const result = await ProductVariant.bulkWrite(bulkOps);
+    return res.json({
+      success: true,
+      message: `Successfully updated ${result.modifiedCount} variant(s).`,
+      data: { modifiedCount: result.modifiedCount },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not bulk update variants." });
   }
 };
 
@@ -598,5 +660,65 @@ export const deleteVariant = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Could not delete variant." });
+  }
+};
+
+// @route   GET /api/products/:id/movements
+// @desc    Get inventory movements (audit log) for a specific product
+// @access  Private
+export const getProductMovements = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { id } = req.params;
+    const movements = await InventoryMovement.find({ productId: id })
+      .sort({ occurredAt: -1 })
+      .limit(100)
+      .lean();
+
+    return res.json({ success: true, data: { movements } });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not fetch product inventory movements." });
+  }
+};
+
+// @route   GET /api/products/:id/sales
+// @desc    Get order sales history for a specific product
+// @access  Private
+export const getProductSales = async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { id } = req.params;
+    const Order = (await import("../models/Order.js")).default;
+    const orders = await Order.find({ "items.productId": id })
+      .sort({ completedAt: -1 })
+      .limit(50)
+      .lean();
+
+    // Map to relevant line items for this product
+    const sales = orders.map((order) => {
+      const itemsForProduct = (order.items || []).filter(
+        (i) => i.productId?.toString() === id.toString()
+      );
+      const totalUnits = itemsForProduct.reduce((s, i) => s + (i.quantity || 1), 0);
+      const totalRevenuePaisa = itemsForProduct.reduce((s, i) => s + (i.totalPaisa || 0), 0);
+
+      return {
+        orderId: order._id,
+        invoiceNumber: order.invoiceNumber,
+        completedAt: order.completedAt,
+        customerName: order.customerSnapshot?.name || "Walk-in",
+        customerMobile: order.customerSnapshot?.mobile || "",
+        items: itemsForProduct,
+        totalUnits,
+        totalRevenuePaisa,
+        orderStatus: order.status,
+      };
+    });
+
+    return res.json({ success: true, data: { sales } });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Could not fetch product sales history." });
   }
 };

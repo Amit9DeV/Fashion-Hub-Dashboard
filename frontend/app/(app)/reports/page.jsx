@@ -8,13 +8,14 @@ import {
 import { 
   Calendar, Download, TrendingUp, RefreshCcw, DollarSign, 
   ReceiptText, Package, AlertCircle, ShoppingBag, ArrowDownRight,
-  Edit2, Save, X
+  Edit2, Save, X, Receipt
 } from "lucide-react";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
 import { toast } from "sonner";
+import InvoiceModal from "@/components/invoice/InvoiceModal";
 
 const PRESET_DATES = [
   { label: "Lifetime", value: "lifetime" },
@@ -65,6 +66,7 @@ export default function ReportsPage() {
   
   const [productTab, setProductTab] = useState("units"); // 'units', 'profit', 'slow'
   const [expandedBillId, setExpandedBillId] = useState(null);
+  const [viewingInvoiceId, setViewingInvoiceId] = useState(null);
 
   const fetchReport = async (start, end) => {
     setLoading(true);
@@ -164,6 +166,24 @@ export default function ReportsPage() {
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-[#706a61]">
         <RefreshCcw size={32} className="animate-spin text-[#c9963e] mb-4" />
         <p className="text-sm font-medium">Aggregating store analytics...</p>
+      </div>
+    );
+  }
+
+  if (!report) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-[#706a61] gap-4">
+        <AlertCircle size={32} className="text-[#a53a2d]" />
+        <div className="text-center">
+          <p className="font-semibold text-[#0b0b0b]">Failed to load reports</p>
+          <p className="text-sm mt-1">Please check your connection and try again.</p>
+        </div>
+        <button
+          onClick={() => fetchReport(startDate, endDate)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#0b0b0b] text-white text-sm font-medium hover:bg-[#2a2520] transition-colors"
+        >
+          <RefreshCcw size={14} /> Retry
+        </button>
       </div>
     );
   }
@@ -328,6 +348,7 @@ export default function ReportsPage() {
                           <ExpandedBillDetails 
                             bill={bill} 
                             onUpdated={() => fetchReport(startDate, endDate)} 
+                            onViewInvoice={() => setViewingInvoiceId(bill.id)}
                           />
                         </td>
                       </tr>
@@ -485,6 +506,12 @@ export default function ReportsPage() {
         </div>
       </section>
 
+      <InvoiceModal
+        isOpen={!!viewingInvoiceId}
+        onClose={() => setViewingInvoiceId(null)}
+        invoiceId={viewingInvoiceId}
+        orderId={viewingInvoiceId}
+      />
     </div>
   );
 }
@@ -503,7 +530,7 @@ function KpiCard({ title, value, icon: Icon, color }) {
   );
 }
 
-function ExpandedBillDetails({ bill, onUpdated }) {
+function ExpandedBillDetails({ bill, onUpdated, onViewInvoice }) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [items, setItems] = useState([]);
@@ -596,6 +623,19 @@ function ExpandedBillDetails({ bill, onUpdated }) {
       <div className="bg-[#f5f2ee] px-4 py-2.5 flex flex-wrap justify-between items-center gap-2 border-b border-[#dfd8cc]">
         <h4 className="font-bold text-xs text-[#5f584e] uppercase tracking-wider">Bill Items</h4>
         <div className="flex flex-wrap gap-2 items-center">
+          {onViewInvoice && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onViewInvoice}
+              className="h-7 px-2.5 text-xs text-[#9b7740] border-[#c9963e] hover:bg-[#fff9ed] font-medium flex items-center gap-1"
+              title="View and print luxury invoice"
+            >
+              <Receipt size={12} /> View Invoice
+            </Button>
+          )}
+
           {/* Full edit → opens BillingPOS edit mode */}
           <a
             href={`/billing?editOrderId=${bill.id}`}

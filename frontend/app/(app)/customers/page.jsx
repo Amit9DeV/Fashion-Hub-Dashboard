@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CustomersPage(props) {
   const searchParams = await props.searchParams;
-  const q = searchParams?.q || "";
+  const q = searchParams?.q || searchParams?.query || "";
   const res = await serverFetch(`/customers/all?query=${encodeURIComponent(q)}`);
   if (res.status === 401) {
     redirect("/login");

@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, MessageCircle, ChevronDown, ChevronRight, Package, ArrowLeft, ArrowRight, Printer } from "lucide-react";
+import { FileText, MessageCircle, ChevronDown, ChevronRight, Package, ArrowLeft, ArrowRight, Printer, Pencil, Receipt, Download, Loader2, RotateCcw } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/utils";
-import { apiBase } from "@/lib/backend";
 import DeleteOrderButton from "@/components/orders/DeleteOrderButton";
+import InvoiceModal from "@/components/invoice/InvoiceModal";
 import { Button } from "@/components/ui/button";
+import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
-export default function OrdersTable({ orders, invoices = [], messages = [], pagination = {}, currentQuery = "" }) {
+export default function OrdersTable({ orders, invoices = [], messages = [], pagination = {}, currentQuery = "", startDate = "", endDate = "" }) {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [activeInvoiceOrder, setActiveInvoiceOrder] = useState(null);
+  const [sendingWaOrderId, setSendingWaOrderId] = useState(null);
 
   const invoiceByOrderId = new Map(
     invoices.filter(i => i.orderId).map((invoice) => [invoice.orderId.toString(), invoice])
@@ -18,14 +22,79 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
     messages.filter(m => m.orderId).map((message) => [message.orderId.toString(), message])
   );
 
+  const handleSendWhatsApp = async (order) => {
+    const phone = order.customerSnapshot?.mobile;
+    if (!phone) {
+      toast.error("Customer does not have a phone number on this order");
+      return;
+    }
+    const orderIdStr = order._id.toString();
+    setSendingWaOrderId(orderIdStr);
+    try {
+      const res = await api.whatsapp.send({ orderId: orderIdStr });
+      if (res.success) {
+        toast.success(res.message || "WhatsApp invoice queued!");
+      } else {
+        throw new Error(res.message || "Failed to send");
+      }
+    } catch (err) {
+      // Fallback: direct WhatsApp Web link
+      const rawDigits = phone.replace(/\D/g, "");
+      const waNumber = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+      const msg = encodeURIComponent(`Hello ${order.customerSnapshot?.name || ""}, here is your bill for Invoice #${order.invoiceNumber} totaling ₹${((order.totalPaisa || 0) / 100).toFixed(2)} from Fashion Hub.`);
+      window.open(`https://wa.me/${waNumber}?text=${msg}`, "_blank");
+      toast.info("Opening WhatsApp chat directly");
+    } finally {
+      setSendingWaOrderId(null);
+    }
+  };
+
   const toggleExpand = (orderId) => {
     setExpandedOrderId(prev => prev === orderId ? null : orderId);
   };
 
   const { page = 1, totalPages = 1, total = orders.length } = pagination;
 
+  const handleExportOrdersCsv = () => {
+    if (!orders || orders.length === 0) return;
+    const headers = ["Invoice No", "Order Date", "Customer Name", "Customer Mobile", "Items Count", "Subtotal (Rs)", "Discount (Rs)", "Tax (Rs)", "Total (Rs)", "Due (Rs)", "Payment Methods"];
+    const rows = orders.map((o) => [
+      o.invoiceNumber || "",
+      o.completedAt ? new Date(o.completedAt).toLocaleDateString("en-IN") : "",
+      `"${(o.customerSnapshot?.name || "Walk-in").replace(/"/g, '""')}"`,
+      `"${(o.customerSnapshot?.mobile || "").replace(/"/g, '""')}"`,
+      (o.items || []).reduce((sum, i) => sum + (i.quantity || 1), 0),
+      (o.subtotalPaisa || 0) / 100,
+      (o.discountPaisa || 0) / 100,
+      (o.taxPaisa || 0) / 100,
+      (o.totalPaisa || 0) / 100,
+      (o.duePaisa || 0) / 100,
+      `"${(o.payments || []).map(p => p.method).join(" + ")}"`,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orders_export_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
+      <div className="flex items-center justify-between px-5 py-2.5 bg-[#faf9f6] border-b border-[#dfd8cc] text-xs">
+        <span className="text-[#81796d] font-medium">{total} orders recorded</span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportOrdersCsv}
+          className="h-7 px-2.5 text-xs text-[#5f584e] hover:text-[#0b0b0b] flex items-center gap-1.5"
+        >
+          <Download size={13} /> Export CSV
+        </Button>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[920px] text-left text-sm">
           <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-[0.13em] text-[#81796d]">
@@ -62,21 +131,30 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
                     </button>
                   </td>
                   <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <FileText size={15} className="text-[#9b7740]" />
-                      {invoice ? (
-                        <a
-                          href={`${apiBase()}/invoices/${invoice._id}/pdf`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-mono text-xs font-semibold text-[#0b0b0b] hover:text-[#9b7740] transition-colors flex items-center gap-1"
-                        >
-                          {order.invoiceNumber}
-                          <span className="text-[10px] text-[#9b7740] underline opacity-0 group-hover:opacity-100">PDF</span>
-                        </a>
-                      ) : (
-                        <span className="font-mono text-xs font-semibold text-[#81796d]" title="Invoice PDF not generated yet">
-                          {order.invoiceNumber}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <FileText size={15} className="text-[#9b7740] shrink-0" />
+                      <button
+                        type="button"
+                        onClick={() => setActiveInvoiceOrder(order)}
+                        className="font-mono text-xs font-semibold text-[#0b0b0b] hover:text-[#9b7740] transition-colors flex items-center gap-1 text-left"
+                        title="Click to view and print invoice"
+                      >
+                        {order.invoiceNumber}
+                        <span className="text-[10px] text-[#9b7740] underline opacity-0 group-hover:opacity-100">VIEW</span>
+                      </button>
+                      {order.status === "RETURNED" && (
+                        <span className="rounded bg-[#fef0f0] border border-[#f5c6cb] px-1.5 py-0.5 text-[9px] font-bold text-[#8a1a1a]">
+                          RETURNED
+                        </span>
+                      )}
+                      {order.status === "PARTIALLY_RETURNED" && (
+                        <span className="rounded bg-[#fdf8f0] border border-[#f5d996] px-1.5 py-0.5 text-[9px] font-bold text-[#8a5a10]">
+                          PARTIAL RETURN
+                        </span>
+                      )}
+                      {order.status === "EXCHANGED" && (
+                        <span className="rounded bg-[#f0f4fc] border border-[#b8ccee] px-1.5 py-0.5 text-[9px] font-bold text-[#1a3a7a]">
+                          EXCHANGED
                         </span>
                       )}
                     </div>
@@ -96,15 +174,50 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
                     </button>
                   </td>
                   <td className="px-5 py-3.5 text-xs">
-                    {(order.payments || []).map((payment) => payment.method).join(" + ") || "—"}
+                    <p className="font-medium text-[#151515]">
+                      {(order.payments || []).map((payment) => payment.method).join(" + ") || "—"}
+                    </p>
+                    {order.duePaisa > 0 ? (
+                      <span className="mt-1 inline-flex items-center rounded bg-[#fff0f0] border border-[#f5c6cb] px-1.5 py-0.5 text-[10px] font-bold text-[#8a2f20] font-financial">
+                        Due: {formatMoney(order.duePaisa)}
+                      </span>
+                    ) : (
+                      <span className="mt-1 inline-flex items-center text-[10px] font-medium text-[#1a6b3a]">
+                        Paid in full
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-3.5">
                     {message ? (
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${message.status === "FAILED" ? "text-[#9d382c]" : "text-[#617355]"}`}>
-                        <MessageCircle size={14} />{message.status}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${message.status === "FAILED" ? "text-[#9d382c]" : "text-[#1a6b3a]"}`}>
+                          <MessageCircle size={13} />{message.status}
+                        </span>
+                        {message.status === "FAILED" && (
+                          <button
+                            type="button"
+                            onClick={() => handleSendWhatsApp(order)}
+                            disabled={sendingWaOrderId === orderIdStr}
+                            className="text-[10px] text-[#9b7740] hover:underline font-semibold"
+                            title="Retry WhatsApp"
+                          >
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    ) : order.customerSnapshot?.mobile ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSendWhatsApp(order)}
+                        disabled={sendingWaOrderId === orderIdStr}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[#9b7740] hover:text-[#7a5c2f] hover:underline"
+                        title="Send invoice via WhatsApp"
+                      >
+                        <MessageCircle size={13} className="text-[#25D366]" />
+                        {sendingWaOrderId === orderIdStr ? "Sending..." : "Send Bill"}
+                      </button>
                     ) : (
-                      <span className="text-xs text-[#898277]">Not requested</span>
+                      <span className="text-xs text-[#898277]">No phone</span>
                     )}
                   </td>
                   <td className="px-5 py-3.5 text-xs text-[#655e54]">
@@ -114,24 +227,52 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
                     {formatMoney(order.totalPaisa)}
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {invoice && (
-                        <a
-                          href={`${apiBase()}/invoices/${invoice._id}/pdf`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#5f584e] hover:text-[#9b7740] transition-colors p-1"
-                          title="Print / View Invoice PDF"
+                    <div className="flex items-center justify-end gap-1.5">
+                      {order.customerSnapshot?.mobile && (
+                        <button
+                          type="button"
+                          onClick={() => handleSendWhatsApp(order)}
+                          disabled={sendingWaOrderId === orderIdStr}
+                          className="text-[#25D366] hover:text-[#128C7E] transition-colors p-1"
+                          title="Send/Share Invoice on WhatsApp"
                         >
-                          <Printer size={15} />
-                        </a>
+                          {sendingWaOrderId === orderIdStr ? (
+                            <Loader2 size={15} className="animate-spin text-[#9b7740]" />
+                          ) : (
+                            <MessageCircle size={15} />
+                          )}
+                        </button>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => setActiveInvoiceOrder(order)}
+                        className="text-[#9b7740] hover:text-[#5d4624] transition-colors p-1"
+                        title="View & Print Luxury Invoice"
+                      >
+                        <Receipt size={15} />
+                      </button>
+                      <a
+                        href={`/api/invoices/${invoice ? invoice._id : orderIdStr}/pdf`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#5f584e] hover:text-[#9b7740] transition-colors p-1"
+                        title="Download Official PDF"
+                      >
+                        <Printer size={15} />
+                      </a>
                       <Link 
                         href={`/billing?editOrderId=${orderIdStr}`}
                         className="text-[#9b7740] hover:text-[#7a5c2f] transition-colors p-1"
                         title="Edit Order in POS"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                        <Pencil size={15} />
+                      </Link>
+                      <Link
+                        href={`/returns?invoice=${encodeURIComponent(order.invoiceNumber || "")}`}
+                        className="text-[#5a2a7a] hover:text-[#3a1555] transition-colors p-1"
+                        title="Return or Exchange Items"
+                      >
+                        <RotateCcw size={15} />
                       </Link>
                       <DeleteOrderButton orderId={orderIdStr} />
                     </div>
@@ -229,15 +370,32 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
                 </div>
               </div>
 
-              <div className="flex justify-between items-center px-6 py-4 bg-[#faf9f6] border-t border-[#dfd8cc] shrink-0">
-                {invoice ? (
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center px-6 py-4 bg-[#faf9f6] border-t border-[#dfd8cc] gap-3 shrink-0">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveInvoiceOrder(expandedOrder)}
+                    className="bg-[#fffdf9] border-[#c9963e] text-[#9b7740] hover:bg-[#fff9ed] font-semibold text-xs flex items-center gap-1.5"
+                  >
+                    <Receipt size={14} /> View & Print Invoice
+                  </Button>
                   <Button variant="outline" size="sm" asChild>
-                    <a href={`${apiBase()}/invoices/${invoice._id}/pdf`} target="_blank" rel="noreferrer">
-                      <FileText size={14} className="mr-1.5" /> View PDF Invoice
+                    <a
+                      href={`/api/invoices/${invoice ? invoice._id : expandedOrderId}/pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <FileText size={14} className="mr-1.5" /> Direct PDF
                     </a>
                   </Button>
-                ) : <span />}
-                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" asChild className="border-[#d0bce0] text-[#5a2a7a] hover:bg-[#faf4fc]">
+                    <Link href={`/returns?invoice=${encodeURIComponent(expandedOrder.invoiceNumber || "")}`}>
+                      <RotateCcw size={14} className="mr-1.5" /> Return / Exchange
+                    </Link>
+                  </Button>
+                </div>
+                <div className="flex gap-2 justify-end">
                   <Button variant="gold" size="sm" asChild>
                     <Link href={`/billing?editOrderId=${expandedOrderId}`}>
                       Edit Order in POS
@@ -268,7 +426,7 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
               className="h-8 text-xs"
             >
               {page > 1 ? (
-                <Link href={`/orders?page=${page - 1}${currentQuery ? `&q=${encodeURIComponent(currentQuery)}` : ""}`}>
+                <Link href={`/orders?page=${page - 1}${currentQuery ? `&q=${encodeURIComponent(currentQuery)}` : ""}${startDate ? `&startDate=${encodeURIComponent(startDate)}` : ""}${endDate ? `&endDate=${encodeURIComponent(endDate)}` : ""}`}>
                   <ArrowLeft size={13} className="mr-1" /> Previous
                 </Link>
               ) : (
@@ -288,7 +446,7 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
               className="h-8 text-xs"
             >
               {page < totalPages ? (
-                <Link href={`/orders?page=${page + 1}${currentQuery ? `&q=${encodeURIComponent(currentQuery)}` : ""}`}>
+                <Link href={`/orders?page=${page + 1}${currentQuery ? `&q=${encodeURIComponent(currentQuery)}` : ""}${startDate ? `&startDate=${encodeURIComponent(startDate)}` : ""}${endDate ? `&endDate=${encodeURIComponent(endDate)}` : ""}`}>
                   Next <ArrowRight size={13} className="ml-1" />
                 </Link>
               ) : (
@@ -298,6 +456,13 @@ export default function OrdersTable({ orders, invoices = [], messages = [], pagi
           </div>
         </div>
       )}
+
+      {/* Invoice Modal */}
+      <InvoiceModal
+        isOpen={!!activeInvoiceOrder}
+        onClose={() => setActiveInvoiceOrder(null)}
+        order={activeInvoiceOrder}
+      />
     </div>
   );
 }

@@ -42,7 +42,7 @@ export const getSalesReport = async (req, res) => {
     const matchStage = {
       $match: {
         completedAt: { $gte: start, $lte: end },
-        status: "COMPLETED"
+        status: { $in: ["COMPLETED", "PARTIALLY_RETURNED", "EXCHANGED"] }
       }
     };
 

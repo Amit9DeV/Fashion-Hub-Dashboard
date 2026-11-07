@@ -7,7 +7,7 @@ const cached = globalForMongoose._mongooseCache || { conn: null, promise: null }
 export default async function connectToDatabase() {
   if (cached.conn) return cached.conn;
 
-  const uri = process.env.MONGODB_URI;
+  const uri = "mongodb+srv://kumararyanbhai90_db_user:2IRWcVTxpF8GbLXe@cluster0.8jnejwp.mongodb.net/dashboard?appName=Cluster0";
   if (!uri) {
     throw new Error(
       "Missing MONGODB_URI. Copy .env.example to .env and configure MongoDB.",
@@ -33,4 +33,11 @@ export default async function connectToDatabase() {
 
   globalForMongoose._mongooseCache = cached;
   return cached.conn;
+}
+
+// Inspect the connected topology instead of guessing from the URI string.
+// Atlas SRV URLs usually omit an explicit `replicaSet` query parameter.
+export function supportsTransactions() {
+  const topologyType = mongoose.connection.client?.topology?.description?.type;
+  return topologyType !== "Single";
 }

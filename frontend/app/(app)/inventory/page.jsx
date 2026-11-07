@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InventoryPage(props) {
   const searchParams = await props.searchParams;
-  const q = searchParams?.q || "";
+  const q = searchParams?.q || searchParams?.query || "";
   const res = await serverFetch(`/inventory${q ? `?query=${encodeURIComponent(q)}` : ""}`);
   if (res.status === 401) {
     redirect("/login");

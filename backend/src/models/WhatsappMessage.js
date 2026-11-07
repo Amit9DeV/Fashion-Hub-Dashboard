@@ -5,9 +5,14 @@ const whatsappMessageSchema = new mongoose.Schema(
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
     invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice" },
-    type: { type: String, enum: ["INVOICE", "PAYMENT_CONFIRMATION", "RETURN_CONFIRMATION", "EXCHANGE_CONFIRMATION", "MARKETING"], required: true },
-    category: { type: String, enum: ["TRANSACTIONAL", "MARKETING"], required: true },
+    type: { 
+      type: String, 
+      enum: ["INVOICE", "PAYMENT_CONFIRMATION", "RETURN_CONFIRMATION", "EXCHANGE_CONFIRMATION", "MARKETING", "REMINDER", "CUSTOM"], 
+      required: true 
+    },
+    category: { type: String, enum: ["TRANSACTIONAL", "MARKETING"], default: "TRANSACTIONAL" },
     phoneNumber: { type: String, required: true },
+    messageBody: String,
     providerMessageId: String,
     status: { type: String, enum: ["QUEUED", "SENT", "DELIVERED", "READ", "FAILED"], default: "QUEUED" },
     templateName: String,

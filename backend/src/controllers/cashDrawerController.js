@@ -21,7 +21,7 @@ export const getDrawerStatus = async (req, res) => {
 
       // Aggregate cash sales
       const salesAggregation = await Order.aggregate([
-        { $match: { completedAt: { $gte: startOfDay, $lte: endOfDay }, status: "COMPLETED" } },
+        { $match: { completedAt: { $gte: startOfDay, $lte: endOfDay } } },
         { $unwind: "$payments" },
         { $match: { "payments.method": "CASH" } },
         { $group: { _id: null, totalCash: { $sum: "$payments.amountPaisa" } } }
@@ -35,9 +35,17 @@ export const getDrawerStatus = async (req, res) => {
       ]);
       const cashExpenses = expenseAggregation[0]?.totalCash || 0;
 
+      // Aggregate cash returns / refunds
+      const returnAggregation = await Return.aggregate([
+        { $match: { createdAt: { $gte: startOfDay, $lte: endOfDay } } },
+        { $group: { _id: null, totalCash: { $sum: { $ifNull: ["$cashRefundPaisa", "$totalRefundPaisa"] } } } }
+      ]);
+      const cashReturns = returnAggregation[0]?.totalCash || 0;
+
       // Update drawer
       drawer.cashSalesPaisa = cashSales;
       drawer.cashExpensesPaisa = cashExpenses;
+      drawer.cashRefundsPaisa = cashReturns;
       await drawer.save();
     }
 

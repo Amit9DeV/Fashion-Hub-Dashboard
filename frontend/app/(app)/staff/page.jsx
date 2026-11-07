@@ -26,7 +26,7 @@ export default async function StaffPage() {
             Staff Members
           </h2>
           <p className="mt-1 text-xs sm:text-sm text-[#756e64]">
-            {staff.length} active team member{staff.length !== 1 ? "s" : ""}
+            Manage roles, access levels, and account status.
           </p>
         </div>
         <div className="w-full sm:w-auto flex justify-start sm:justify-end">
