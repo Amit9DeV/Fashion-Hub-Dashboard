@@ -6,6 +6,7 @@ import { formatMoney, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
 export default function ReturnsPage() {
   const [query, setQuery] = useState("");
@@ -82,7 +83,7 @@ export default function ReturnsPage() {
     if (!order) return 0;
     let total = 0;
     Object.entries(returnItems).forEach(([variantId, qty]) => {
-      const item = order.items.find(i => i.variantId === variantId);
+      const item = order.items.find(i => (i.variantId?.toString() || i.variantId) === (variantId?.toString() || variantId));
       if (item && qty > 0) {
         const unitPrice = Math.floor(item.totalPaisa / item.quantity);
         total += unitPrice * qty;
@@ -90,6 +91,8 @@ export default function ReturnsPage() {
     });
     return total;
   };
+
+  const [historySearch, setHistorySearch] = useState("");
 
   const getAlreadyReturnedQty = (variantId) => {
     if (!order || !history) return 0;
@@ -113,7 +116,7 @@ export default function ReturnsPage() {
       .map(([variantId, quantity]) => ({ variantId, quantity }));
 
     if (itemsToReturn.length === 0) {
-      alert("Select at least one item to return.");
+      toast.warning("Please select at least one item to return.");
       return;
     }
 
@@ -124,13 +127,13 @@ export default function ReturnsPage() {
         reason,
         items: itemsToReturn
       });
-      alert("Return processed successfully!");
+      toast.success("Return processed successfully!");
       setOrder(null);
       setReturnItems({});
       setQuery("");
       fetchHistory();
     } catch (err) {
-      alert(err.message || "Failed to process return.");
+      toast.error(err.message || "Failed to process return.");
     } finally {
       setProcessing(false);
     }
@@ -138,6 +141,21 @@ export default function ReturnsPage() {
 
   const totalRefund = calculateTotalRefund();
   const hasItemsSelected = totalRefund > 0;
+
+  const eligibleItems = order?.items?.filter(item => {
+    const maxAllowed = item.quantity - getAlreadyReturnedQty(item.variantId);
+    return maxAllowed > 0;
+  }) || [];
+
+  const filteredHistory = history.filter(ret => {
+    if (!historySearch.trim()) return true;
+    const s = historySearch.toLowerCase();
+    return (
+      ret.returnNumber?.toLowerCase().includes(s) ||
+      ret.invoiceNumber?.toLowerCase().includes(s) ||
+      ret.reason?.toLowerCase().includes(s)
+    );
+  });
 
   return (
     <div className="space-y-7 pb-10">
@@ -172,7 +190,7 @@ export default function ReturnsPage() {
           </div>
 
           {order && (
-            <div className="rounded-md border bg-white overflow-hidden">
+            <div className="rounded-md border bg-white overflow-hidden shadow-sm">
               <div className="border-b px-4 sm:px-5 py-3 sm:py-4 bg-[#faf9f6] flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                 <div>
                   <h3 className="font-semibold">Invoice: {order.invoiceNumber}</h3>
@@ -187,44 +205,51 @@ export default function ReturnsPage() {
               <div className="p-5 space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#706a61]">Select items to return</p>
                 
-                <div className="space-y-3">
-                  {order.items.map(item => {
-                    const returnQty = returnItems[item.variantId] || 0;
-                    const unitPrice = Math.floor(item.totalPaisa / item.quantity);
-                    const maxAllowed = item.quantity - getAlreadyReturnedQty(item.variantId);
+                {eligibleItems.length === 0 ? (
+                  <div className="rounded-md bg-[#faf9f6] border border-[#e6e0d5] p-5 text-center text-xs text-[#706a61]">
+                    <p className="font-semibold text-[#8a5a10]">All items returned</p>
+                    <p className="mt-1">All products in invoice {order.invoiceNumber} have already been refunded or returned.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {order.items.map(item => {
+                      const returnQty = returnItems[item.variantId] || 0;
+                      const unitPrice = Math.floor(item.totalPaisa / item.quantity);
+                      const maxAllowed = item.quantity - getAlreadyReturnedQty(item.variantId);
 
-                    // Skip showing items that have already been fully returned
-                    if (maxAllowed <= 0) return null;
+                      // Skip showing items that have already been fully returned
+                      if (maxAllowed <= 0) return null;
 
-                    return (
-                      <div key={item.variantId} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border rounded-md p-3 transition ${returnQty > 0 ? 'border-[#c9963e] bg-[#fffbf5]' : ''}`}>
-                        <div>
-                          <p className="font-medium text-sm">{item.productName}</p>
-                          <p className="text-xs text-[#706a61] mt-0.5">{item.sku} {item.size && `· ${item.size}`} {item.color && `· ${item.color}`}</p>
-                          <p className="text-xs font-financial mt-1">{formatMoney(unitPrice)} each</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <p className="text-xs text-[#706a61]">Max: {maxAllowed}</p>
-                          <div className="flex items-center border rounded-md">
-                            <button 
-                              type="button"
-                              onClick={() => decrementReturn(item.variantId)}
-                              className="px-2 py-1 text-lg hover:bg-gray-100"
-                              disabled={returnQty === 0}
-                            >-</button>
-                            <span className="w-8 text-center font-medium text-sm">{returnQty}</span>
-                            <button 
-                              type="button"
-                              onClick={() => incrementReturn(item.variantId, maxAllowed)}
-                              className="px-2 py-1 text-lg hover:bg-gray-100"
-                              disabled={returnQty === maxAllowed}
-                            >+</button>
+                      return (
+                        <div key={item.variantId} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border rounded-md p-3 transition ${returnQty > 0 ? 'border-[#c9963e] bg-[#fffbf5]' : ''}`}>
+                          <div>
+                            <p className="font-medium text-sm">{item.productName}</p>
+                            <p className="text-xs text-[#706a61] mt-0.5">{item.sku} {item.size && `· ${item.size}`} {item.color && `· ${item.color}`}</p>
+                            <p className="text-xs font-financial mt-1">{formatMoney(unitPrice)} each</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <p className="text-xs text-[#706a61]">Max: {maxAllowed}</p>
+                            <div className="flex items-center border rounded-md">
+                              <button 
+                                type="button"
+                                onClick={() => decrementReturn(item.variantId)}
+                                className="px-2 py-1 text-lg hover:bg-gray-100"
+                                disabled={returnQty === 0}
+                              >-</button>
+                              <span className="w-8 text-center font-medium text-sm">{returnQty}</span>
+                              <button 
+                                type="button"
+                                onClick={() => incrementReturn(item.variantId, maxAllowed)}
+                                className="px-2 py-1 text-lg hover:bg-gray-100"
+                                disabled={returnQty === maxAllowed}
+                              >+</button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {hasItemsSelected && (
                   <div className="pt-4 border-t space-y-4">
@@ -233,7 +258,7 @@ export default function ReturnsPage() {
                       <Input 
                         value={reason} 
                         onChange={(e) => setReason(e.target.value)} 
-                        placeholder="e.g., Size didn't fit, defective" 
+                        placeholder="e.g., Size didn't fit, defective, exchanged for other" 
                         className="text-sm"
                       />
                     </div>
@@ -255,27 +280,40 @@ export default function ReturnsPage() {
         </div>
 
         {/* Right Col: History */}
-        <div className="rounded-md border bg-white overflow-hidden flex flex-col">
-          <div className="border-b px-5 py-4">
+        <div className="rounded-md border bg-white overflow-hidden flex flex-col shadow-sm">
+          <div className="border-b px-5 py-3.5 bg-[#faf9f6] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h3 className="font-semibold text-sm">Return History</h3>
+            <div className="w-full sm:w-48">
+              <Input
+                placeholder="Search history..."
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                className="h-8 text-xs bg-white"
+              />
+            </div>
           </div>
           
           <div className="flex-1 overflow-y-auto max-h-[600px] p-0">
             {loadingHistory ? (
               <p className="p-5 text-sm text-gray-500">Loading history...</p>
-            ) : history.length === 0 ? (
+            ) : filteredHistory.length === 0 ? (
               <div className="grid place-items-center p-10 text-center text-[#706a61]">
                 <RotateCcw size={24} className="mb-2 opacity-50" />
-                <p className="text-sm">No returns processed yet.</p>
+                <p className="text-sm">{historySearch ? "No matching returns found." : "No returns processed yet."}</p>
               </div>
             ) : (
               <div className="divide-y">
-                {history.map(ret => (
-                  <div key={ret._id} className="p-4 hover:bg-[#faf9f6]">
+                {filteredHistory.map(ret => (
+                  <div key={ret._id} className="p-4 hover:bg-[#faf9f6] transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-semibold text-sm">{ret.returnNumber}</p>
                         <p className="text-xs text-[#706a61] mt-0.5">Inv: {ret.invoiceNumber}</p>
+                        {ret.reason && (
+                          <p className="text-[11px] text-[#8a5a10] mt-1 bg-[#fffbf2] border border-[#f0e3c5] rounded px-2 py-0.5 inline-block">
+                            Reason: {ret.reason}
+                          </p>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="font-financial font-semibold text-[#8a1a1a]">-{formatMoney(ret.totalRefundPaisa)}</p>
@@ -300,3 +338,4 @@ export default function ReturnsPage() {
     </div>
   );
 }
+

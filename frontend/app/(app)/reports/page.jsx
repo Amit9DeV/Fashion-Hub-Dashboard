@@ -14,6 +14,7 @@ import { formatMoney, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
 const PRESET_DATES = [
   { label: "Lifetime", value: "lifetime" },
@@ -76,7 +77,7 @@ export default function ReportsPage() {
       setReport(data);
     } catch (err) {
       console.error("Error fetching report:", err);
-      alert("Failed to fetch reports. Please try again.");
+      toast.error("Failed to fetch reports. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -581,9 +582,10 @@ function ExpandedBillDetails({ bill, onUpdated }) {
 
       await api.orders.update(bill.id, payload);
       setIsEditing(false);
+      toast.success("Cost data updated successfully");
       onUpdated();
     } catch (e) {
-      alert("Failed to update cost data: " + e.message);
+      toast.error("Failed to update cost data: " + e.message);
     } finally {
       setSaving(false);
     }

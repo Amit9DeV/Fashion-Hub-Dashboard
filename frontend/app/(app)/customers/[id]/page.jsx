@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { serverFetch } from "@/lib/server-api";
 import { redirect } from "next/navigation";
 import { FileText } from "lucide-react";
 import EditCustomerButton from "@/components/customers/EditCustomerButton";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +32,12 @@ export default async function CustomerDetailPage(props) {
             {customer.gstin && <span>GSTIN: {customer.gstin}</span>}
           </div>
         </div>
-        <div className="w-full sm:w-auto flex justify-start sm:justify-end">
+        <div className="w-full sm:w-auto flex flex-wrap gap-2.5 justify-start sm:justify-end">
+          <Button variant="gold" asChild className="h-9 text-xs">
+            <Link href={`/billing?customerId=${customer._id}`}>
+              + New Sale
+            </Link>
+          </Button>
           <EditCustomerButton customer={customer} />
         </div>
       </section>
@@ -76,7 +83,13 @@ export default async function CustomerDetailPage(props) {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <FileText size={15} className="text-[#9b7740]" />
-                        <span className="font-mono text-xs font-semibold">{order.invoiceNumber}</span>
+                        <Link
+                          href={`/orders?query=${order.invoiceNumber}`}
+                          className="font-mono text-xs font-semibold text-[#0b0b0b] hover:text-[#9b7740] hover:underline"
+                          title="View order in ledger"
+                        >
+                          {order.invoiceNumber}
+                        </Link>
                       </div>
                     </td>
                     <td className="px-5 py-3.5">{formatDate(order.completedAt)}</td>

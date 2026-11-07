@@ -74,7 +74,7 @@ export const receivePurchaseOrder = async (req, res) => {
     const { id } = req.params;
     
     const session = await mongoose.startSession();
-    const isStandalone = !process.env.MONGODB_URI.includes("replicaSet");
+    const isStandalone = !process.env.MONGODB_URI?.includes("replicaSet");
     if (isStandalone) {
       session.endSession();
     }

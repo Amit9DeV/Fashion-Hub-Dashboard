@@ -1,35 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileText, MessageCircle } from "lucide-react";
-import { formatDate, formatMoney } from "@/lib/utils";
-import { apiBase } from "@/lib/backend";
+import { FileText } from "lucide-react";
 import { serverFetch } from "@/lib/server-api";
-import DeleteOrderButton from "@/components/orders/DeleteOrderButton";
 import { SearchInput } from "@/components/ui/SearchInput";
+import OrdersTable from "./OrdersTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage(props) {
   const searchParams = await props.searchParams;
   const q = searchParams?.q || "";
-  const res = await serverFetch(`/orders?query=${encodeURIComponent(q)}`);
+  const page = parseInt(searchParams?.page, 10) || 1;
+  const res = await serverFetch(`/orders?query=${encodeURIComponent(q)}&page=${page}&limit=25`);
   if (res.status === 401) {
     redirect("/login");
   }
   
   const payload = await res.json().catch(() => ({}));
-  const { orders = [], invoices = [], messages = [] } = payload.data || {};
-
-  // Guard against null orderId to prevent .toString() crash
-  const invoiceByOrderId = new Map(
-    invoices.filter(i => i.orderId).map((invoice) => [invoice.orderId.toString(), invoice])
-  );
-  const messageByOrderId = new Map(
-    messages.filter(m => m.orderId).map((message) => [message.orderId.toString(), message])
-  );
+  const { orders = [], invoices = [], messages = [], pagination = {} } = payload.data || {};
 
   return (
-    <div className="overflow-hidden rounded-md border bg-white">
+    <div className="overflow-hidden rounded-md border bg-white shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b px-4 sm:px-6 py-5 gap-4">
         <div>
           <p className="eyebrow flex items-center gap-2">
@@ -45,92 +36,30 @@ export default async function OrdersPage(props) {
           <div className="flex-1 sm:w-64">
             <SearchInput placeholder="Search invoice or customer..." />
           </div>
-          <span className="hidden rounded-full bg-[#f0ede7] px-3 py-1 text-xs font-semibold text-[#5f584e] sm:block shrink-0">{orders.length} recent</span>
+          <span className="hidden rounded-full bg-[#f0ede7] px-3 py-1 text-xs font-semibold text-[#5f584e] sm:block shrink-0">
+            {pagination.total !== undefined ? `${pagination.total} total` : `${orders.length} orders`}
+          </span>
         </div>
       </div>
       {orders.length ? (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-sm">
-            <thead className="bg-[#faf9f6] text-[10px] uppercase tracking-[0.13em] text-[#81796d]">
-              <tr>
-                <th className="px-5 py-3 font-semibold">Invoice</th>
-                <th className="px-5 py-3 font-semibold">Customer</th>
-                <th className="px-5 py-3 font-semibold">Items</th>
-                <th className="px-5 py-3 font-semibold">Payment</th>
-                <th className="px-5 py-3 font-semibold">WhatsApp</th>
-                <th className="px-5 py-3 font-semibold">Completed</th>
-                <th className="px-5 py-3 text-right font-semibold">Total</th>
-                <th className="px-5 py-3 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                const invoice = invoiceByOrderId.get(order._id.toString());
-                const message = messageByOrderId.get(order._id.toString());
-                return (
-                  <tr key={order._id.toString()} className="border-t hover:bg-[#fffcf5]">
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <FileText size={15} className="text-[#9b7740]" />
-                        {invoice ? (
-                          <a href={`${apiBase()}/invoices/${invoice._id}/pdf`} target="_blank" rel="noreferrer" className="font-mono text-xs font-semibold hover:text-[#9b7740]">{order.invoiceNumber}</a>
-                        ) : (
-                          <span className="font-mono text-xs font-semibold text-[#81796d]" title="Invoice PDF not generated yet">{order.invoiceNumber}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {order.customerSnapshot?.name || "Walk-in"}
-                      <p className="mt-1 text-xs text-[#7c756b]">{order.customerSnapshot?.mobile || "—"}</p>
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-[#5f594f]">
-                      {(order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0)} item(s)
-                    </td>
-                    <td className="px-5 py-3.5 text-xs">
-                      {(order.payments || []).map((payment) => payment.method).join(" + ") || "—"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {message ? (
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${message.status === "FAILED" ? "text-[#9d382c]" : "text-[#617355]"}`}>
-                          <MessageCircle size={14} />{message.status}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-[#898277]">Not requested</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-[#655e54]">
-                      {formatDate(order.completedAt)}
-                    </td>
-                    <td className="font-financial px-5 py-3.5 text-right font-semibold">
-                      {formatMoney(order.totalPaisa)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link 
-                          href={`/billing?editOrderId=${order._id.toString()}`}
-                          className="text-[#9b7740] hover:text-[#7a5c2f] transition-colors p-1"
-                          title="Edit Order"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
-                        </Link>
-                        <DeleteOrderButton orderId={order._id.toString()} />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <OrdersTable 
+          orders={orders} 
+          invoices={invoices} 
+          messages={messages} 
+          pagination={pagination}
+          currentQuery={q}
+        />
       ) : (
         <div className="grid min-h-72 place-items-center p-6 text-center">
           <div>
             <FileText className="mx-auto text-[#c9963e]" size={28} />
-            <p className="mt-3 text-sm font-medium">No completed orders yet</p>
-            <Link href="/billing" className="mt-2 inline-block text-sm font-semibold text-[#805f2b]">Start a counter sale</Link>
+            <p className="mt-3 text-sm font-medium">No completed orders found</p>
+            <p className="text-xs text-[#8a847a] mt-1">{q ? `No results for "${q}"` : "Sales will appear here once processed at POS."}</p>
+            <Link href="/billing" className="mt-3 inline-block text-xs font-semibold text-[#805f2b] underline">Start a counter sale</Link>
           </div>
         </div>
       )}
     </div>
   );
 }
+

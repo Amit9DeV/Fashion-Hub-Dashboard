@@ -133,7 +133,7 @@ export async function completeSale(rawInput, user) {
   let result;
 
   try {
-    const isStandalone = !process.env.MONGODB_URI.includes("replicaSet");
+    const isStandalone = !process.env.MONGODB_URI?.includes("replicaSet");
     if (isStandalone) {
       session.endSession();
       session = undefined;

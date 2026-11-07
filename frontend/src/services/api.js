@@ -1,50 +1,52 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Fashion Hub — Client-side API Service
+// Authentication is handled exclusively via HttpOnly cookies (set by the backend).
+// No tokens are stored in localStorage (XSS-vulnerable).
+// ─────────────────────────────────────────────────────────────────────────────
+
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://fashion-hub-dashboard.onrender.com/api";
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://fashion-hub-dashboard.onrender.com/api";
+
+// Tracks active AbortControllers per endpoint to cancel stale GET requests
 const activeRequests = new Map();
 
 async function fetchAPI(endpoint, options = {}) {
   const isGet = !options.method || options.method === "GET";
 
-  // Automatically cancel previous duplicate GET requests to prevent race conditions
+  // Cancel previous duplicate GET request to prevent race conditions
   if (isGet) {
-    const existingController = activeRequests.get(endpoint);
-    if (existingController) {
-      existingController.abort();
-    }
+    const existing = activeRequests.get(endpoint);
+    if (existing) existing.abort();
     const controller = new AbortController();
     activeRequests.set(endpoint, controller);
     options.signal = controller.signal;
   }
 
   const url = `${API_URL}${endpoint}`;
-  const headers = {
-    ...options.headers,
-  };
 
+  const headers = { ...options.headers };
   if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
-  }
-
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("fashion_hub_token");
-    if (token && !headers["Authorization"]) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
   }
 
   try {
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: "include", // Always send cookies for JWT auth
+      credentials: "include", // Sends the HttpOnly session cookie automatically
     });
 
-    const data = await response.json().catch(() => ({}));
-
+    // Handle session expiry — redirect to login
     if (response.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("fashion_hub_token");
-      localStorage.removeItem("fashion_hub_user");
+      const currentPath = window.location.pathname;
+      if (currentPath !== "/login") {
+        window.location.href = `/login?next=${encodeURIComponent(currentPath)}`;
+      }
+      return new Promise(() => {}); // Prevent React state updates during redirect
     }
+
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       throw new Error(data.message || data.error || "API request failed");
@@ -53,15 +55,14 @@ async function fetchAPI(endpoint, options = {}) {
     return data.data !== undefined ? data.data : data;
   } catch (error) {
     if (error.name === "AbortError") {
-      // Return a never-resolving promise to stop React state updates on aborted requests
+      // Stale request was cancelled — return a pending promise to halt updates
       return new Promise(() => {});
     }
     throw error;
   } finally {
     if (isGet) {
-      // Fix: compare against the stored controller (not the signal object)
-      const storedController = activeRequests.get(endpoint);
-      if (storedController?.signal === options.signal) {
+      const stored = activeRequests.get(endpoint);
+      if (stored?.signal === options.signal) {
         activeRequests.delete(endpoint);
       }
     }
@@ -82,7 +83,10 @@ export const api = {
         body: JSON.stringify({ name, gender }),
       }),
     search: (query) => fetchAPI(`/products?query=${encodeURIComponent(query)}`),
-    getAll: () => fetchAPI("/products/all"),
+    getAll: (params = {}) => {
+      const qs = new URLSearchParams(params).toString();
+      return fetchAPI(`/products/all${qs ? `?${qs}` : ""}`);
+    },
     getById: (id) => fetchAPI(`/products/${id}`),
     create: (data) =>
       fetchAPI("/products", { method: "POST", body: JSON.stringify(data) }),
@@ -115,7 +119,10 @@ export const api = {
   customers: {
     search: (query) =>
       fetchAPI(`/customers?query=${encodeURIComponent(query)}`),
-    getAll: () => fetchAPI("/customers/all"),
+    getAll: (params = {}) => {
+      const qs = new URLSearchParams(params).toString();
+      return fetchAPI(`/customers/all${qs ? `?${qs}` : ""}`);
+    },
     getById: (id) => fetchAPI(`/customers/${id}`),
     create: (data) =>
       fetchAPI("/customers", { method: "POST", body: JSON.stringify(data) }),
@@ -145,8 +152,10 @@ export const api = {
   },
   orders: {
     search: (q) => fetchAPI(`/orders/search?q=${encodeURIComponent(q)}`),
-    getAll: (page = 1, limit = 50) =>
-      fetchAPI(`/orders?page=${page}&limit=${limit}`),
+    getAll: (page = 1, limit = 50, query = "") =>
+      fetchAPI(
+        `/orders?page=${page}&limit=${limit}${query ? `&query=${encodeURIComponent(query)}` : ""}`
+      ),
     getById: (id) => fetchAPI(`/orders/${id}`),
     update: (id, payload) =>
       fetchAPI(`/orders/${id}`, {
@@ -156,7 +165,10 @@ export const api = {
     delete: (id) => fetchAPI(`/orders/${id}`, { method: "DELETE" }),
   },
   returns: {
-    getAll: () => fetchAPI("/returns"),
+    getAll: (params = {}) => {
+      const qs = new URLSearchParams(params).toString();
+      return fetchAPI(`/returns${qs ? `?${qs}` : ""}`);
+    },
     getById: (id) => fetchAPI(`/returns/${id}`),
     process: (data) =>
       fetchAPI("/returns", { method: "POST", body: JSON.stringify(data) }),

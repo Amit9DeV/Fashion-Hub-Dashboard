@@ -1,30 +1,31 @@
 import connectToDatabase from "../config/db.js";
 import Customer from "../models/Customer.js";
 import Order from "../models/Order.js";
-import crypto from "crypto";
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// @route   GET /api/customers
+// @desc    Search customers (POS typeahead)
+// @access  Private
 export const searchCustomers = async (req, res) => {
   try {
     const query = req.query.query?.trim().slice(0, 80) || "";
     await connectToDatabase();
     const search = new RegExp(escapeRegExp(query), "i");
-    const customers = await Customer.find(query ? { $or: [{ name: search }, { mobile: search }, { whatsappNumber: search }] } : {})
+    const customers = await Customer.find(
+      query ? { $or: [{ name: search }, { mobile: search }, { whatsappNumber: search }] } : {}
+    )
       .sort({ "stats.lastPurchaseAt": -1 })
       .limit(10)
       .lean();
-      
-    return res.json({ 
-      success: true, 
-      data: { 
-        customers: customers.map((customer) => ({
-          ...customer,
-          _id: customer._id.toString(),
-        })) 
-      } 
+
+    return res.json({
+      success: true,
+      data: {
+        customers: customers.map((c) => ({ ...c, _id: c._id.toString() })),
+      },
     });
   } catch (error) {
     console.error(error);
@@ -32,34 +33,55 @@ export const searchCustomers = async (req, res) => {
   }
 };
 
+// @route   GET /api/customers/all
+// @desc    Get all customers with optional search and pagination
+// @access  Private
 export const getAllCustomers = async (req, res) => {
   try {
     await connectToDatabase();
     const query = req.query.query?.trim().slice(0, 80) || "";
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, parseInt(req.query.limit) || 100);
+    const skip = (page - 1) * limit;
     const search = query ? new RegExp(escapeRegExp(query), "i") : null;
-    
+
     let filter = {};
     if (search) {
       filter.$or = [{ name: search }, { mobile: search }, { whatsappNumber: search }];
     }
-    
-    const customers = await Customer.find(filter).sort({ createdAt: -1 }).lean();
-    return res.json({ success: true, data: { customers } });
+
+    const [customers, total] = await Promise.all([
+      Customer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Customer.countDocuments(filter),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        customers,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      },
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not fetch customers." });
   }
 };
 
+// @route   GET /api/customers/:id
+// @desc    Get a single customer with their order history
+// @access  Private
 export const getCustomerById = async (req, res) => {
   try {
     await connectToDatabase();
     const customer = await Customer.findById(req.params.id).lean();
-    if (!customer) return res.status(404).json({ success: false, message: "Customer not found" });
-    
-    // Order stores customerId at the root level, not inside customerSnapshot
-    const orders = await Order.find({ customerId: req.params.id }).sort({ completedAt: -1 }).lean() || [];
-    
+    if (!customer)
+      return res.status(404).json({ success: false, message: "Customer not found" });
+
+    const orders = await Order.find({ customerId: req.params.id })
+      .sort({ completedAt: -1 })
+      .lean() || [];
+
     return res.json({ success: true, data: { customer, orders } });
   } catch (error) {
     console.error(error);
@@ -67,6 +89,9 @@ export const getCustomerById = async (req, res) => {
   }
 };
 
+// @route   POST /api/customers
+// @desc    Create a new customer
+// @access  Private
 export const createCustomer = async (req, res) => {
   try {
     await connectToDatabase();
@@ -80,7 +105,11 @@ export const createCustomer = async (req, res) => {
     if (mobile) {
       const existing = await Customer.findOne({ mobile });
       if (existing) {
-        return res.status(409).json({ success: false, message: "A customer with this mobile number already exists.", data: { customer: existing } });
+        return res.status(409).json({
+          success: false,
+          message: "A customer with this mobile number already exists.",
+          data: { customer: existing },
+        });
       }
     }
 
@@ -95,13 +124,18 @@ export const createCustomer = async (req, res) => {
       createdBy: req.user?.id,
     });
 
-    return res.status(201).json({ success: true, data: { customer }, message: "Customer created successfully." });
+    return res
+      .status(201)
+      .json({ success: true, data: { customer }, message: "Customer created successfully." });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not create customer." });
   }
 };
 
+// @route   PUT /api/customers/:id
+// @desc    Update a customer
+// @access  Private
 export const updateCustomer = async (req, res) => {
   try {
     const { name, mobile, email, gstin } = req.body;
@@ -130,19 +164,24 @@ export const updateCustomer = async (req, res) => {
   }
 };
 
+// @route   DELETE /api/customers/:id
+// @desc    Delete a customer (ADMIN/MANAGER only)
+// @access  Private
 export const deleteCustomer = async (req, res) => {
   try {
+    // ── Role guard (was missing — anyone could delete customers) ─────────────
+    if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
     await connectToDatabase();
     const customer = await Customer.findByIdAndDelete(req.params.id);
-    if (!customer) return res.status(404).json({ success: false, message: "Customer not found" });
-    
-    // Also nullify the customerId in their past orders to prevent dangling references,
-    // or just leave it since it's a historical ledger. We'll leave the snapshot but nullify the ID.
-    await Order.updateMany(
-      { customerId: req.params.id },
-      { $unset: { customerId: "" } }
-    );
-    
+    if (!customer)
+      return res.status(404).json({ success: false, message: "Customer not found" });
+
+    // Nullify customerId on historical orders (preserve ledger, remove dangling ref)
+    await Order.updateMany({ customerId: req.params.id }, { $unset: { customerId: "" } });
+
     return res.json({ success: true, message: "Customer deleted successfully" });
   } catch (error) {
     console.error(error);

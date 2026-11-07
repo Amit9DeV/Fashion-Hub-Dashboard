@@ -19,8 +19,9 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [email, setEmail] = useState("admin@fashionhub.local");
-  const [password, setPassword] = useState("FashionHub@123");
+  // ── No default credentials pre-filled in production ───────────────────────
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(params.get("error") || "");
   const [busy, setBusy] = useState(false);
 
@@ -32,27 +33,28 @@ function LoginForm() {
       const res = await fetch(`${apiBase()}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // allows Express to set the session cookie on the browser
-        body: JSON.stringify({ email, password }),
+        credentials: "include",
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Invalid credentials.");
 
-      // 1. Sync session cookie into Next.js domain (for Server Components like Dashboard)
+      // Sync session cookie into Next.js domain (for Server Components)
       const { syncSession } = await import("./actions");
       const actionResult = await syncSession(data.data);
       if (actionResult && !actionResult.success) {
         console.warn("Session cookie sync warning:", actionResult.error);
       }
 
-      // 2. Store token in localStorage (for client-side API requests)
-      if (data.data?.token) {
-        localStorage.setItem("fashion_hub_token", data.data.token);
-        localStorage.setItem("fashion_hub_user", JSON.stringify(data.data));
-      }
+      // ── Validate the redirect target to prevent open redirect attacks ──────
+      const rawNext = params.get("next") || "/dashboard";
+      const safeTarget =
+        rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes("://")
+          ? rawNext
+          : "/dashboard";
 
-      const target = params.get("next") || "/dashboard";
-      window.location.href = target;
+      // Use router.replace so the login page is removed from history
+      router.replace(safeTarget);
     } catch (err) {
       setError(err.message || "Could not sign in.");
       setBusy(false);
@@ -107,8 +109,9 @@ function LoginForm() {
                   className="pl-10"
                   type="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
+                  placeholder="you@fashionhub.com"
                   required
                 />
               </div>
@@ -124,15 +127,19 @@ function LoginForm() {
                   className="pl-10"
                   type="password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
+                  placeholder="••••••••"
                   required
                 />
               </div>
             </label>
           </div>
           {error && (
-            <p className="mt-4 rounded-md border border-[#e0ae9f] bg-[#fff0ec] px-3 py-2 text-sm text-[#8a2f20]">
+            <p
+              role="alert"
+              className="mt-4 rounded-md border border-[#e0ae9f] bg-[#fff0ec] px-3 py-2 text-sm text-[#8a2f20]"
+            >
               {error}
             </p>
           )}
@@ -140,6 +147,7 @@ function LoginForm() {
             className="mt-6 w-full"
             variant="gold"
             size="lg"
+            type="submit"
             disabled={busy}
           >
             {busy ? (

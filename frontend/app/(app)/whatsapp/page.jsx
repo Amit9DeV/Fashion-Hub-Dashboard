@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/utils";
 import { apiBase } from "@/lib/backend";
 import { Button } from "@/components/ui/button";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 import Link from "next/link";
 
 export default function WhatsAppPage() {
@@ -33,10 +34,11 @@ export default function WhatsAppPage() {
     setRetryingId(id);
     try {
       await api.whatsapp.retry(id);
+      toast.success("Retry request queued successfully");
       // Wait a moment before refreshing to give the queue a chance
       setTimeout(fetchMessages, 2000);
     } catch (err) {
-      alert(err.message || "Failed to retry message");
+      toast.error(err.message || "Failed to retry message");
     } finally {
       setRetryingId(null);
     }
@@ -115,8 +117,9 @@ export default function WhatsAppPage() {
                     <td className="px-5 py-3.5 font-medium">{msg.phoneNumber}</td>
                     <td className="px-5 py-3.5">
                       <a 
-                        href={`${apiBase()}/invoices/${msg.invoiceId}/pdf`}
+                        href={api.invoices.getPdfUrl(msg.invoiceId)}
                         target="_blank"
+                        rel="noreferrer"
                         className="flex items-center gap-1.5 text-xs font-semibold hover:text-[#9b7740]"
                       >
                         <FileText size={14} /> PDF

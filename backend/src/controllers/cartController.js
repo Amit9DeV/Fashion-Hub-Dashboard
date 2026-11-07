@@ -14,7 +14,7 @@ export const cartHeartbeat = async (req, res) => {
     await connectToDatabase();
     
     const session = await mongoose.startSession();
-    const isStandalone = !process.env.MONGODB_URI.includes("replicaSet");
+    const isStandalone = !process.env.MONGODB_URI?.includes("replicaSet");
     if (isStandalone) {
       session.endSession();
     }

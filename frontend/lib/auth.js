@@ -1,23 +1,22 @@
 import { cookies } from "next/headers";
-import { SignJWT, jwtVerify, decodeJwt } from "jose";
+import { SignJWT, jwtVerify } from "jose";
 export { can, rolePermissions } from "@/lib/permissions";
 
 const COOKIE_NAME = "fashion_hub_session";
 const encoder = new TextEncoder();
 
-const PRIMARY_SECRET =
-  process.env.AUTH_SECRET || "replace-with-a-long-random-secret-at-least-32-characters";
-const KNOWN_SECRETS = [
-  PRIMARY_SECRET,
-  "replace-with-a-long-random-secret-at-least-32-characters",
-  "default-fallback-secret-key-that-is-at-least-32-chars-long",
-];
-
-function sessionSecret() {
-  return encoder.encode(PRIMARY_SECRET);
+function getSecret() {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error("AUTH_SECRET environment variable is not set.");
+  }
+  return encoder.encode(secret);
 }
 
+// ─── Create a signed session cookie ──────────────────────────────────────────
 export async function createSession(user) {
+  // If the backend already sent us a signed token, store it directly
+  // (avoids double-signing and keeps both ends on the same key)
   const token =
     user.token ||
     (await new SignJWT({
@@ -28,7 +27,7 @@ export async function createSession(user) {
       .setProtectedHeader({ alg: "HS256" })
       .setSubject((user._id || user.id).toString())
       .setExpirationTime("12h")
-      .sign(sessionSecret()));
+      .sign(getSecret()));
 
   let isHttps = false;
   try {
@@ -36,8 +35,11 @@ export async function createSession(user) {
     const h = await headers();
     const proto = h.get("x-forwarded-proto");
     const host = h.get("host") || "";
-    isHttps = proto === "https" || host.includes("vercel.app") || host.includes("onrender.com");
-  } catch (e) {
+    isHttps =
+      proto === "https" ||
+      host.includes("vercel.app") ||
+      host.includes("onrender.com");
+  } catch {
     isHttps = Boolean(process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://"));
   }
 
@@ -45,62 +47,53 @@ export async function createSession(user) {
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: isHttps,
-    sameSite: "lax",
+    sameSite: isHttps ? "none" : "lax",
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: 60 * 60 * 12, // 12 hours
   });
 
   return token;
 }
 
+// ─── Clear session cookie ─────────────────────────────────────────────────────
 export async function clearSession() {
   const store = await cookies();
-  store.set(COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  store.set(COOKIE_NAME, "", {
+    path: "/",
+    maxAge: 0,
+    httpOnly: true,
+  });
 }
 
+// ─── Read and verify the session cookie ──────────────────────────────────────
 export async function getCurrentUser() {
   try {
     const store = await cookies();
     const token = store.get(COOKIE_NAME)?.value;
     if (!token) return null;
 
+    // Verify signature — no insecure decodeJwt fallback
     let payload = null;
-
-    // 1. Try verifying with known secrets
-    for (const secretStr of KNOWN_SECRETS) {
-      try {
-        const verified = await jwtVerify(token, encoder.encode(secretStr), { clockTolerance: 60 });
-        payload = verified.payload;
-        break;
-      } catch (e) {
-        // try next secret
-      }
-    }
-
-    // 2. Fallback: decode JWT safely if signed by backend with an unlisted secret
-    if (!payload) {
-      try {
-        const decoded = decodeJwt(token);
-        if (decoded && decoded.exp && Date.now() < decoded.exp * 1000) {
-          payload = decoded;
-        }
-      } catch (decodeErr) {
-        return null;
-      }
-    }
-
-    if (!payload || (!payload.sub && !payload.id)) {
+    try {
+      const verified = await jwtVerify(token, getSecret(), {
+        clockTolerance: 60,
+      });
+      payload = verified.payload;
+    } catch {
+      // Invalid signature or expired — treat as unauthenticated
       return null;
     }
+
+    if (!payload?.sub && !payload?.id) return null;
 
     return {
       id: payload.sub || payload.id,
       name: payload.name,
       email: payload.email,
       role: payload.role,
-      token: token,
+      token,
     };
-  } catch (err) {
+  } catch {
     return null;
   }
 }

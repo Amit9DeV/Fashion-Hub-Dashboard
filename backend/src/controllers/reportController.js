@@ -14,18 +14,30 @@ export const getSalesReport = async (req, res) => {
     
     let start = new Date();
     let end = new Date();
-    
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
     if (startDate && endDate) {
-      start = new Date(startDate);
-      end = new Date(endDate);
+      // Parse dates and set boundaries in IST (convert to UTC for MongoDB)
+      const parseIST = (dateStr, isEnd) => {
+        const d = new Date(dateStr);
+        const istDate = new Date(d.getTime() + IST_OFFSET_MS);
+        const utcMidnight = Date.UTC(
+          istDate.getUTCFullYear(), istDate.getUTCMonth(), istDate.getUTCDate(),
+          isEnd ? 23 : 0, isEnd ? 59 : 0, isEnd ? 59 : 0, isEnd ? 999 : 0
+        ) - IST_OFFSET_MS;
+        return new Date(utcMidnight);
+      };
+      start = parseIST(startDate, false);
+      end = parseIST(endDate, true);
     } else {
-      // Default based on dateFilter string if passed, else Last 30 days
-      start.setDate(start.getDate() - 30);
+      // Default: last 30 days, also IST-aware
+      const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+      const todayMidnightUTC = new Date(
+        Date.UTC(nowIST.getUTCFullYear(), nowIST.getUTCMonth(), nowIST.getUTCDate()) - IST_OFFSET_MS
+      );
+      start = new Date(todayMidnightUTC.getTime() - 29 * 24 * 60 * 60 * 1000);
+      end = new Date(todayMidnightUTC.getTime() + 24 * 60 * 60 * 1000 - 1);
     }
-    
-    // Ensure boundaries
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
 
     const matchStage = {
       $match: {

@@ -6,6 +6,7 @@ import { ImageIcon, Shirt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 
 export default function ProductTable({ initialProducts, searchComponent }) {
   const router = useRouter();
@@ -90,9 +91,10 @@ export default function ProductTable({ initialProducts, searchComponent }) {
       }
 
       setProducts(prev => prev.map(p => p._id === product._id ? updatedProduct : p));
+      toast.success("Product updated successfully");
       setEditingId(null);
     } catch (err) {
-      alert("Failed to update product: " + err.message);
+      toast.error("Failed to update product: " + err.message);
     }
   };
 

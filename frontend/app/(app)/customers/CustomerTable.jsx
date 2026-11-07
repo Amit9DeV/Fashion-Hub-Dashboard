@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
 import DeleteCustomerButton from "@/components/customers/DeleteCustomerButton";
+import EditCustomerButton from "@/components/customers/EditCustomerButton";
 import AddCustomerModal from "@/components/customers/AddCustomerModal";
 import { UsersRound, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,8 @@ export default function CustomerTable({ customers: initialCustomers }) {
                   {formatMoney(customer.stats?.totalSpentPaisa || 0)}
                 </td>
                 <td className="px-5 py-3.5 text-right" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center justify-end">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <EditCustomerButton customer={customer} iconOnly={true} />
                     <DeleteCustomerButton customerId={customer._id.toString()} />
                   </div>
                 </td>

@@ -7,6 +7,7 @@ import { Plus, Receipt, Trash2, IndianRupee, Store, Zap, Heart, User, Sparkles, 
 import { Button } from "@/components/ui/button";
 import { AddExpenseModal } from "@/features/expenses/AddExpenseModal";
 import EditExpenseModal from "@/components/expenses/EditExpenseModal";
+import { toast } from "sonner";
 
 const CATEGORY_ICONS = {
   STOCK: Store,
@@ -43,8 +44,9 @@ export default function ExpensesPage() {
     try {
       await api.expenses.delete(id);
       setExpenses((prev) => prev.filter((e) => e._id !== id));
+      toast.success("Expense deleted successfully");
     } catch (err) {
-      alert(err.message || "Failed to delete expense");
+      toast.error(err.message || "Failed to delete expense");
     }
   };
 

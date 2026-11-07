@@ -201,77 +201,67 @@ h1, h2, h3, .font-serif {
   .invoice-paper { box-shadow: none !important; margin: 0 !important; }
 }
 
-/* Make table wrappers vertically scrollable so sticky headers work */
-.overflow-x-auto:has(table) {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-/* Excel-style Tables (Blue Theme based on screenshot) */
-table {
+/* Custom Excel-style Tables (scoped only when explicitly requested) */
+.excel-table {
   width: 100%;
   border-collapse: collapse;
   font-family: 'Calibri', 'Arial', sans-serif;
   background-color: #ffffff;
 }
 
-thead {
-  background-color: #1a4d71 !important; /* Excel Dark Blue Header */
-}
-
-thead th, table th {
+.excel-table thead, .excel-table thead th {
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: #1a4d71 !important; /* Ensure background is solid when sticky */
+  background-color: #1a4d71 !important;
   color: #ffffff !important;
   font-weight: bold !important;
   border: 1px solid #444444 !important;
   padding: 8px 10px !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-  font-size: 14px !important; /* Larger, readable text size */
-  text-align: center; /* Headers are often centered in this style */
+  font-size: 13px !important;
+  text-align: center;
 }
 
-tbody td, table td {
-  border: 1px solid #444444 !important; /* Dark solid borders */
-  padding: 4px 8px !important;
+.excel-table tbody td {
+  border: 1px solid #444444 !important;
+  padding: 5px 8px !important;
   color: #000000 !important;
   vertical-align: middle !important;
 }
 
-tbody tr:nth-child(even) {
-  background-color: #d8f1f8 !important; /* Light icy blue zebra striping */
+.excel-table tbody tr:nth-child(even) {
+  background-color: #d8f1f8 !important;
 }
 
-tbody tr:nth-child(odd) {
+.excel-table tbody tr:nth-child(odd) {
   background-color: #ffffff !important;
 }
 
-tbody tr:hover {
-  filter: brightness(0.95); /* Subtle hover that preserves the alternating colors */
+.excel-table tbody tr:hover {
+  filter: brightness(0.96);
 }
 
 /* Sub-table styling to differentiate from main tables */
 table.sub-table {
-  background-color: #fdfbf7 !important;
+  background-color: #fdfbf7;
 }
 
 table.sub-table thead, table.sub-table thead th, table.sub-table th {
-  background-color: #8c8273 !important; /* Warm neutral grey/brown for header */
-  color: #ffffff !important;
-  border-color: #a8a094 !important;
+  background-color: #8c8273;
+  color: #ffffff;
+  border-color: #a8a094;
 }
 
 table.sub-table tbody td, table.sub-table td {
-  border-color: #d0c9bd !important;
+  border-color: #d0c9bd;
 }
 
 table.sub-table tbody tr:nth-child(even) {
-  background-color: #f3efe9 !important; /* Warm beige zebra striping */
+  background-color: #f3efe9;
 }
 
 table.sub-table tbody tr:nth-child(odd) {
-  background-color: #ffffff !important;
+  background-color: #ffffff;
 }

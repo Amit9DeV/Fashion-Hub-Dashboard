@@ -7,7 +7,7 @@ export async function syncSession(user) {
     const token = await createSession(user);
     return { success: true, token };
   } catch (error) {
-    console.error("Session creation error:", error);
+    console.error("Session creation error:", error.message);
     return { success: false, error: error.message };
   }
 }

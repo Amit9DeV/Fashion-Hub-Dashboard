@@ -14,6 +14,7 @@ import {
   Search,
   Trash2,
   UserPlus,
+  Vault,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { cn, formatMoney } from "@/lib/utils";
 import { api } from "@/src/services/api";
 import { toast } from "sonner";
 import { AddProductModal } from "./AddProductModal";
+import { CashDrawerModal } from "./CashDrawerModal";
 
 const paymentOptions = ["CASH", "UPI", "CARD", "OTHER"];
 
@@ -276,6 +278,7 @@ export function BillingPOS() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editOrderId = searchParams?.get("editOrderId");
+  const customerId = searchParams?.get("customerId");
   const inputRef = useRef(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -297,7 +300,26 @@ export function BillingPOS() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [lastSaleSummary, setLastSaleSummary] = useState(null);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [isCashDrawerOpen, setIsCashDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!customerId) return;
+    async function loadCustomer() {
+      try {
+        const data = await api.customers.getById(customerId);
+        const cust = data?.customer || data;
+        if (cust) {
+          setCustomer(cust);
+          toast.success(`Selected customer: ${cust.name || cust.mobile}`);
+        }
+      } catch (err) {
+        console.error("Could not load customer for sale:", err);
+      }
+    }
+    loadCustomer();
+  }, [customerId]);
 
   useEffect(() => {
     if (!editOrderId) return;
@@ -481,14 +503,24 @@ export function BillingPOS() {
       finalPayments = [{ method: payments[0].method, amountPaisa: totalPaisa }];
     }
 
-    const totalPaid = finalPayments.reduce((sum, p) => sum + p.amountPaisa, 0);
-    if (totalPaid > totalPaisa) {
-      setBusy(false);
-      return setError("Total paid cannot exceed the bill amount.");
-    }
     if (finalPayments.length === 0) {
       setBusy(false);
       return setError("Please provide at least one payment method or amount.");
+    }
+
+    const totalPaid = finalPayments.reduce((sum, p) => sum + p.amountPaisa, 0);
+    let changeGivenPaisa = 0;
+
+    if (totalPaid > totalPaisa) {
+      const cashEntry = finalPayments.find((p) => p.method === "CASH");
+      if (cashEntry) {
+        changeGivenPaisa = totalPaid - totalPaisa;
+        // Cap recorded cash payment so ledger balances exactly
+        cashEntry.amountPaisa = Math.max(0, cashEntry.amountPaisa - changeGivenPaisa);
+      } else {
+        setBusy(false);
+        return setError("Payment amount exceeds total payable. Please check entered amounts.");
+      }
     }
 
     const payload = {
@@ -525,9 +557,15 @@ export function BillingPOS() {
         data = await api.sales.complete(payload);
         toast.success("Order completed successfully");
       }
+      setLastSaleSummary({
+        changeGivenPaisa,
+        totalPaidPaisa: totalPaid,
+        billTotalPaisa: totalPaisa,
+      });
       setSuccess(data);
       setCart([]);
       setDiscount("");
+      setPayments([{ method: "UPI", amount: "" }]);
       setCustomer(null);
       setCustomerQuery("");
       setCustomerDraft({
@@ -572,6 +610,16 @@ export function BillingPOS() {
                 autoFocus
               />
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCashDrawerOpen(true)}
+              className="h-11 border-[#d8c3a5] text-[#2c2724] hover:bg-[#faf7f2] flex items-center gap-2"
+              title="Open / Close Shift Cash Drawer"
+            >
+              <Vault size={16} className="text-[#c9963e]" />
+              <span className="hidden sm:inline font-medium text-xs">Cash Drawer</span>
+            </Button>
           </div>
           <p className="mt-3 text-xs text-[#777169]">
             Scan and press Enter to add instantly. Tap any field in the cart to
@@ -893,6 +941,32 @@ export function BillingPOS() {
                   </button>
                 )}
               </div>
+
+              {/* Quick Pay Presets */}
+              <div className="flex items-center gap-1.5 flex-wrap pt-0.5 pb-1">
+                <button
+                  type="button"
+                  onClick={() => setPayments([{ method: "UPI", amount: (totalPaisa / 100).toString() }])}
+                  className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#eef4ff] text-[#1a3a7a] border border-[#c5d7ff] hover:bg-[#dce8ff] transition-colors"
+                >
+                  ⚡ Full UPI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayments([{ method: "CASH", amount: (totalPaisa / 100).toString() }])}
+                  className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#f0f9f4] text-[#1a6b3a] border border-[#a3d9b8] hover:bg-[#dcf3e5] transition-colors"
+                >
+                  ⚡ Full Cash
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayments([{ method: "CARD", amount: (totalPaisa / 100).toString() }])}
+                  className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#faf5ff] text-[#5a2a7a] border border-[#e2ccff] hover:bg-[#f3e8ff] transition-colors"
+                >
+                  ⚡ Full Card
+                </button>
+              </div>
+
               {payments.map((p, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <select
@@ -937,16 +1011,17 @@ export function BillingPOS() {
                 
                 if (balanceDue > 0 && !isAutoFull) {
                   return (
-                    <div className="flex justify-between text-xs text-[#8a3a30] font-medium pt-1">
-                      <span>Balance Due (Dues)</span>
-                      <span>{formatMoney(balanceDue)}</span>
+                    <div className="flex justify-between items-center text-xs text-[#8a3a30] font-medium pt-1 px-2.5 py-1.5 rounded bg-[#fff0ec] border border-[#f5c6cb]">
+                      <span>Balance Due (Dues):</span>
+                      <span className="font-financial font-bold">{formatMoney(balanceDue)}</span>
                     </div>
                   );
                 } else if (balanceDue < 0) {
-                   return (
-                    <div className="flex justify-between text-xs text-[#8a3a30] font-medium pt-1">
-                      <span>Overpaid!</span>
-                      <span>{formatMoney(Math.abs(balanceDue))}</span>
+                  const hasCash = payments.some(p => p.method === "CASH");
+                  return (
+                    <div className="flex justify-between items-center text-xs font-semibold pt-1 px-2.5 py-1.5 rounded bg-[#f0f9f4] border border-[#a3d9b8] text-[#1a6b3a]">
+                      <span>{hasCash ? "💵 Change to return:" : "Excess amount:"}</span>
+                      <span className="font-financial text-sm font-bold">{formatMoney(Math.abs(balanceDue))}</span>
                     </div>
                   );
                 }
@@ -1082,6 +1157,14 @@ export function BillingPOS() {
                 : "Inventory, immutable order, invoice, payment, and audit entry were saved together."
               }
             </p>
+            {lastSaleSummary?.changeGivenPaisa > 0 && (
+              <div className="my-4 rounded-md bg-[#f0f9f4] border border-[#a3d9b8] p-3 text-center">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-[#1a6b3a]">Change Returned to Customer</p>
+                <p className="font-financial text-2xl font-bold text-[#1a6b3a] mt-0.5">
+                  {formatMoney(lastSaleSummary.changeGivenPaisa)}
+                </p>
+              </div>
+            )}
             {success.postSaleWarning && (
               <p className="mt-4 rounded-md bg-[#fff4e5] px-3 py-2 text-xs leading-5 text-[#7d521b]">
                 {success.postSaleWarning}
@@ -1123,6 +1206,10 @@ export function BillingPOS() {
           setQuery("");
           setResults([]);
         }}
+      />
+      <CashDrawerModal
+        isOpen={isCashDrawerOpen}
+        onClose={() => setIsCashDrawerOpen(false)}
       />
     </div>
   );

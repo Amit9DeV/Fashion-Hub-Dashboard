@@ -7,9 +7,8 @@ import ProductVariant from "../models/ProductVariant.js";
 import InventoryMovement from "../models/InventoryMovement.js";
 import { completeSale } from "../services/sales/completeSale.js";
 
-// @route   POST /api/returns
-// @desc    Process a new return with partial-return tracking and inventory audit
-// @access  Private
+// @desc    Core return logic (shared between processReturn and processExchange)
+// @access  Internal
 export const executeReturn = async (input, user) => {
   await connectToDatabase();
 
@@ -40,8 +39,10 @@ export const executeReturn = async (input, user) => {
       }
 
       // Fetch all previous returns for this order to enforce partial-return limits
-      const previousReturns = await Return.find({ orderId: order._id }).session(session).lean();
-      
+      const previousReturns = await Return.find({ orderId: order._id })
+        .session(session)
+        .lean();
+
       // Build a map: variantId → total previously returned quantity
       const alreadyReturnedQty = {};
       for (const ret of previousReturns) {
@@ -72,7 +73,7 @@ export const executeReturn = async (input, user) => {
           );
         }
 
-        // Proportional unit refund — divide the item's net total (after discount) by quantity
+        // Proportional unit refund
         const unitRefundPaisa = Math.floor(orderItem.totalPaisa / orderItem.quantity);
         const refundPaisa = unitRefundPaisa * returnReq.quantity;
 
@@ -96,7 +97,7 @@ export const executeReturn = async (input, user) => {
           { session }
         );
 
-        // Log the movement with correct schema fields
+        // Log inventory movement
         await InventoryMovement.create(
           [{
             productId: orderItem.productId,
@@ -104,7 +105,7 @@ export const executeReturn = async (input, user) => {
             skuSnapshot: orderItem.sku,
             productNameSnapshot: orderItem.productName,
             type: "RETURN",
-            quantityDelta: returnReq.quantity, // positive = stock restored
+            quantityDelta: returnReq.quantity,
             referenceType: "Order",
             referenceId: order._id,
             reason: `Return from Order ${order.invoiceNumber}`,
@@ -115,8 +116,7 @@ export const executeReturn = async (input, user) => {
         );
       }
 
-      // Generate unique return number
-      const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
+      const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, "");
       const randomSuffix = crypto.randomBytes(2).toString("hex").toUpperCase();
       const returnNumber = `RTN-${dateStr}-${randomSuffix}`;
 
@@ -129,11 +129,7 @@ export const executeReturn = async (input, user) => {
         items: returnItems,
         totalRefundPaisa,
         reason,
-        staffSnapshot: {
-          id: user.id,
-          name: user.name,
-          role: user.role,
-        },
+        staffSnapshot: { id: user.id, name: user.name, role: user.role },
       });
 
       await newReturn.save({ session });
@@ -143,99 +139,111 @@ export const executeReturn = async (input, user) => {
       writeConcern: { w: "majority" },
     });
   } finally {
-    if (session) {
-      await session.endSession();
-    }
+    if (session) await session.endSession();
   }
   return result;
 };
 
 // @route   POST /api/returns
-// @desc    Process a new return with partial-return tracking and inventory audit
 // @access  Private
 export const processReturn = async (req, res) => {
   try {
     const result = await executeReturn(req.body, req.user);
-    return res.status(201).json({ success: true, data: result, message: "Return processed successfully." });
+    return res.status(201).json({
+      success: true,
+      data: result,
+      message: "Return processed successfully.",
+    });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Could not process return." });
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Could not process return.",
+    });
   }
 };
 
 // @route   POST /api/returns/exchange
-// @desc    Process a return and a new sale as a single exchange workflow
 // @access  Private
 export const processExchange = async (req, res) => {
   try {
     const { returnPayload, salePayload } = req.body;
-    
+
     if (!returnPayload || !salePayload) {
-      return res.status(400).json({ success: false, message: "Both returnPayload and salePayload are required for an exchange." });
+      return res.status(400).json({
+        success: false,
+        message: "Both returnPayload and salePayload are required for an exchange.",
+      });
     }
 
-    // 1. Process the Return first
     const returnResult = await executeReturn(returnPayload, req.user);
-    
-    // 2. The return result gives us the refundPaisa (store credit)
     const refundCredit = returnResult.totalRefundPaisa;
 
-    // 3. Process the Sale
-    // We add the refund credit as a payment method in the sale payload if there's credit
     if (refundCredit > 0) {
       salePayload.payments = salePayload.payments || [];
-      // Push the exchange credit as a payment method
       salePayload.payments.push({
         method: "OTHER",
         amountPaisa: refundCredit,
-        reference: `Exchange Credit (RTN: ${returnResult.returnNumber})`
+        reference: `Exchange Credit (RTN: ${returnResult.returnNumber})`,
       });
       salePayload.notes = `Exchange for Order ${returnPayload.orderId}. ` + (salePayload.notes || "");
     }
 
     const saleResult = await completeSale(salePayload, req.user);
 
-    return res.status(201).json({ 
-      success: true, 
+    return res.status(201).json({
+      success: true,
       message: "Exchange processed successfully.",
-      data: {
-        return: returnResult,
-        sale: saleResult
-      }
+      data: { return: returnResult, sale: saleResult },
     });
-
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Could not process exchange." });
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Could not process exchange.",
+    });
   }
 };
 
 // @route   GET /api/returns
-// @desc    Get all returns
+// @desc    Get all returns (paginated)
 // @access  Private
 export const getReturns = async (req, res) => {
   try {
     await connectToDatabase();
-    const returns = await Return.find().sort({ createdAt: -1 }).lean();
-    res.json({ success: true, data: returns });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, parseInt(req.query.limit) || 50);
+    const skip = (page - 1) * limit;
+
+    const [returns, total] = await Promise.all([
+      Return.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Return.countDocuments(),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        returns,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      },
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "Could not fetch returns." });
   }
 };
 
 // @route   GET /api/returns/:id
-// @desc    Get single return by ID
 // @access  Private
 export const getReturnById = async (req, res) => {
   try {
     await connectToDatabase();
     const returnDoc = await Return.findById(req.params.id).lean();
     if (!returnDoc)
-      return res.status(404).json({ success: false, error: "Return not found" });
+      return res.status(404).json({ success: false, message: "Return not found" });
     res.json({ success: true, data: returnDoc });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "Could not fetch return." });
   }
 };

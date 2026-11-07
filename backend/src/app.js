@@ -1,9 +1,21 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// ─── Validate required env vars before anything else loads ────────────────────
+const REQUIRED_ENV = ["MONGODB_URI", "AUTH_SECRET"];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`\n❌  FATAL: Missing required environment variable: ${key}`);
+    console.error(`   Copy .env.example to .env and fill in the values.\n`);
+    process.exit(1);
+  }
+}
+
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 
 import { requestLogger } from "./middleware/logger.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -25,13 +37,20 @@ import purchaseRoutes from "./routes/purchaseRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
-import CartReservation from "./models/CartReservation.js";
-import ProductVariant from "./models/ProductVariant.js";
-
 const app = express();
 
+// ─── Trust proxy (Render / Railway) ──────────────────────────────────────────
 app.set("trust proxy", 1);
 
+// ─── Security headers ─────────────────────────────────────────────────────────
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin asset fetching
+    contentSecurityPolicy: false,                          // API-only server, no HTML served
+  })
+);
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:3000",
@@ -56,29 +75,41 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+  })
 );
 
-app.use(express.json());
-app.use(cookieParser()); // Required for reading JWT from HttpOnly cookie
+// ─── Body parsing (with size limit to prevent DoS) ────────────────────────────
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(cookieParser());
 app.use(requestLogger);
 
-// Public root and health routes (no auth required)
+// ─── Global rate limiter (all routes) ────────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500,                  // 500 requests per window per IP
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { success: false, message: "Too many requests. Please try again later." },
+  skip: (req) => process.env.NODE_ENV === "development",
+});
+app.use(globalLimiter);
+
+// ─── Public root and health routes ───────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({ success: true, message: "Fashion Hub API is running", version: "1.0.0" });
 });
 app.head("/", (req, res) => {
   res.status(200).end();
 });
-
-// Public routes (no auth required)
-app.use("/api/auth", authRoutes);
-
 app.get("/api/health", (req, res) => {
-  res.json({ success: true, message: "Backend is running" });
+  res.json({ success: true, message: "Backend is running", timestamp: new Date().toISOString() });
 });
 
-// All routes below this require authentication
+// ─── Public auth routes ───────────────────────────────────────────────────────
+app.use("/api/auth", authRoutes);
+
+// ─── Protected routes ─────────────────────────────────────────────────────────
 app.use(requireAuth);
 
 app.use("/api/products", productRoutes);
@@ -98,31 +129,22 @@ app.use("/api/cash-drawer", cashDrawerRoutes);
 app.use("/api/purchase", purchaseRoutes);
 app.use("/api/cart", cartRoutes);
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error(err);
-  if (res.headersSent) return next(err);
-  return res
-    .status(500)
-    .json({ success: false, message: err.message || "Server error" });
+// ─── 404 handler ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: "Route not found" });
 });
 
-// Periodic background job: release expired stock reservations
-setInterval(async () => {
-  try {
-    const expired = await CartReservation.find({
-      expiresAt: { $lt: new Date() },
-    });
-    for (const res of expired) {
-      await ProductVariant.updateOne(
-        { _id: res.variantId },
-        { $inc: { reserved: -res.quantity } },
-      );
-      await CartReservation.deleteOne({ _id: res._id });
-    }
-  } catch (error) {
-    console.error("Cron Error releasing stock:", error);
-  }
-}, 60 * 1000); // Check every minute
+// ─── Global error handler ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  const status = err.status || err.statusCode || 500;
+  const isProd = process.env.NODE_ENV === "production";
+  console.error(`[ERROR] ${req.method} ${req.originalUrl}:`, err.message);
+  if (!isProd) console.error(err.stack);
+  if (res.headersSent) return next(err);
+  return res.status(status).json({
+    success: false,
+    message: isProd && status === 500 ? "An internal error occurred." : (err.message || "Server error"),
+  });
+});
 
 export default app;

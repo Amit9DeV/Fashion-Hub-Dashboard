@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/src/services/api";
+import { toast } from "sonner";
 import { ArrowLeft, Box, BarChart3, List, Settings, TrendingUp, PackageSearch, Plus, Image as ImageIcon } from "lucide-react";
 
 export default function ProductDetailPage(props) {
@@ -26,6 +27,8 @@ export default function ProductDetailPage(props) {
   const [editingVariantId, setEditingVariantId] = useState(null);
   const [variantForm, setVariantForm] = useState({});
   const [addingVariant, setAddingVariant] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [savingImage, setSavingImage] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -58,8 +61,9 @@ export default function ProductDetailPage(props) {
       const data = await api.products.update(product._id, basicForm);
       setProduct(prev => ({ ...prev, ...data.product }));
       setEditingBasic(false);
+      toast.success("Product details updated successfully");
     } catch (err) {
-      alert(err.message || "Failed to update product");
+      toast.error(err.message || "Failed to update product");
     }
   }
 
@@ -87,8 +91,9 @@ export default function ProductDetailPage(props) {
         return { ...prev, variants };
       });
       setEditingVariantId(null);
+      toast.success("Variant updated successfully");
     } catch (err) {
-      alert(err.message || "Failed to update variant");
+      toast.error(err.message || "Failed to update variant");
     }
   }
 
@@ -114,8 +119,9 @@ export default function ProductDetailPage(props) {
         variants: [...(prev.variants || []), data.variant]
       }));
       e.target.reset();
+      toast.success("Variant added successfully");
     } catch (err) {
-      alert(err.message || "Failed to add variant");
+      toast.error(err.message || "Failed to add variant");
     } finally {
       setAddingVariant(false);
     }
@@ -125,9 +131,10 @@ export default function ProductDetailPage(props) {
     if (!confirm("Are you sure you want to delete this product? All variants will also be deleted. This cannot be undone.")) return;
     try {
       await api.products.delete(product._id);
+      toast.success("Product deleted successfully");
       router.push("/products");
     } catch (err) {
-      alert(err.message || "Failed to delete product");
+      toast.error(err.message || "Failed to delete product");
     }
   }
 
@@ -139,8 +146,38 @@ export default function ProductDetailPage(props) {
         ...prev,
         variants: prev.variants.filter(v => v._id !== variantId)
       }));
+      toast.success("Variant deleted successfully");
     } catch (err) {
-      alert(err.message || "Failed to delete variant");
+      toast.error(err.message || "Failed to delete variant");
+    }
+  }
+
+  async function handleAddImage(e) {
+    if (e) e.preventDefault();
+    if (!newImageUrl.trim()) return;
+    setSavingImage(true);
+    try {
+      const updatedImages = [...(product.images || []), newImageUrl.trim()];
+      await api.products.update(product._id, { images: updatedImages });
+      setProduct(prev => ({ ...prev, images: updatedImages }));
+      setNewImageUrl("");
+      toast.success("Image added successfully");
+    } catch (err) {
+      toast.error(err.message || "Failed to add image");
+    } finally {
+      setSavingImage(false);
+    }
+  }
+
+  async function handleDeleteImage(index) {
+    if (!confirm("Are you sure you want to remove this image?")) return;
+    try {
+      const updatedImages = (product.images || []).filter((_, i) => i !== index);
+      await api.products.update(product._id, { images: updatedImages });
+      setProduct(prev => ({ ...prev, images: updatedImages }));
+      toast.success("Image removed successfully");
+    } catch (err) {
+      toast.error(err.message || "Failed to remove image");
     }
   }
 
@@ -323,12 +360,66 @@ export default function ProductDetailPage(props) {
             
             <div className="space-y-6">
               <div className="rounded-xl border bg-white p-6 shadow-sm">
-                <h3 className="font-semibold text-lg border-b pb-4 mb-4">Product Images</h3>
-                <div className="aspect-square bg-[#f5f4f0] rounded-lg border border-dashed border-[#c2bcaf] flex flex-col items-center justify-center text-[#81796d] gap-2">
-                  <ImageIcon size={32} />
-                  <p className="text-sm font-medium">No images uploaded</p>
-                  <Button variant="outline" size="sm" className="mt-2 text-xs h-8">Upload Image</Button>
+                <div className="flex items-center justify-between border-b pb-4 mb-4">
+                  <h3 className="font-semibold text-lg text-[#0b0b0b]">Product Images</h3>
+                  <span className="text-xs text-[#8a847a]">
+                    {product.images?.length || 0} image{product.images?.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
+
+                {/* Existing Images Gallery */}
+                {product.images && product.images.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {product.images.map((img, idx) => (
+                      <div key={idx} className="relative group rounded-lg border overflow-hidden aspect-square bg-[#faf9f6]">
+                        <img src={img} alt={`${product.name} - ${idx + 1}`} className="w-full h-full object-cover" />
+                        {idx === 0 && (
+                          <span className="absolute top-1.5 left-1.5 bg-[#0b0b0b]/80 text-[#d8b46a] text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wider uppercase">
+                            Primary
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImage(idx)}
+                          className="absolute top-1.5 right-1.5 bg-black/70 hover:bg-red-600 text-white rounded-full p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="aspect-video bg-[#f5f4f0] rounded-lg border border-dashed border-[#c2bcaf] flex flex-col items-center justify-center text-[#81796d] gap-2 mb-4">
+                    <ImageIcon size={32} className="text-[#c2bcaf]" />
+                    <p className="text-sm font-medium">No images uploaded</p>
+                    <p className="text-xs text-[#8a847a]">Add product photos below</p>
+                  </div>
+                )}
+
+                {/* Add Image Form */}
+                <form onSubmit={handleAddImage} className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#5f584e]">
+                    Add Image by URL
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://images.unsplash.com/..."
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      className="h-9 text-xs"
+                    />
+                    <Button
+                      type="submit"
+                      variant="gold"
+                      size="sm"
+                      disabled={savingImage || !newImageUrl.trim()}
+                      className="h-9 text-xs px-4 shrink-0"
+                    >
+                      {savingImage ? "Adding..." : "Add"}
+                    </Button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

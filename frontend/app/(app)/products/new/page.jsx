@@ -20,6 +20,10 @@ export default function NewProductWizard() {
 
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [isAddingBrand, setIsAddingBrand] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   // Form State
   const [basic, setBasic] = useState({ name: "", brandId: "", categoryId: "", description: "" });
@@ -137,6 +141,34 @@ export default function NewProductWizard() {
     }
   }
 
+  const handleSaveNewBrand = async () => {
+    if (!newBrandName.trim()) return;
+    try {
+      const res = await api.products.createBrand(newBrandName.trim());
+      setBrands(prev => [...prev, res.brand]);
+      setBasic(prev => ({ ...prev, brandId: res.brand._id }));
+      setNewBrandName("");
+      setIsAddingBrand(false);
+      toast.success("Brand created successfully");
+    } catch (err) {
+      toast.error(err.message || "Failed to create brand");
+    }
+  };
+
+  const handleSaveNewCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    try {
+      const res = await api.products.createCategory(newCategoryName.trim());
+      setCategories(prev => [...prev, res.category]);
+      setBasic(prev => ({ ...prev, categoryId: res.category._id }));
+      setNewCategoryName("");
+      setIsAddingCategory(false);
+      toast.success("Category created successfully");
+    } catch (err) {
+      toast.error(err.message || "Failed to create category");
+    }
+  };
+
   const StepIndicator = () => (
     <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2 no-scrollbar">
       {['Basic Info', 'Pricing', 'Variants', 'Images', 'Review'].map((label, i) => {
@@ -189,58 +221,114 @@ export default function NewProductWizard() {
                 <Input value={basic.name} onChange={e => setBasic({...basic, name: e.target.value})} placeholder="e.g. Signature Piqué Polo" className="h-11 font-medium text-lg" autoFocus />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Brand</label>
-                <select 
-                  className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
-                  value={basic.brandId} onChange={async e => {
-                    const val = e.target.value;
-                    if (val === "ADD_NEW") {
-                      const name = window.prompt("Enter new brand name:");
-                      if (name) {
-                        try {
-                          const res = await api.products.createBrand(name);
-                          setBrands([...brands, res.brand]);
-                          setBasic({...basic, brandId: res.brand._id});
-                        } catch (err) {
-                          alert(err.message || "Failed to create brand");
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Brand</label>
+                  {!isAddingBrand && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingBrand(true)}
+                      className="text-xs text-[#9b7740] hover:underline font-medium"
+                    >
+                      + Add New
+                    </button>
+                  )}
+                </div>
+                {isAddingBrand ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newBrandName}
+                      onChange={(e) => setNewBrandName(e.target.value)}
+                      placeholder="Brand name"
+                      className="h-11 text-sm bg-white"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSaveNewBrand();
+                        } else if (e.key === "Escape") {
+                          setIsAddingBrand(false);
                         }
+                      }}
+                    />
+                    <Button type="button" size="sm" variant="gold" className="h-11 px-3" onClick={handleSaveNewBrand}>
+                      Save
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="h-11 px-2.5" onClick={() => setIsAddingBrand(false)}>
+                      ✕
+                    </Button>
+                  </div>
+                ) : (
+                  <select 
+                    className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
+                    value={basic.brandId}
+                    onChange={(e) => {
+                      if (e.target.value === "ADD_NEW") {
+                        setIsAddingBrand(true);
+                      } else {
+                        setBasic({ ...basic, brandId: e.target.value });
                       }
-                      return;
-                    }
-                    setBasic({...basic, brandId: val});
-                  }}
-                >
-                  <option value="">Select Brand</option>
-                  <option value="ADD_NEW">+ Add New Brand</option>
-                  {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-                </select>
+                    }}
+                  >
+                    <option value="">Select Brand</option>
+                    <option value="ADD_NEW">+ Add New Brand</option>
+                    {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                  </select>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Category</label>
-                <select 
-                  className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
-                  value={basic.categoryId} onChange={async e => {
-                    const val = e.target.value;
-                    if (val === "ADD_NEW") {
-                      const name = window.prompt("Enter new category name:");
-                      if (name) {
-                        try {
-                          const res = await api.products.createCategory(name);
-                          setCategories([...categories, res.category]);
-                          setBasic({...basic, categoryId: res.category._id});
-                        } catch (err) {
-                          alert(err.message || "Failed to create category");
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Category</label>
+                  {!isAddingCategory && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingCategory(true)}
+                      className="text-xs text-[#9b7740] hover:underline font-medium"
+                    >
+                      + Add New
+                    </button>
+                  )}
+                </div>
+                {isAddingCategory ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Category name"
+                      className="h-11 text-sm bg-white"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSaveNewCategory();
+                        } else if (e.key === "Escape") {
+                          setIsAddingCategory(false);
                         }
+                      }}
+                    />
+                    <Button type="button" size="sm" variant="gold" className="h-11 px-3" onClick={handleSaveNewCategory}>
+                      Save
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="h-11 px-2.5" onClick={() => setIsAddingCategory(false)}>
+                      ✕
+                    </Button>
+                  </div>
+                ) : (
+                  <select 
+                    className="w-full h-11 rounded-md border bg-white px-3 text-sm focus:border-[#9b7740] focus:ring-1 focus:ring-[#9b7740] outline-none"
+                    value={basic.categoryId}
+                    onChange={(e) => {
+                      if (e.target.value === "ADD_NEW") {
+                        setIsAddingCategory(true);
+                      } else {
+                        setBasic({ ...basic, categoryId: e.target.value });
                       }
-                      return;
-                    }
-                    setBasic({...basic, categoryId: val});
-                  }}
-                >
-                  <option value="">Select Category</option>
-                  <option value="ADD_NEW">+ Add New Category</option>
-                  {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                </select>
+                    }}
+                  >
+                    <option value="">Select Category</option>
+                    <option value="ADD_NEW">+ Add New Category</option>
+                    {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                  </select>
+                )}
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#5f584e]">Description</label>

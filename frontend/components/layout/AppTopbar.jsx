@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, Search, Menu, X, LayoutDashboard, ReceiptText, ClipboardList, Shirt, Boxes, UsersRound, RotateCcw, BarChart3, MessageCircle, Users, Settings, ArrowRight, Tags, Receipt } from "lucide-react";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { api } from "@/src/services/api";
 
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -32,8 +33,55 @@ const titles = {
 
 export function AppTopbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifData, setNotifData] = useState(null);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+
   const pageTitle = Object.entries(titles).find(([k]) => pathname === k || pathname.startsWith(k + '/'))?.[1] || "Fashion Hub";
+
+  const fetchNotifications = async () => {
+    setLoadingNotifs(true);
+    try {
+      const [productsRes, whatsappRes] = await Promise.allSettled([
+        api.products.getAll(),
+        api.whatsapp.getMessages()
+      ]);
+
+      let outOfStockCount = 0;
+      let lowStockCount = 0;
+      let failedWhatsappCount = 0;
+
+      if (productsRes.status === "fulfilled" && productsRes.value?.products) {
+        productsRes.value.products.forEach(p => {
+          (p.variants || []).forEach(v => {
+            if (v.stock === 0) outOfStockCount++;
+            else if (v.stock > 0 && v.stock <= (v.reorderLevel || 5)) lowStockCount++;
+          });
+        });
+      }
+
+      if (whatsappRes.status === "fulfilled" && Array.isArray(whatsappRes.value)) {
+        failedWhatsappCount = whatsappRes.value.filter(m => m.status === "FAILED" || m.status === "QUEUED").length;
+      }
+
+      setNotifData({ outOfStockCount, lowStockCount, failedWhatsappCount });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const alertCount = (notifData?.outOfStockCount || 0) + (notifData?.lowStockCount || 0) + (notifData?.failedWhatsappCount || 0);
 
   return (
     <>
@@ -64,22 +112,157 @@ export function AppTopbar() {
           </div>
         </div>
 
-        {/* Right: search + actions */}
+        {/* Right: search + notifications + actions */}
         <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Search */}
-          <div className="hidden items-center gap-2 xl:flex" style={{ border: '1px solid #e2ddd5', background: '#fff', borderRadius: 4, padding: '7px 14px' }}>
-            <Search size={14} style={{ color: '#9c9489' }} />
-            <span style={{ fontSize: 12, color: '#9c9489', letterSpacing: '0.01em' }}>Search</span>
-          </div>
-
-          {/* Bell (hidden on very small mobile) */}
-          <button
-            aria-label="Notifications"
-            style={{ width: 34, height: 34, placeItems: 'center', borderRadius: 4, color: '#5f584e' }}
-            className="hidden sm:grid hover:bg-[#eee9df] transition-colors"
+          {/* Quick Search */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+                setSearchQuery("");
+              }
+            }}
+            className="hidden items-center gap-2 xl:flex relative"
           >
-            <Bell size={16} strokeWidth={1.6} />
-          </button>
+            <div className="flex items-center gap-2 border border-[#e2ddd5] bg-white rounded px-2.5 py-1.5 focus-within:border-[#9b7740] focus-within:ring-1 focus-within:ring-[#9b7740]/20 transition-all">
+              <Search size={14} className="text-[#9c9489]" />
+              <input
+                type="text"
+                placeholder="Search products, orders..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="text-xs text-[#0b0b0b] placeholder:text-[#9c9489] outline-none w-44 bg-transparent"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="text-xs text-[#9c9489] hover:text-[#0b0b0b]"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </form>
+
+          {/* Notifications Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Notifications"
+              onClick={() => {
+                setNotifOpen(!notifOpen);
+                if (!notifOpen && !notifData) fetchNotifications();
+              }}
+              style={{ width: 34, height: 34, placeItems: 'center', borderRadius: 4, color: '#5f584e' }}
+              className="relative hidden sm:grid hover:bg-[#eee9df] transition-colors"
+            >
+              <Bell size={16} strokeWidth={1.6} />
+              {alertCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8a1a1a] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8a1a1a]"></span>
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                <div className="absolute right-0 mt-2 w-80 rounded-md border border-[#dfd8cc] bg-white shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="border-b border-[#f0ede7] bg-[#faf9f6] px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-xs text-[#0b0b0b] uppercase tracking-wider">Store Alerts</h4>
+                      <p className="text-[11px] text-[#706a61] mt-0.5">Live store notifications</p>
+                    </div>
+                    {alertCount > 0 && (
+                      <span className="rounded-full bg-[#fef0f0] border border-[#f5c6cb] px-2 py-0.5 text-[10px] font-bold text-[#8a1a1a]">
+                        {alertCount} alert{alertCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto divide-y divide-[#f5f2ee] p-0">
+                    {loadingNotifs ? (
+                      <div className="p-4 text-center text-xs text-[#706a61]">Loading alerts...</div>
+                    ) : (
+                      <>
+                        {notifData?.outOfStockCount > 0 && (
+                          <Link
+                            href="/inventory"
+                            onClick={() => setNotifOpen(false)}
+                            className="p-3 flex items-start gap-2.5 hover:bg-[#fff9f9] transition-colors block"
+                          >
+                            <span className="size-2 rounded-full bg-[#8a1a1a] mt-1.5 shrink-0" />
+                            <div>
+                              <p className="text-xs font-semibold text-[#8a1a1a]">
+                                {notifData.outOfStockCount} variant{notifData.outOfStockCount > 1 ? 's' : ''} out of stock
+                              </p>
+                              <p className="text-[11px] text-[#706a61] mt-0.5">Tap to review live inventory and replenish stock.</p>
+                            </div>
+                          </Link>
+                        )}
+                        {notifData?.lowStockCount > 0 && (
+                          <Link
+                            href="/inventory"
+                            onClick={() => setNotifOpen(false)}
+                            className="p-3 flex items-start gap-2.5 hover:bg-[#fffcf5] transition-colors block"
+                          >
+                            <span className="size-2 rounded-full bg-[#8a5a10] mt-1.5 shrink-0" />
+                            <div>
+                              <p className="text-xs font-semibold text-[#8a5a10]">
+                                {notifData.lowStockCount} variant{notifData.lowStockCount > 1 ? 's' : ''} running low
+                              </p>
+                              <p className="text-[11px] text-[#706a61] mt-0.5">Stock level is at or below reorder threshold.</p>
+                            </div>
+                          </Link>
+                        )}
+                        {notifData?.failedWhatsappCount > 0 && (
+                          <Link
+                            href="/whatsapp"
+                            onClick={() => setNotifOpen(false)}
+                            className="p-3 flex items-start gap-2.5 hover:bg-[#faf9f6] transition-colors block"
+                          >
+                            <span className="size-2 rounded-full bg-[#1a3a7a] mt-1.5 shrink-0" />
+                            <div>
+                              <p className="text-xs font-semibold text-[#1a3a7a]">
+                                {notifData.failedWhatsappCount} WhatsApp bill{notifData.failedWhatsappCount > 1 ? 's' : ''} pending/failed
+                              </p>
+                              <p className="text-[11px] text-[#706a61] mt-0.5">Tap to retry delivery or verify customer numbers.</p>
+                            </div>
+                          </Link>
+                        )}
+                        {alertCount === 0 && (
+                          <div className="p-6 text-center text-xs text-[#706a61]">
+                            <p className="font-semibold text-[#1a6b3a]">All systems optimal</p>
+                            <p className="text-[11px] text-[#8a847a] mt-1">Stock levels healthy and no pending delivery errors.</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#f0ede7] bg-[#faf9f6] px-3 py-2 flex justify-between items-center text-[11px]">
+                    <Link
+                      href="/inventory"
+                      onClick={() => setNotifOpen(false)}
+                      className="text-[#9b7740] font-semibold hover:underline"
+                    >
+                      View Inventory &rarr;
+                    </Link>
+                    <Link
+                      href="/reports"
+                      onClick={() => setNotifOpen(false)}
+                      className="text-[#5f584e] hover:underline"
+                    >
+                      Store Reports
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* New Sale CTA */}
           <Link

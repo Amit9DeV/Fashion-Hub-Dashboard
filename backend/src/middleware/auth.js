@@ -1,13 +1,21 @@
 import jwt from 'jsonwebtoken';
 
 const COOKIE_NAME = "fashion_hub_session";
-const PRIMARY_SECRET =
-  process.env.AUTH_SECRET || "replace-with-a-long-random-secret-at-least-32-characters";
-const KNOWN_SECRETS = [
-  PRIMARY_SECRET,
-  "replace-with-a-long-random-secret-at-least-32-characters",
-  "default-fallback-secret-key-that-is-at-least-32-chars-long",
-];
+
+function getPrimarySecret() {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error(
+      "AUTH_SECRET environment variable is not set. " +
+      "Generate a secure secret: node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\" " +
+      "and add it to your .env file."
+    );
+  }
+  if (secret.length < 32) {
+    throw new Error("AUTH_SECRET must be at least 32 characters long.");
+  }
+  return secret;
+}
 
 const IS_PROD =
   process.env.NODE_ENV === "production" ||
@@ -15,23 +23,22 @@ const IS_PROD =
   Boolean(process.env.RENDER_EXTERNAL_URL);
 
 export function requireAuth(req, res, next) {
-  const token = req.cookies[COOKIE_NAME] || req.headers.authorization?.split(' ')[1];
-  
+  const token =
+    req.cookies[COOKIE_NAME] ||
+    req.headers.authorization?.split(" ")[1];
+
   if (!token) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
   let payload = null;
-  for (const secret of KNOWN_SECRETS) {
-    try {
-      payload = jwt.verify(token, secret);
-      break;
-    } catch (e) {
-      // try next secret
-    }
+  try {
+    payload = jwt.verify(token, getPrimarySecret());
+  } catch (e) {
+    return res.status(401).json({ success: false, message: "Invalid or expired session" });
   }
 
-  if (!payload) {
+  if (!payload?.sub) {
     return res.status(401).json({ success: false, message: "Invalid session" });
   }
 
@@ -45,6 +52,7 @@ export function requireAuth(req, res, next) {
 }
 
 export function createSession(res, user) {
+  const secret = getPrimarySecret();
   const token = jwt.sign(
     {
       sub: (user._id || user.id).toString(),
@@ -52,18 +60,16 @@ export function createSession(res, user) {
       email: user.email,
       role: user.role,
     },
-    PRIMARY_SECRET,
-    { expiresIn: '12h' }
+    secret,
+    { expiresIn: "12h" }
   );
 
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    // In production (HTTPS) use secure + sameSite:none for cross-origin cookies.
-    // In local dev (HTTP) these flags cause browsers to silently reject the cookie.
     secure: IS_PROD,
     sameSite: IS_PROD ? "none" : "lax",
     path: "/",
-    maxAge: 12 * 60 * 60 * 1000, // 12 hours in ms
+    maxAge: 12 * 60 * 60 * 1000,
   });
 
   return token;
