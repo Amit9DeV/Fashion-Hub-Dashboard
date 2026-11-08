@@ -21,10 +21,10 @@ export const requestLogger = (req, res, next) => {
     const cleanBody = scrub(body);
     console.log(`\n---------------------------------------------------------`);
     console.log(`[--> ] ${method} ${originalUrl}`);
-    if (Object.keys(query).length > 0) {
+    if (query && typeof query === "object" && Object.keys(query).length > 0) {
       console.log(`       Query:`, JSON.stringify(query));
     }
-    if (Object.keys(cleanBody).length > 0) {
+    if (cleanBody && typeof cleanBody === "object" && Object.keys(cleanBody).length > 0) {
       const bodyStr = JSON.stringify(cleanBody);
       console.log(`       Body:`, bodyStr.length > 300 ? bodyStr.slice(0, 300) + "… (truncated)" : bodyStr);
     }
