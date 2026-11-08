@@ -37,7 +37,7 @@ export default function ExpensesPage() {
   async function fetchExpenses() {
     try {
       const data = await api.expenses.getAll();
-      setExpenses(data.expenses || []);
+      setExpenses(Array.isArray(data) ? data : data?.expenses || data?.data || []);
     } catch (err) {
       console.error(err);
     } finally {

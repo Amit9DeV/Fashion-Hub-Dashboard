@@ -19,7 +19,7 @@ export const STORE = {
   instagram:   "@fashionhub9080",
   email:       "fashionhub9080@gmail.com",
 
-  gstin:       "27ABCDE1234F1Z5",  // replace with actual GSTIN when available
+  gstin:       "",  // set via Settings or env when registered
 
   brands: [
     "Levi's", "Nike", "U.S. Polo Assn.", "Adidas", "Mufti",

@@ -365,6 +365,34 @@ export function BillingPOS() {
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [storeSettings, setStoreSettings] = useState(null);
+  const [idempotencyKey, setIdempotencyKey] = useState(() =>
+    crypto.randomUUID(),
+  );
+
+  const subtotalPaisa = useMemo(
+    () =>
+      cart.reduce(
+        (sum, item) => sum + item.sellingPricePaisa * item.quantity,
+        0,
+      ),
+    [cart],
+  );
+  const discountPaisa = useMemo(() => {
+    if (discountMode === "PERCENT") {
+      const pct = parseFloat(discountPercent) || 0;
+      return Math.min(Math.round((subtotalPaisa * pct) / 100), subtotalPaisa);
+    }
+    return Math.min(toPaisa(discount), subtotalPaisa);
+  }, [discountMode, discountPercent, discount, subtotalPaisa]);
+  const totalPaisa = subtotalPaisa - discountPaisa;
+
+  const taxRate = storeSettings?.taxRate ?? 5;
+  const estimatedTaxPaisa = useMemo(() => {
+    if (totalPaisa <= 0 || !taxRate) return 0;
+    return Math.round(totalPaisa - (totalPaisa / (1 + taxRate / 100)));
+  }, [totalPaisa, taxRate]);
+  const cgstPaisa = Math.round(estimatedTaxPaisa / 2);
+  const sgstPaisa = estimatedTaxPaisa - cgstPaisa;
 
   useEffect(() => {
     try {
@@ -616,31 +644,6 @@ export function BillingPOS() {
     loadOrder();
   }, [editOrderId]);
 
-  const subtotalPaisa = useMemo(
-    () =>
-      cart.reduce(
-        (sum, item) => sum + item.sellingPricePaisa * item.quantity,
-        0,
-      ),
-    [cart],
-  );
-  const discountPaisa = useMemo(() => {
-    if (discountMode === "PERCENT") {
-      const pct = parseFloat(discountPercent) || 0;
-      return Math.min(Math.round((subtotalPaisa * pct) / 100), subtotalPaisa);
-    }
-    return Math.min(toPaisa(discount), subtotalPaisa);
-  }, [discountMode, discountPercent, discount, subtotalPaisa]);
-  const totalPaisa = subtotalPaisa - discountPaisa;
-
-  const taxRate = storeSettings?.taxRate ?? 5;
-  const estimatedTaxPaisa = useMemo(() => {
-    if (totalPaisa <= 0 || !taxRate) return 0;
-    return Math.round(totalPaisa - (totalPaisa / (1 + taxRate / 100)));
-  }, [totalPaisa, taxRate]);
-  const cgstPaisa = Math.round(estimatedTaxPaisa / 2);
-  const sgstPaisa = estimatedTaxPaisa - cgstPaisa;
-
   // Product search
   useEffect(() => {
     const timer = setTimeout(
@@ -753,10 +756,6 @@ export function BillingPOS() {
     setCustomerResults([]);
     setError("");
   }
-
-  const [idempotencyKey, setIdempotencyKey] = useState(() =>
-    crypto.randomUUID(),
-  );
 
   async function completeSale() {
     if (!cart.length)

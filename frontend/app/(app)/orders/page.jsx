@@ -32,7 +32,8 @@ export default async function OrdersPage(props) {
   }
   
   const payload = await res.json().catch(() => ({}));
-  const { orders = [], invoices = [], messages = [], pagination = {} } = payload.data || {};
+  const dataObj = payload.data || payload || {};
+  const { orders = [], invoices = [], messages = [], pagination = {} } = dataObj;
 
   return (
     <div className="overflow-hidden rounded-md border bg-white shadow-sm">

@@ -217,7 +217,7 @@ function createPdfBuffer(model) {
       drawCentered(doc, `${model.storePhone}   |   ${model.storeContact2}`, y);
       y += 13;
     }
-    if (model.prefs.showGstin) {
+    if (model.prefs.showGstin && model.gstin) {
       doc.fillColor(MUTED).font(F).fontSize(8);
       drawCentered(doc, `GSTIN: ${model.gstin}`, y, { characterSpacing: 0.5 });
       y += 22;

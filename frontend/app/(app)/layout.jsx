@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
+import { NavigationProgressBar } from "@/components/layout/NavigationProgressBar";
 
 export default async function AppLayout({ children }) {
   const user = await getCurrentUser();
@@ -11,6 +13,9 @@ export default async function AppLayout({ children }) {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#faf9f6' }}>
+      <Suspense fallback={null}>
+        <NavigationProgressBar />
+      </Suspense>
       <AppSidebar user={user} />
       <div className="min-w-0 flex-1 flex flex-col">
         <AppTopbar user={user} />

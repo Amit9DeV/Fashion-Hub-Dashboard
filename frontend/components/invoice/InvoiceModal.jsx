@@ -24,17 +24,17 @@ export default function InvoiceModal({
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [printTheme, setPrintTheme] = useState("dark");
   const [printFormat, setPrintFormat] = useState("A4"); // "A4" | "THERMAL"
+  const [storeSettings, setStoreSettings] = useState(null);
 
   useEffect(() => {
-    if (defaultFormat) {
-      setPrintFormat(defaultFormat === "THERMAL_80MM" ? "THERMAL" : defaultFormat);
-    } else {
-      api.settings.get().then((res) => {
-        if (res?.settings?.printFormat === "THERMAL_80MM") {
+    api.settings.get().then((res) => {
+      if (res?.settings) {
+        setStoreSettings(res.settings);
+        if (!defaultFormat && res.settings.printFormat === "THERMAL_80MM") {
           setPrintFormat("THERMAL");
         }
-      }).catch(() => {});
-    }
+      }
+    }).catch(() => {});
   }, [defaultFormat, isOpen]);
 
   useEffect(() => {
@@ -286,14 +286,14 @@ export default function InvoiceModal({
                   <ThermalReceipt
                     invoice={data.invoice || data.snapshot}
                     customer={data.customer}
-                    store={data.store}
+                    store={data.store || storeSettings}
                   />
                 </div>
               ) : (
                 <FashionHubInvoice
                   invoice={data.invoice || data.snapshot}
                   customer={data.customer}
-                  store={data.store}
+                  store={data.store || storeSettings}
                   theme={printTheme}
                 />
               )}

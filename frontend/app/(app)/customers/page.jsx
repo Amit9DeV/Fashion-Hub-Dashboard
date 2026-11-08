@@ -18,7 +18,7 @@ export default async function CustomersPage(props) {
   }
   
   const payload = await res.json().catch(() => ({}));
-  const customers = payload.data?.customers || [];
+  const customers = payload.data?.customers || payload.customers || [];
 
   return (
     <div className="space-y-7">

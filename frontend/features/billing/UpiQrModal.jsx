@@ -10,20 +10,27 @@ export function UpiQrModal({
   isOpen,
   onClose,
   amountPaisa,
-  upiId = "fashionhub@oksbi",
+  upiId = "",
   storeName = "Fashion Hub",
   onPaymentConfirmed,
 }) {
   const [copied, setCopied] = useState(false);
+  const [customUpi, setCustomUpi] = useState("");
 
   if (!isOpen) return null;
 
-  const effectiveUpiId = upiId?.trim() || "fashionhub@oksbi";
+  const effectiveUpiId = (upiId || customUpi || "").trim();
+  const hasUpi = Boolean(effectiveUpiId);
   const amountRupees = (amountPaisa / 100).toFixed(2);
-  const upiUrl = `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(storeName)}&am=${amountRupees}&cu=INR&tn=Fashion%20Hub%20Bill`;
-  const qrImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(upiUrl)}`;
+  const upiUrl = hasUpi
+    ? `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(storeName)}&am=${amountRupees}&cu=INR&tn=Fashion%20Hub%20Bill`
+    : "";
+  const qrImageSrc = hasUpi
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(upiUrl)}`
+    : null;
 
   const handleCopy = () => {
+    if (!effectiveUpiId) return;
     navigator.clipboard?.writeText(effectiveUpiId);
     setCopied(true);
     toast.success("UPI ID copied to clipboard!");
@@ -69,34 +76,54 @@ export function UpiQrModal({
           </p>
         </div>
 
-        {/* QR Code Container */}
-        <div className="mx-auto my-3 size-64 rounded-xl border border-[#eee9df] p-2 bg-white shadow-inner flex items-center justify-center">
-          <img
-            src={qrImageSrc}
-            alt="UPI QR Code"
-            className="size-full object-contain rounded-lg"
-          />
-        </div>
+        {/* QR Code Container or UPI configuration prompt */}
+        {hasUpi ? (
+          <>
+            <div className="mx-auto my-3 size-64 rounded-xl border border-[#eee9df] p-2 bg-white shadow-inner flex items-center justify-center">
+              <img
+                src={qrImageSrc}
+                alt="UPI QR Code"
+                className="size-full object-contain rounded-lg"
+              />
+            </div>
 
-        <p className="text-[11px] text-[#706a61] flex items-center justify-center gap-1.5 font-medium">
-          <ShieldCheck size={14} className="text-[#1a6b3a]" />
-          Scan with GPay, PhonePe, Paytm, or BHIM
-        </p>
+            <p className="text-[11px] text-[#706a61] flex items-center justify-center gap-1.5 font-medium">
+              <ShieldCheck size={14} className="text-[#1a6b3a]" />
+              Scan with GPay, PhonePe, Paytm, or BHIM
+            </p>
 
-        {/* UPI ID Pill */}
-        <div className="mt-3 flex items-center justify-between rounded-lg bg-[#f5f2ee] px-3 py-1.5 text-xs text-[#5f584e]">
-          <span className="font-mono text-[11px] truncate max-w-[200px]">
-            {effectiveUpiId}
-          </span>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="text-[11px] font-semibold text-[#1a3a7a] hover:underline flex items-center gap-1 ml-2 shrink-0"
-          >
-            <Copy size={12} />
-            {copied ? "Copied!" : "Copy"}
-          </button>
-        </div>
+            {/* UPI ID Pill */}
+            <div className="mt-3 flex items-center justify-between rounded-lg bg-[#f5f2ee] px-3 py-1.5 text-xs text-[#5f584e]">
+              <span className="font-mono text-[11px] truncate max-w-[200px]">
+                {effectiveUpiId}
+              </span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="text-[11px] font-semibold text-[#1a3a7a] hover:underline flex items-center gap-1 ml-2 shrink-0"
+              >
+                <Copy size={12} />
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="my-6 p-4 rounded-xl border border-[#e8d5b5] bg-[#fffcf5] text-left space-y-3">
+            <p className="text-xs font-semibold text-[#8a5a10]">
+              Store UPI ID Not Set
+            </p>
+            <p className="text-[11px] text-[#706a61] leading-relaxed">
+              Enter your shop UPI ID below for this bill, or configure it permanently in Store Settings.
+            </p>
+            <Input
+              type="text"
+              placeholder="e.g. yourstore@okhdfcbank"
+              value={customUpi}
+              onChange={(e) => setCustomUpi(e.target.value)}
+              className="text-xs h-9 bg-white"
+            />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="mt-5 flex gap-2">

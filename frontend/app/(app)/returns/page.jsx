@@ -55,7 +55,7 @@ export default function ReturnsPage() {
   const fetchHistory = async () => {
     try {
       const data = await api.returns.getAll();
-      setHistory(Array.isArray(data) ? data : data?.returns || []);
+      setHistory(Array.isArray(data) ? data : data?.returns || data?.data || []);
     } catch (err) {
       console.error(err);
     } finally {

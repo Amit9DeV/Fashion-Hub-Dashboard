@@ -76,7 +76,7 @@ export default function ReportsPage() {
       if (end) query.append("endDate", end);
       
       const data = await api.reports.getSales(query.toString());
-      setReport(data);
+      setReport(data?.data || data);
     } catch (err) {
       console.error("Error fetching report:", err);
       toast.error("Failed to fetch reports. Please try again.");

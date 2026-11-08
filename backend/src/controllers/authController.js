@@ -5,7 +5,7 @@ import { createSession, clearSession } from "../middleware/auth.js";
 
 export const login = async (req, res) => {
   try {
-    const rawIdentifier = (req.body.email || req.body.username || req.body.employeeId || req.body.userId || "").trim();
+    const rawIdentifier = (req.body.identifier || req.body.email || req.body.username || req.body.employeeId || req.body.userId || "").trim();
     const { password } = req.body;
     if (!rawIdentifier || !password) {
       return res.status(400).json({ success: false, message: "Email or Staff ID and password are required." });

@@ -12,7 +12,7 @@ export default async function StaffPage() {
   }
 
   const payload = await res.json().catch(() => ({}));
-  const staff = payload.data?.staff || [];
+  const staff = payload.data?.staff || payload.staff || [];
 
   return (
     <div className="space-y-7">

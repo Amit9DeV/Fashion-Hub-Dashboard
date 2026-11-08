@@ -17,7 +17,7 @@ export default async function ProductsPage(props) {
   }
   
   const payload = await res.json().catch(() => ({}));
-  const products = payload.data?.products || [];
+  const products = payload.data?.products || payload.products || [];
 
   return (
     <div className="space-y-7 pb-10">

@@ -47,7 +47,7 @@ export default function WhatsAppPage() {
     setLoading(true);
     try {
       const res = await api.whatsapp.getMessages();
-      setMessages(res || []);
+      setMessages(Array.isArray(res) ? res : res?.messages || res?.data || []);
     } catch (err) {
       console.error(err);
     } finally {

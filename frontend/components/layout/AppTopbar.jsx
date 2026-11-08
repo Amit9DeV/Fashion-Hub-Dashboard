@@ -42,17 +42,23 @@ export function AppTopbar({ user }) {
   const [notifData, setNotifData] = useState(null);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(null);
+  const [storeName, setStoreName] = useState("Fashion Hub");
 
   const pageTitle = Object.entries(titles).find(([k]) => pathname === k || pathname.startsWith(k + '/'))?.[1] || "Fashion Hub";
 
   const fetchNotifications = async () => {
     setLoadingNotifs(true);
     try {
-      const [productsRes, whatsappRes, drawerRes] = await Promise.allSettled([
+      const [productsRes, whatsappRes, drawerRes, settingsRes] = await Promise.allSettled([
         can(user, "inventory:view") ? api.products.getAll() : Promise.resolve(null),
         can(user, "whatsapp:manage") ? api.whatsapp.getMessages() : Promise.resolve(null),
         can(user, "billing:use") ? api.cashDrawer.getStatus() : Promise.resolve(null),
+        api.settings.get(),
       ]);
+
+      if (settingsRes.status === "fulfilled" && settingsRes.value?.settings?.storeName) {
+        setStoreName(settingsRes.value.settings.storeName);
+      }
 
       if (drawerRes.status === "fulfilled" && drawerRes.value) {
         const drawerData = drawerRes.value.data || drawerRes.value;
@@ -112,7 +118,7 @@ export function AppTopbar({ user }) {
           </button>
           <div>
             <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', color: '#9b7740', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
-              Fashion Hub
+              {storeName}
             </p>
             <h1
               style={{ fontWeight: 700, color: '#0b0b0b', letterSpacing: '-0.02em', fontFamily: "'Playfair Display', Georgia, serif", lineHeight: 1.1, marginTop: 1 }}
@@ -145,10 +151,10 @@ export function AppTopbar({ user }) {
               <Search size={14} className="text-[#9c9489]" />
               <input
                 type="text"
-                placeholder="Search products, orders (FH/)..."
+                placeholder="Search products, SKUs, or orders (INV/)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="text-xs text-[#0b0b0b] placeholder:text-[#9c9489] outline-none w-48 bg-transparent"
+                className="text-xs text-[#0b0b0b] placeholder:text-[#9c9489] outline-none w-52 bg-transparent"
               />
               {searchQuery && (
                 <button
@@ -310,6 +316,23 @@ export function AppTopbar({ user }) {
             <span className="xs:hidden">+ Sale</span>
             <ArrowRight size={12} />
           </Link>
+
+          {/* User profile pill */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md bg-white border border-[#e8e3da]">
+              <div className="size-6 rounded-full bg-[#fdf8f0] border border-[#e8d5b5] flex items-center justify-center text-[11px] font-bold text-[#8a5a10]">
+                {user.name ? user.name[0].toUpperCase() : "U"}
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-xs font-semibold text-[#0b0b0b] max-w-[120px] truncate">
+                  {user.name || user.email}
+                </span>
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-[#9b7740] mt-0.5">
+                  {user.role}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Sign out */}
           <div className="border-l border-[#e8e3da] pl-1.5 sm:pl-2 ml-0.5 sm:ml-1">

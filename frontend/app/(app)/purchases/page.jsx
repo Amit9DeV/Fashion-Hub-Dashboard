@@ -33,6 +33,7 @@ export default function PurchasesPage() {
   const [activeTab, setActiveTab] = useState("orders"); // "orders" | "suppliers"
   const [orders, setOrders] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [storeSettings, setStoreSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedPoId, setExpandedPoId] = useState(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState("ALL"); // "ALL" | "PENDING" | "RECEIVED"
@@ -51,9 +52,10 @@ export default function PurchasesPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [poRes, supRes] = await Promise.allSettled([
+      const [poRes, supRes, setRes] = await Promise.allSettled([
         api.purchase.getOrders(),
         api.purchase.getSuppliers(),
+        api.settings.get(),
       ]);
 
       if (poRes.status === "fulfilled") {
@@ -61,6 +63,9 @@ export default function PurchasesPage() {
       }
       if (supRes.status === "fulfilled") {
         setSuppliers(supRes.value?.data || supRes.value || []);
+      }
+      if (setRes.status === "fulfilled" && setRes.value?.settings) {
+        setStoreSettings(setRes.value.settings);
       }
     } catch (err) {
       console.error(err);
@@ -711,6 +716,7 @@ export default function PurchasesPage() {
           isOpen={!!viewingPo}
           onClose={() => setViewingPo(null)}
           po={viewingPo}
+          storeSettings={storeSettings}
         />
       )}
     </div>
@@ -720,13 +726,14 @@ export default function PurchasesPage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-Modal: View & Print Purchase Order
 // ─────────────────────────────────────────────────────────────────────────────
-function PurchaseOrderViewModal({ isOpen, onClose, po }) {
+function PurchaseOrderViewModal({ isOpen, onClose, po, storeSettings }) {
   if (!isOpen || !po) return null;
 
   const totalQty = (po.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
   const supplierMobile = po.supplierSnapshot?.mobile || "";
   const cleanMobile = supplierMobile.replace(/\D/g, "");
   const waNumber = cleanMobile.length === 10 ? `91${cleanMobile}` : cleanMobile;
+  const storeName = storeSettings?.storeName || "Fashion Hub";
 
   const handleShareWhatsApp = () => {
     if (!waNumber) {
@@ -734,7 +741,7 @@ function PurchaseOrderViewModal({ isOpen, onClose, po }) {
       return;
     }
     const message = encodeURIComponent(
-      `Dear ${po.supplierSnapshot?.name || "Vendor"},\n\nGreetings from Fashion Hub! Please find Purchase Order #${po.poNumber} for ${totalQty} units totaling ${formatMoney(po.totalAmountPaisa)}.\n\nThank you!`
+      `Dear ${po.supplierSnapshot?.name || "Vendor"},\n\nGreetings from ${storeName}! Please find Purchase Order #${po.poNumber} for ${totalQty} units totaling ${formatMoney(po.totalAmountPaisa)}.\n\nThank you!`
     );
     window.open(`https://wa.me/${waNumber}?text=${message}`, "_blank");
   };
@@ -808,12 +815,16 @@ function PurchaseOrderViewModal({ isOpen, onClose, po }) {
                 Purchase Order
               </p>
               <h2 className="text-2xl font-serif font-bold text-[#0b0b0b] mt-1">
-                FASHION HUB
+                {storeName}
               </h2>
-              <p className="text-xs text-[#706a61] mt-0.5">
-                Main Road Mairwa, Near Nahar Bridge, Siwan, Bihar - 841437
-              </p>
-              <p className="text-xs text-[#706a61]">Phone: +91 82923 99080</p>
+              {storeSettings?.address && (
+                <p className="text-xs text-[#706a61] mt-0.5">
+                  {storeSettings.address}
+                </p>
+              )}
+              {storeSettings?.phone && (
+                <p className="text-xs text-[#706a61]">Phone: {storeSettings.phone}</p>
+              )}
             </div>
             <div className="text-right">
               <p className="font-mono text-base font-bold text-[#1a3a7a]">{po.poNumber}</p>

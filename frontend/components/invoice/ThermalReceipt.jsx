@@ -43,12 +43,10 @@ export default function ThermalReceipt({ invoice, customer, store }) {
 
   const storeName = store?.name || store?.storeName || "FASHION HUB";
   const storeTagline = store?.tagline || "Premium Men's & Ethnic Fashion";
-  const storeAddress =
-    store?.address ||
-    "Main Road Mairwa, Near Nahar Bridge, Siwan, Bihar - 841437";
-  const storePhone = store?.phone || "+91 82923 99080";
+  const storeAddress = store?.address || "";
+  const storePhone = store?.phone || "";
   const storeGstin = store?.gstin || "";
-  const storeUpi = store?.upiId || "fashionhub@oksbi";
+  const storeUpi = store?.upiId || "";
 
   const subtotalPaisa =
     invoice?.subtotalPaisa ??
@@ -220,17 +218,19 @@ export default function ThermalReceipt({ invoice, customer, store }) {
       </div>
 
       {/* ── QR Code for UPI ── */}
-      <div className="py-3 text-center border-b border-dashed border-gray-400">
-        <img
-          src={qrUrl}
-          alt="UPI QR"
-          className="size-24 mx-auto border border-gray-300 p-1 bg-white"
-        />
-        <p className="text-[9px] uppercase font-bold text-gray-700 mt-1">
-          Scan to Pay via UPI / GPay / PhonePe
-        </p>
-        <p className="text-[8px] text-gray-500 font-mono">{storeUpi}</p>
-      </div>
+      {storeUpi && (
+        <div className="py-3 text-center border-b border-dashed border-gray-400">
+          <img
+            src={qrUrl}
+            alt="UPI QR"
+            className="size-24 mx-auto border border-gray-300 p-1 bg-white"
+          />
+          <p className="text-[9px] uppercase font-bold text-gray-700 mt-1">
+            Scan to Pay via UPI / GPay / PhonePe
+          </p>
+          <p className="text-[8px] text-gray-500 font-mono">{storeUpi}</p>
+        </div>
+      )}
 
       {/* ── Return Terms & Barcode ── */}
       <div className="pt-2 text-center space-y-1">

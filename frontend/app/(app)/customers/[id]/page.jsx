@@ -19,9 +19,11 @@ export default async function CustomerDetailPage(props) {
   }
   
   const payload = await res.json().catch(() => ({}));
-  if (!payload.success || !payload.data?.customer) redirect("/customers");
+  const dataObj = payload.data || payload || {};
+  const customer = dataObj.customer;
+  const orders = dataObj.orders || [];
+  if (!customer) redirect("/customers");
   
-  const { customer, orders = [] } = payload.data;
   const duesPaisa = customer.stats?.totalDuesPaisa || 0;
 
   // Format customer address

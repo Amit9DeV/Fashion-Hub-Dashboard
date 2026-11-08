@@ -55,11 +55,78 @@ export function AppSidebar({ user }) {
         })}
       </nav>
 
-      {/* Bottom status */}
-      <div className="px-3 pb-5">
-        <div style={{ background: '#141414', border: '1px solid #222', borderRadius: 6, padding: '10px 12px' }} className="flex items-center gap-2.5">
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4caf7d', flexShrink: 0, boxShadow: '0 0 6px #4caf7d60' }} />
-          <span style={{ fontSize: 11, color: '#9c9489', letterSpacing: '0.06em' }}>Store online</span>
+      {/* Bottom user & status info */}
+      <div className="px-3 pb-5 space-y-2">
+        {user && (
+          <div
+            style={{
+              background: "#141414",
+              border: "1px solid #222",
+              borderRadius: 6,
+              padding: "8px 10px",
+            }}
+            className="flex items-center gap-2.5"
+          >
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                background: "#2a2214",
+                border: "1px solid #5a4524",
+                color: "#d8b46a",
+                fontSize: 11,
+                fontWeight: 700,
+                display: "grid",
+                placeItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              {user.name ? user.name[0].toUpperCase() : "U"}
+            </div>
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="text-xs font-semibold text-[#f0ebe2] truncate">
+                {user.name || user.email}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[9px] font-bold tracking-wider text-[#d8b46a] uppercase">
+                  {user.role}
+                </span>
+                {user.employeeId && (
+                  <span className="text-[9px] text-[#706a61]">
+                    · {user.employeeId}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            background: "#0f0f0f",
+            border: "1px solid #1a1a1a",
+            borderRadius: 6,
+            padding: "8px 10px",
+          }}
+          className="flex items-center justify-between text-[11px]"
+        >
+          <div className="flex items-center gap-2">
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#4caf7d",
+                flexShrink: 0,
+                boxShadow: "0 0 6px #4caf7d60",
+              }}
+            />
+            <span style={{ color: "#9c9489", letterSpacing: "0.04em" }}>
+              Cloud DB Connected
+            </span>
+          </div>
+          <span className="text-[10px] text-[#555] font-mono">v1.0</span>
         </div>
       </div>
     </aside>

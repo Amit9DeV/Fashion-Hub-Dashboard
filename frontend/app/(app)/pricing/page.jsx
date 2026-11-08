@@ -12,7 +12,7 @@ export default async function PricingPage() {
   }
   
   const payload = await res.json().catch(() => ({}));
-  const products = payload.data?.products || [];
+  const products = payload.data?.products || payload.products || [];
 
   // Flatten to a single list of variants, attaching product context to each variant
   const variants = products.flatMap(product => 

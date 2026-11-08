@@ -1,11 +1,11 @@
 import React from 'react';
 
 export default function InvoiceHeader({ store }) {
-  const storeName = store?.name || "FASHION HUB";
+  const storeName = store?.name || store?.storeName || "FASHION HUB";
   const tagline = store?.tagline || "MEN'S PREMIUM FASHION";
-  const address = store?.address || "Main Road Mairwa, Near Nahar Bridge, South of HDFC Bank, Mairwa - 841437";
-  const phone = store?.phone || "+91 82923 99080";
-  const gstin = store?.gstin || "27ABCDE1234F1Z5";
+  const address = store?.address || "";
+  const phone = store?.phone || "";
+  const gstin = store?.gstin || "";
 
   return (
     <div className="flex flex-col items-center pt-8 pb-3 text-center w-full z-10">
@@ -22,17 +22,21 @@ export default function InvoiceHeader({ store }) {
         {storeName}
       </div>
       
-      <div className="text-[#C99532] text-xs tracking-widest uppercase mb-4">
-        {tagline}
-      </div>
+      {tagline && (
+        <div className="text-[#C99532] text-xs tracking-widest uppercase mb-4">
+          {tagline}
+        </div>
+      )}
       
       <div className="w-16 h-[1px] bg-[#C99532] mb-4 opacity-60"></div>
       
-      <div className="text-[#D6D6D6] text-xs sm:text-sm leading-relaxed max-w-[320px] mb-3 font-sans text-center">
-        {address}<br />
-        Tel: {phone}<br />
-        {gstin && <span className="font-mono text-[11px] text-[#C99532] mt-0.5 inline-block">GSTIN: {gstin}</span>}
-      </div>
+      {(address || phone || gstin) && (
+        <div className="text-[#D6D6D6] text-xs sm:text-sm leading-relaxed max-w-[320px] mb-3 font-sans text-center">
+          {address && <div>{address}</div>}
+          {phone && <div>Tel: {phone}</div>}
+          {gstin && <span className="font-mono text-[11px] text-[#C99532] mt-0.5 inline-block">GSTIN: {gstin}</span>}
+        </div>
+      )}
     </div>
   );
 }

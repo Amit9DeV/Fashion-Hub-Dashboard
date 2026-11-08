@@ -24,8 +24,8 @@ export default function SettingsPage() {
     storeName: "Fashion Hub",
     tagline: "Premium Men's Fashion",
     gstin: "",
-    phone: "+91 82923 99080",
-    address: "Main Road Mairwa, Near Nahar Bridge, South of HDFC Bank, Mairwa - 841437",
+    phone: "",
+    address: "",
     upiId: "",
     taxRate: 5,
     invoiceFooter: "Thank you for shopping with us!",
@@ -51,10 +51,8 @@ export default function SettingsPage() {
           setSettings({
             ...payload.settings,
             gstin: payload.settings.gstin || "",
-            phone: payload.settings.phone || "+91 82923 99080",
-            address:
-              payload.settings.address ||
-              "Main Road Mairwa, Near Nahar Bridge, South of HDFC Bank, Mairwa - 841437",
+            phone: payload.settings.phone || "",
+            address: payload.settings.address || "",
             upiId: payload.settings.upiId || "",
             printFormat: payload.settings.printFormat || "A4",
             lowStockThreshold: payload.settings.lowStockThreshold || 5,
@@ -190,12 +188,16 @@ export default function SettingsPage() {
 
   if (loading) return <div className="p-8 text-sm text-[#706a61]">Loading settings...</div>;
 
-  const testUpiUrl = `upi://pay?pa=${encodeURIComponent(settings.upiId || "fashionhub@oksbi")}&pn=${encodeURIComponent(
-    settings.storeName || "Fashion Hub"
-  )}&am=100.00&cu=INR`;
-  const upiQrPreviewSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(
-    testUpiUrl
-  )}`;
+  const testUpiUrl = settings.upiId
+    ? `upi://pay?pa=${encodeURIComponent(settings.upiId)}&pn=${encodeURIComponent(
+        settings.storeName || "Fashion Hub"
+      )}&am=100.00&cu=INR`
+    : "";
+  const upiQrPreviewSrc = testUpiUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(
+        testUpiUrl
+      )}`
+    : "";
 
   return (
     <div className="mx-auto max-w-3xl space-y-7 pb-12">
@@ -283,7 +285,7 @@ export default function SettingsPage() {
               <Input
                 id="upiId"
                 name="upiId"
-                placeholder="e.g. fashionhub@oksbi"
+                placeholder="e.g. yourstore@oksbi or merchant@upi"
                 value={settings.upiId}
                 onChange={(e) => setSettings({ ...settings, upiId: e.target.value })}
               />

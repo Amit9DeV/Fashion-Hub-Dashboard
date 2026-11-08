@@ -58,7 +58,18 @@ async function fetchAPI(endpoint, options = {}) {
       throw new Error(data.message || data.error || "API request failed");
     }
 
-    return data.data !== undefined ? data.data : data;
+    if (data.data !== undefined) {
+      if (typeof data.data === "object" && data.data !== null && !Array.isArray(data.data)) {
+        if (data.data.success === undefined && data.success !== undefined) {
+          data.data.success = data.success;
+        }
+        if (data.data.message === undefined && data.message !== undefined) {
+          data.data.message = data.message;
+        }
+      }
+      return data.data;
+    }
+    return data;
   } catch (error) {
     if (error.name === "AbortError") {
       // Stale request was cancelled — return a pending promise to halt updates

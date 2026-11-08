@@ -13,6 +13,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
   const payload = await res.json().catch(() => ({}));
+  const dataObj = payload.data || payload || {};
   const {
     today = { sales: 0, orders: 0, itemsSold: 0, expenses: 0, netSales: 0 },
     totalSales = 0,
@@ -25,7 +26,7 @@ export default async function DashboardPage() {
     inventoryAttention = { outOfStock: [], lowStock: [], outOfStockCount: 0, lowStockCount: 0 },
     salesChartData = [],
     topProducts = [],
-  } = payload.data || {};
+  } = dataObj;
 
   const needsAttention = inventoryAttention.outOfStockCount > 0 || inventoryAttention.lowStockCount > 0;
 

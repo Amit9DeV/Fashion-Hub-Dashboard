@@ -17,7 +17,7 @@ export default async function InventoryPage(props) {
   }
 
   const payload = await res.json().catch(() => ({}));
-  const variants = payload.data?.variants || [];
+  const variants = payload.data?.variants || payload.variants || [];
 
   return (
     <div className="space-y-7 pb-10">
