@@ -10,38 +10,41 @@ import mongoose from "mongoose";
 export const getSalesReport = async (req, res) => {
   try {
     await connectToDatabase();
-    const { startDate, endDate, dateFilter } = req.query;
+    const { startDate, endDate, dateFilter, preset } = req.query;
     
-    let start = new Date();
-    let end = new Date();
+    let start = null;
+    let end = null;
     const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
-    if (startDate && endDate) {
-      // Parse dates and set boundaries in IST (convert to UTC for MongoDB)
-      const parseIST = (dateStr, isEnd) => {
-        const d = new Date(dateStr);
-        const istDate = new Date(d.getTime() + IST_OFFSET_MS);
-        const utcMidnight = Date.UTC(
-          istDate.getUTCFullYear(), istDate.getUTCMonth(), istDate.getUTCDate(),
-          isEnd ? 23 : 0, isEnd ? 59 : 0, isEnd ? 59 : 0, isEnd ? 999 : 0
-        ) - IST_OFFSET_MS;
-        return new Date(utcMidnight);
-      };
-      start = parseIST(startDate, false);
-      end = parseIST(endDate, true);
-    } else {
-      // Default: last 30 days, also IST-aware
-      const nowIST = new Date(Date.now() + IST_OFFSET_MS);
-      const todayMidnightUTC = new Date(
-        Date.UTC(nowIST.getUTCFullYear(), nowIST.getUTCMonth(), nowIST.getUTCDate()) - IST_OFFSET_MS
-      );
-      start = new Date(todayMidnightUTC.getTime() - 29 * 24 * 60 * 60 * 1000);
-      end = new Date(todayMidnightUTC.getTime() + 24 * 60 * 60 * 1000 - 1);
+    const parseIST = (dateStr, isEnd) => {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return null;
+      const istDate = new Date(d.getTime() + IST_OFFSET_MS);
+      const utcMidnight = Date.UTC(
+        istDate.getUTCFullYear(), istDate.getUTCMonth(), istDate.getUTCDate(),
+        isEnd ? 23 : 0, isEnd ? 59 : 0, isEnd ? 59 : 0, isEnd ? 999 : 0
+      ) - IST_OFFSET_MS;
+      return new Date(utcMidnight);
+    };
+
+    const isLifetime =
+      dateFilter === "lifetime" ||
+      preset === "lifetime" ||
+      (!startDate && !endDate) ||
+      (startDate === "" && endDate === "");
+
+    if (!isLifetime) {
+      if (startDate) start = parseIST(startDate, false);
+      if (endDate) end = parseIST(endDate, true);
     }
+
+    const matchCompletedAt = {};
+    if (start) matchCompletedAt.$gte = start;
+    if (end) matchCompletedAt.$lte = end;
 
     const matchStage = {
       $match: {
-        completedAt: { $gte: start, $lte: end },
+        ...(Object.keys(matchCompletedAt).length > 0 && { completedAt: matchCompletedAt }),
         status: { $in: ["COMPLETED", "PARTIALLY_RETURNED", "EXCHANGED"] }
       }
     };
@@ -204,8 +207,12 @@ export const getSalesReport = async (req, res) => {
     }
 
     // 2. Returns Aggregation
+    const matchReturnsCreatedAt = {};
+    if (start) matchReturnsCreatedAt.$gte = start;
+    if (end) matchReturnsCreatedAt.$lte = end;
+
     const returnsAgg = await Return.aggregate([
-      { $match: { createdAt: { $gte: start, $lte: end } } },
+      ...(Object.keys(matchReturnsCreatedAt).length > 0 ? [{ $match: { createdAt: matchReturnsCreatedAt } }] : []),
       { $unwind: "$items" },
       {
         $group: {

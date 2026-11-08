@@ -68,12 +68,13 @@ export default function ReportsPage() {
   const [expandedBillId, setExpandedBillId] = useState(null);
   const [viewingInvoiceId, setViewingInvoiceId] = useState(null);
 
-  const fetchReport = async (start, end) => {
+  const fetchReport = async (start, end, currentPreset = preset) => {
     setLoading(true);
     try {
       const query = new URLSearchParams();
       if (start) query.append("startDate", start);
       if (end) query.append("endDate", end);
+      if (currentPreset) query.append("preset", currentPreset);
       
       const data = await api.reports.getSales(query.toString());
       setReport(data?.data || data);
@@ -86,7 +87,7 @@ export default function ReportsPage() {
   };
 
   useEffect(() => {
-    fetchReport(startDate, endDate);
+    fetchReport(startDate, endDate, "lifetime");
   }, []);
 
   const handlePresetChange = (e) => {
@@ -96,14 +97,14 @@ export default function ReportsPage() {
       const { start, end } = getDateRange(val);
       setStartDate(start);
       setEndDate(end);
-      fetchReport(start, end);
+      fetchReport(start, end, val);
     }
   };
 
   const handleCustomFilter = (e) => {
     e.preventDefault();
     setPreset("custom");
-    fetchReport(startDate, endDate);
+    fetchReport(startDate, endDate, "custom");
   };
 
   const handleExport = () => {
@@ -212,9 +213,25 @@ export default function ReportsPage() {
           </select>
           
           <form onSubmit={handleCustomFilter} className="flex items-center gap-2 flex-1 sm:flex-initial flex-wrap sm:flex-nowrap">
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="flex-1 sm:w-auto min-w-[125px] h-9 text-xs bg-[#faf9f6]" required />
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setPreset("custom");
+              }}
+              className="flex-1 sm:w-auto min-w-[125px] h-9 text-xs bg-[#faf9f6]"
+            />
             <span className="text-[#8a847a] text-xs">to</span>
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="flex-1 sm:w-auto min-w-[125px] h-9 text-xs bg-[#faf9f6]" required />
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setPreset("custom");
+              }}
+              className="flex-1 sm:w-auto min-w-[125px] h-9 text-xs bg-[#faf9f6]"
+            />
             <Button type="submit" variant="outline" size="sm" className="h-9 px-3 bg-[#faf9f6]">
               <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
             </Button>
