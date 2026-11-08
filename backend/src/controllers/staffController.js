@@ -32,6 +32,10 @@ export const createStaff = async (req, res) => {
       return res.status(400).json({ success: false, message: "Name, email, and password are required." });
     }
 
+    const safeRole = ["ADMIN", "MANAGER", "CASHIER"].includes(role?.toUpperCase())
+      ? role.toUpperCase()
+      : "CASHIER";
+
     await connectToDatabase();
     const existing = await User.findOne({ email: email.toLowerCase().trim() });
     if (existing) {
@@ -46,7 +50,7 @@ export const createStaff = async (req, res) => {
       name: name.trim(),
       email: email.toLowerCase().trim(),
       passwordHash,
-      role,
+      role: safeRole,
       phone: phone?.trim(),
       active: true,
     });
@@ -77,7 +81,11 @@ export const updateStaff = async (req, res) => {
     await connectToDatabase();
     const updates = {};
     if (name !== undefined) updates.name = name.trim();
-    if (role !== undefined) updates.role = role;
+    if (role !== undefined) {
+      updates.role = ["ADMIN", "MANAGER", "CASHIER"].includes(role?.toUpperCase())
+        ? role.toUpperCase()
+        : "CASHIER";
+    }
     if (phone !== undefined) updates.phone = phone.trim();
     if (active !== undefined) updates.active = Boolean(active);
 

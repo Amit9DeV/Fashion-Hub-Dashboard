@@ -54,8 +54,9 @@ export function AppTopbar({ user }) {
         can(user, "billing:use") ? api.cashDrawer.getStatus() : Promise.resolve(null),
       ]);
 
-      if (drawerRes.status === "fulfilled" && drawerRes.value?.data) {
-        setDrawerOpen(drawerRes.value.data.status === "OPEN");
+      if (drawerRes.status === "fulfilled" && drawerRes.value) {
+        const drawerData = drawerRes.value.data || drawerRes.value;
+        setDrawerOpen(drawerData?.status === "OPEN");
       } else if (drawerRes.status === "fulfilled") {
         setDrawerOpen(false);
       }

@@ -7,7 +7,12 @@
 // Client requests stay on the Next.js origin. The catch-all Route Handler
 // forwards them to Express with the server-only session cookie as a bearer.
 // This avoids relying on third-party cookies between Vercel and Render.
-const API_URL = "https://fashion-hub-dashboard.onrender.com/api";
+const API_URL =
+  typeof window !== "undefined"
+    ? "/api"
+    : (process.env.BACKEND_API_URL ||
+       process.env.NEXT_PUBLIC_API_URL ||
+       "http://localhost:5000/api");
 
 // Tracks active AbortControllers per endpoint to cancel stale GET requests
 const activeRequests = new Map();
@@ -41,7 +46,7 @@ async function fetchAPI(endpoint, options = {}) {
     // Handle session expiry — redirect to login
     if (response.status === 401 && typeof window !== "undefined") {
       const currentPath = window.location.pathname;
-      if (currentPath !== "/login") {
+      if (currentPath !== "/login" && !endpoint.includes("/auth/login")) {
         window.location.href = `/login?next=${encodeURIComponent(currentPath)}`;
       }
       return new Promise(() => { }); // Prevent React state updates during redirect

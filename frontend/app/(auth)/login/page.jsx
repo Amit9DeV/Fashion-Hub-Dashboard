@@ -19,7 +19,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   // ── No default credentials pre-filled in production ───────────────────────
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(params.get("error") || "");
   const [busy, setBusy] = useState(false);
@@ -29,11 +29,17 @@ function LoginForm() {
     setBusy(true);
     setError("");
     try {
+      const trimmedIdentifier = identifier.trim();
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        body: JSON.stringify({
+          email: trimmedIdentifier.toLowerCase(),
+          employeeId: trimmedIdentifier,
+          username: trimmedIdentifier,
+          password,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Invalid credentials.");
@@ -52,8 +58,8 @@ function LoginForm() {
           ? rawNext
           : "/dashboard";
 
-      // Use router.replace so the login page is removed from history
-      router.replace(safeTarget);
+      // Full document reload ensures Next.js App Router and server layout re-evaluate with fresh session
+      window.location.href = safeTarget;
     } catch (err) {
       setError(err.message || "Could not sign in.");
       setBusy(false);
@@ -98,7 +104,7 @@ function LoginForm() {
           </p>
           <div className="mt-8 space-y-4">
             <label className="block text-sm font-medium">
-              Email
+              Email or Staff ID
               <div className="relative mt-1.5">
                 <Mail
                   className="absolute left-3 top-3 text-[#8a847a]"
@@ -106,11 +112,11 @@ function LoginForm() {
                 />
                 <Input
                   className="pl-10"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  placeholder="you@fashionhub.com"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  autoComplete="username"
+                  placeholder="admin@fashionhub.com or FH-ADMIN"
                   required
                 />
               </div>

@@ -7,7 +7,7 @@ const cached = globalForMongoose._mongooseCache || { conn: null, promise: null }
 export default async function connectToDatabase() {
   if (cached.conn) return cached.conn;
 
-  const uri = "mongodb+srv://kumararyanbhai90_db_user:2IRWcVTxpF8GbLXe@cluster0.8jnejwp.mongodb.net/dashboard?appName=Cluster0";
+  const uri = process.env.MONGODB_URI || "mongodb+srv://kumararyanbhai90_db_user:2IRWcVTxpF8GbLXe@cluster0.8jnejwp.mongodb.net/dashboard?appName=Cluster0";
   if (!uri) {
     throw new Error(
       "Missing MONGODB_URI. Copy .env.example to .env and configure MongoDB.",

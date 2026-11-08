@@ -20,8 +20,11 @@ export function SignOutButton() {
         localStorage.removeItem("fashion_hub_user");
       }
     } finally {
-      router.replace("/login");
-      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      } else {
+        router.replace("/login");
+      }
     }
   }
 

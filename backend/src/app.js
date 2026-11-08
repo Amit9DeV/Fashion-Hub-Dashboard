@@ -36,6 +36,7 @@ import cashDrawerRoutes from "./routes/cashDrawerRoutes.js";
 import purchaseRoutes from "./routes/purchaseRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import { getPublicInvoicePdf } from "./controllers/invoiceController.js";
 
 const app = express();
 
@@ -106,8 +107,9 @@ app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "Backend is running", timestamp: new Date().toISOString() });
 });
 
-// ─── Public auth routes ───────────────────────────────────────────────────────
+// ─── Public auth & invoice routes ─────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
+app.get("/api/public/invoices/:token", getPublicInvoicePdf);
 
 // ─── Protected routes ─────────────────────────────────────────────────────────
 app.use(requireAuth);

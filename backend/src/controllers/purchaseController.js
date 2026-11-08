@@ -150,94 +150,101 @@ export const receivePurchaseOrder = async (req, res) => {
     await connectToDatabase();
     const { id } = req.params;
     
-    const session = await mongoose.startSession();
+    let session = await mongoose.startSession();
     const isStandalone = !supportsTransactions();
     if (isStandalone) {
-      session.endSession();
+      await session.endSession();
+      session = null;
     }
     
     const runBlock = isStandalone ? (cb) => cb() : (cb, opts) => session.withTransaction(cb, opts);
 
     let updatedPo;
 
-    await runBlock(async () => {
-      const po = await PurchaseOrder.findById(id).session(isStandalone ? null : session);
-      if (!po) throw new Error("PO not found");
-      if (po.status === "RECEIVED") throw new Error("PO already received");
+    try {
+      await runBlock(async () => {
+        const po = await PurchaseOrder.findById(id).session(isStandalone ? null : session);
+        if (!po) throw new Error("PO not found");
+        if (po.status === "RECEIVED") throw new Error("PO already received");
 
-      po.status = "RECEIVED";
-      po.receivedAt = new Date();
-      await po.save({ session: isStandalone ? null : session });
+        po.status = "RECEIVED";
+        po.receivedAt = new Date();
+        await po.save({ session: isStandalone ? null : session });
 
-      // Update stock with Weighted Average Costing (WAC)
-      const bulkOps = po.items.map(item => ({
-        updateOne: {
-          filter: { _id: item.variantId },
-          update: [
-            {
-              $set: {
-                costPricePaisa: {
-                  $cond: {
-                    if: { $lte: ["$stock", 0] },
-                    then: item.costPricePaisa,
-                    else: {
-                      $round: [
-                        {
-                          $divide: [
-                            { 
-                              $add: [
-                                { $multiply: ["$stock", { $ifNull: ["$costPricePaisa", 0] }] },
-                                { $multiply: [item.quantity, item.costPricePaisa] }
-                              ]
-                            },
-                            { $add: ["$stock", item.quantity] }
-                          ]
-                        },
-                        0
-                      ]
+        // Update stock with Weighted Average Costing (WAC)
+        const bulkOps = po.items.map(item => ({
+          updateOne: {
+            filter: { _id: item.variantId },
+            update: [
+              {
+                $set: {
+                  costPricePaisa: {
+                    $cond: {
+                      if: { $lte: ["$stock", 0] },
+                      then: item.costPricePaisa,
+                      else: {
+                        $round: [
+                          {
+                            $divide: [
+                              { 
+                                $add: [
+                                  { $multiply: ["$stock", { $ifNull: ["$costPricePaisa", 0] }] },
+                                  { $multiply: [item.quantity, item.costPricePaisa] }
+                                ]
+                              },
+                              { $add: ["$stock", item.quantity] }
+                            ]
+                          },
+                          0
+                        ]
+                      }
                     }
-                  }
-                },
-                stock: { $add: ["$stock", item.quantity] }
+                  },
+                  stock: { $add: ["$stock", item.quantity] }
+                }
               }
-            }
-          ]
+            ]
+          }
+        }));
+        if (bulkOps.length > 0) {
+          await ProductVariant.bulkWrite(bulkOps, { session: isStandalone ? null : session });
         }
-      }));
-      if (bulkOps.length > 0) {
-        await ProductVariant.bulkWrite(bulkOps, { session: isStandalone ? null : session });
+
+        // Log Inventory Movements
+        const movements = po.items.map(item => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          skuSnapshot: item.sku,
+          productNameSnapshot: item.productName,
+          type: "PURCHASE",
+          quantityDelta: item.quantity,
+          referenceType: "PURCHASE_ORDER",
+          referenceId: po._id,
+          reason: `Received PO ${po.poNumber}`,
+          performedBy: { id: req.user.id, name: req.user.name },
+          occurredAt: po.receivedAt
+        }));
+        await InventoryMovement.insertMany(movements, { session: isStandalone ? null : session });
+
+        // Create an Expense record
+        await Expense.create([{
+          title: `Stock Purchase - ${po.poNumber}`,
+          amountPaisa: po.totalAmountPaisa,
+          category: "STOCK",
+          paymentMethod: "OTHER",
+          notes: `Supplier: ${po.supplierSnapshot.name}`,
+          createdBy: req.user.id
+        }], { session: isStandalone ? null : session });
+
+        updatedPo = po;
+      });
+
+      return res.json({ success: true, data: updatedPo });
+    } finally {
+      if (session) {
+        await session.endSession();
       }
-
-      // Log Inventory Movements
-      const movements = po.items.map(item => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        skuSnapshot: item.sku,
-        productNameSnapshot: item.productName,
-        type: "PURCHASE",
-        quantityDelta: item.quantity,
-        referenceType: "PURCHASE_ORDER",
-        referenceId: po._id,
-        reason: `Received PO ${po.poNumber}`,
-        performedBy: { id: req.user.id, name: req.user.name },
-        occurredAt: po.receivedAt
-      }));
-      await InventoryMovement.insertMany(movements, { session: isStandalone ? null : session });
-
-      // Create an Expense record
-      await Expense.create([{
-        title: `Stock Purchase - ${po.poNumber}`,
-        amountPaisa: po.totalAmountPaisa,
-        category: "STOCK",
-        paymentMethod: "OTHER",
-        notes: `Supplier: ${po.supplierSnapshot.name}`,
-        createdBy: req.user.id
-      }], { session: isStandalone ? null : session });
-
-      updatedPo = po;
-    });
-
-    return res.json({ success: true, data: updatedPo });
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: error.message || "Could not receive PO" });

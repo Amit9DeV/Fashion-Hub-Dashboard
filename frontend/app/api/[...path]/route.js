@@ -7,8 +7,14 @@ async function proxyRequest(request, context) {
   const method = request.method.toUpperCase();
   if (method !== "GET" && method !== "HEAD") {
     const origin = request.headers.get("origin");
-    if (!origin || origin !== new URL(request.url).origin) {
-      return Response.json({ success: false, message: "Invalid request origin" }, { status: 403 });
+    if (origin) {
+      const requestOrigin = new URL(request.url).origin;
+      const isLocal =
+        (origin.includes("localhost") || origin.includes("127.0.0.1")) &&
+        (requestOrigin.includes("localhost") || requestOrigin.includes("127.0.0.1"));
+      if (origin !== requestOrigin && !isLocal) {
+        return Response.json({ success: false, message: "Invalid request origin" }, { status: 403 });
+      }
     }
   }
 
@@ -20,10 +26,11 @@ async function proxyRequest(request, context) {
   const isLogin = method === "POST" && path.length === 2 && path[0] === "auth" && path[1] === "login";
   const isLogout = method === "POST" && path.length === 2 && path[0] === "auth" && path[1] === "logout";
   const isHealth = path.length === 1 && path[0] === "health";
+  const isPublicInvoice = path.length === 3 && path[0] === "public" && path[1] === "invoices";
   const cookieStore = await cookies();
   const authHeader = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const token = cookieStore.get("fashion_hub_session")?.value || authHeader;
-  if (!token && !isLogin && !isLogout && !isHealth) {
+  if (!token && !isLogin && !isLogout && !isHealth && !isPublicInvoice) {
     return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
@@ -55,6 +62,10 @@ async function proxyRequest(request, context) {
     for (const name of ["content-type", "content-disposition", "cache-control"]) {
       const value = upstream.headers.get(name);
       if (value) responseHeaders.set(name, value);
+    }
+    const setCookie = upstream.headers.get("set-cookie");
+    if (setCookie) {
+      responseHeaders.set("set-cookie", setCookie);
     }
     responseHeaders.set("Cache-Control", "no-store");
     return new Response(upstream.body, {

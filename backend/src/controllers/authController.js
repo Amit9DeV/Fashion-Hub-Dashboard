@@ -5,16 +5,23 @@ import { createSession, clearSession } from "../middleware/auth.js";
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Email and password are required." });
+    const rawIdentifier = (req.body.email || req.body.username || req.body.employeeId || req.body.userId || "").trim();
+    const { password } = req.body;
+    if (!rawIdentifier || !password) {
+      return res.status(400).json({ success: false, message: "Email or Staff ID and password are required." });
     }
 
     await connectToDatabase();
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select("+passwordHash");
+    const user = await User.findOne({
+      $or: [
+        { email: rawIdentifier.toLowerCase() },
+        { employeeId: rawIdentifier.toUpperCase() },
+        { employeeId: rawIdentifier },
+      ],
+    }).select("+passwordHash");
     
     if (!user || !user.active || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ success: false, message: "Invalid email or password." });
+      return res.status(401).json({ success: false, message: "Invalid email/user ID or password." });
     }
     
     const token = createSession(res, user);
@@ -26,6 +33,7 @@ export const login = async (req, res) => {
         name: user.name, 
         role: user.role, 
         email: user.email,
+        employeeId: user.employeeId,
         token,
       } 
     });

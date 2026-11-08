@@ -22,6 +22,28 @@ export const getInvoicePdf = async (req, res) => {
   }
 };
 
+export const getPublicInvoicePdf = async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token is required." });
+    }
+    await connectToDatabase();
+    const invoice = await Invoice.findOne({ publicToken: token }).select("+publicToken");
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: "Invoice not found." });
+    }
+    const pdf = await readInvoicePdf(invoice._id.toString());
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=Fashion-Hub-${invoice.invoiceNumber.replaceAll("/", "-")}.pdf`);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    return res.send(pdf);
+  } catch (error) {
+    console.error(error);
+    return res.status(404).json({ success: false, message: error.message || "Invoice PDF could not be loaded." });
+  }
+};
+
 export const getInvoice = async (req, res) => {
   try {
     await connectToDatabase();
