@@ -5,9 +5,11 @@ import { createSession, clearSession } from "../middleware/auth.js";
 
 export const login = async (req, res) => {
   try {
-    const rawIdentifier = (req.body.identifier || req.body.email || req.body.username || req.body.employeeId || req.body.userId || "").trim();
-    const { password } = req.body;
-    if (!rawIdentifier || !password) {
+    const body = req.body || {};
+    const rawValue = body.identifier || body.email || body.username || body.employeeId || body.userId || "";
+    const rawIdentifier = typeof rawValue === "string" ? rawValue.trim().slice(0, 254) : "";
+    const { password } = body;
+    if (!rawIdentifier || typeof password !== "string" || !password || Buffer.byteLength(password, "utf8") > 72) {
       return res.status(400).json({ success: false, message: "Email or Staff ID and password are required." });
     }
 
@@ -69,12 +71,12 @@ export const changePassword = async (req, res) => {
       return res.status(401).json({ success: false, message: "Not authenticated" });
     }
 
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
+    const { currentPassword, newPassword } = req.body || {};
+    if (typeof currentPassword !== "string" || !currentPassword || typeof newPassword !== "string" || !newPassword) {
       return res.status(400).json({ success: false, message: "Current and new passwords are required." });
     }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: "New password must be at least 6 characters." });
+    if (typeof newPassword !== "string" || newPassword.length < 12 || Buffer.byteLength(newPassword, "utf8") > 72) {
+      return res.status(400).json({ success: false, message: "New password must be at least 12 characters and no more than 72 UTF-8 bytes." });
     }
 
     await connectToDatabase();
@@ -88,8 +90,10 @@ export const changePassword = async (req, res) => {
       return res.status(401).json({ success: false, message: "Current password is incorrect." });
     }
 
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.sessionVersion = (user.sessionVersion || 0) + 1;
     await user.save();
+    clearSession(res);
 
     return res.json({ success: true, message: "Password changed successfully." });
   } catch (error) {

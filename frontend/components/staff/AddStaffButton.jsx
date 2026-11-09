@@ -49,6 +49,10 @@ export default function AddStaffButton() {
       setError("Name, email, and password are required.");
       return;
     }
+    if (formData.password.length < 12 || new TextEncoder().encode(formData.password).length > 72) {
+      setError("Password must be at least 12 characters and no more than 72 UTF-8 bytes.");
+      return;
+    }
 
     setBusy(true);
     setError("");
@@ -187,7 +191,11 @@ export default function AddStaffButton() {
                   <Input
                     type="password"
                     className="pl-9 h-9 text-xs"
-                    placeholder="Min 6 characters"
+                    placeholder="Minimum 12 characters; maximum 72 bytes"
+                    minLength={12}
+                    maxLength={72}
+                    minLength={12}
+                    maxLength={128}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required

@@ -27,13 +27,22 @@ const oldSeedData = [
 ];
 
 async function runSeed() {
+  const seedEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (process.env.NODE_ENV === "production") throw new Error("This legacy catalogue seed is blocked in production.");
+  if (!seedEmail || !seedPassword || seedPassword.length < 12 || Buffer.byteLength(seedPassword, "utf8") > 72) {
+    throw new Error("Set SEED_ADMIN_EMAIL and a 12+ character, at most 72-byte SEED_ADMIN_PASSWORD before running this legacy seed.");
+  }
+  if (process.env.ALLOW_DEMO_CATALOG_SEED !== "true") {
+    throw new Error("This script overwrites catalogue stock. Set ALLOW_DEMO_CATALOG_SEED=true only for a disposable database.");
+  }
   await connectToDatabase();
   console.log("Connected to DB.");
 
-  const passwordHash = await bcrypt.hash("FashionHub@123", 12);
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
   await User.findOneAndUpdate(
-    { email: "admin@fashionhub.local" }, 
-    { $set: { name: "Fashion Hub Admin", employeeId: "FH-ADMIN", passwordHash, role: "ADMIN", active: true } }, 
+    { email: seedEmail },
+    { $set: { name: "Fashion Hub Admin", employeeId: "FH-ADMIN", passwordHash, role: "ADMIN", active: true } },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
   console.log("Admin account ready.");

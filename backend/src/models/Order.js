@@ -69,6 +69,7 @@ const orderSchema = new mongoose.Schema(
       role: { type: String },
     },
     idempotencyKey: { type: String, unique: true, sparse: true },
+    idempotencyHash: { type: String, minlength: 64, maxlength: 64 },
     storeSnapshot: { name: { type: String, default: "FASHION HUB" } },
     notes: { type: String, trim: true },
     completedAt: { type: Date, required: true },
@@ -78,5 +79,6 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ completedAt: -1 });
+orderSchema.index({ "payments.method": 1, "payments.paidAt": 1 });
 
 export default mongoose.models.Order || mongoose.model("Order", orderSchema);

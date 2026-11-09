@@ -11,7 +11,6 @@ const productVariantSchema = new mongoose.Schema(
     sellingPricePaisa: { type: Number, required: true, min: 0 },
     mrpPaisa: { type: Number, min: 0 },
     stock: { type: Number, required: true, min: 0, default: 0 },
-    reserved: { type: Number, min: 0, default: 0 },
     reorderLevel: { type: Number, min: 0, default: 2 },
     status: { type: String, enum: ["ACTIVE", "INACTIVE"], default: "ACTIVE" },
   },

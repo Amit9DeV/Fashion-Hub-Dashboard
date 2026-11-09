@@ -41,7 +41,7 @@ export function SearchInput({ placeholder = "Search..." }) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder} 
-        className="w-full border rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#9b7740]"
+        className="w-full border rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#9b7740] transition-all duration-150"
       />
     </div>
   );

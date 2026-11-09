@@ -41,14 +41,18 @@ export const getExpenses = async (req, res) => {
 export const createExpense = async (req, res) => {
   try {
     await connectToDatabase();
-    const { title, amountPaisa, category, paymentMethod, date, notes } = req.body;
+    const { title, amountPaisa, category, paymentMethod, date, notes } = req.body || {};
     
-    if (!title || !amountPaisa || !category) {
-      return res.status(400).json({ success: false, message: "Title, amount, and category are required." });
+    const categories = ["STOCK", "RENT", "ELECTRICITY", "CASUAL", "PERSONAL", "OTHER"];
+    const paymentMethods = ["CASH", "UPI", "CARD", "OTHER"];
+    if (typeof title !== "string" || !title.trim() || title.trim().length > 160 ||
+        !Number.isSafeInteger(amountPaisa) || amountPaisa <= 0 || amountPaisa > 100000000000 ||
+        !categories.includes(category) || (paymentMethod && !paymentMethods.includes(paymentMethod)) ||
+        (date && !Number.isFinite(new Date(date).getTime()))) {
+      return res.status(400).json({ success: false, message: "Enter a valid title, positive amount, category, payment method, and date." });
     }
-    
     const expense = await Expense.create({
-      title,
+      title: title.trim(),
       amountPaisa,
       category,
       paymentMethod: paymentMethod || "CASH",
@@ -71,10 +75,26 @@ export const updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
     await connectToDatabase();
-    const { title, amountPaisa, category, paymentMethod, date, notes } = req.body;
+    const { title, amountPaisa, category, paymentMethod, date, notes } = req.body || {};
+
+    if (title !== undefined && (typeof title !== "string" || !title.trim() || title.trim().length > 160)) {
+      return res.status(400).json({ success: false, message: "Title must contain 1–160 characters." });
+    }
+    if (amountPaisa !== undefined && (!Number.isSafeInteger(amountPaisa) || amountPaisa <= 0 || amountPaisa > 100000000000)) {
+      return res.status(400).json({ success: false, message: "Amount must be a positive whole number of paisa." });
+    }
+    if (category !== undefined && !["STOCK", "RENT", "ELECTRICITY", "CASUAL", "PERSONAL", "OTHER"].includes(category)) {
+      return res.status(400).json({ success: false, message: "Expense category is invalid." });
+    }
+    if (paymentMethod !== undefined && !["CASH", "UPI", "CARD", "OTHER"].includes(paymentMethod)) {
+      return res.status(400).json({ success: false, message: "Payment method is invalid." });
+    }
+    if (date !== undefined && !Number.isFinite(new Date(date).getTime())) {
+      return res.status(400).json({ success: false, message: "Expense date is invalid." });
+    }
 
     const updates = {};
-    if (title !== undefined) updates.title = title;
+    if (title !== undefined) updates.title = title.trim();
     if (amountPaisa !== undefined) updates.amountPaisa = amountPaisa;
     if (category !== undefined) updates.category = category;
     if (paymentMethod !== undefined) updates.paymentMethod = paymentMethod;

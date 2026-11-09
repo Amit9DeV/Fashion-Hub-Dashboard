@@ -1,4 +1,6 @@
-const IS_PROD = process.env.NODE_ENV === "production";
+function isProduction() {
+  return process.env.NODE_ENV === "production";
+}
 
 // Fields to scrub from logged bodies
 const SENSITIVE_KEYS = new Set(["password", "passwordHash", "token", "secret", "authorization"]);
@@ -17,7 +19,7 @@ export const requestLogger = (req, res, next) => {
   const { method, originalUrl, body, query } = req;
 
   // In production, only log the request line (no bodies — PII risk)
-  if (!IS_PROD) {
+  if (!isProduction()) {
     const cleanBody = scrub(body);
     console.log(`\n---------------------------------------------------------`);
     console.log(`[--> ] ${method} ${originalUrl}`);
@@ -37,7 +39,7 @@ export const requestLogger = (req, res, next) => {
     const statusColor = status >= 400 ? "\x1b[31m" : "\x1b[32m";
     const resetColor = "\x1b[0m";
 
-    if (IS_PROD) {
+    if (isProduction()) {
       // Minimal structured log for production (no PII in body)
       if (status >= 400) {
         console.error(`[${statusColor}${status}${resetColor}] ${method} ${originalUrl} (${duration}ms)`);

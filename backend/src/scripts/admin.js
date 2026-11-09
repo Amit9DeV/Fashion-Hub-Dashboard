@@ -8,23 +8,17 @@ dotenv.config();
 
 const MONGO_URI = process.env.MONGODB_URI;
 
-const ADMIN = {
-  employeeId: "FH-ADMIN",
-  name: "Fashion Hub Admin",
-  email: "admin@fashionhub.com",
-  password: "Admin@123",
-  role: "ADMIN",
-  active: true,
-};
-
-export function buildAdminUser() {
+export async function buildAdminUser({ email, password, name = "Fashion Hub Admin", employeeId = "FH-ADMIN" } = {}) {
+  if (!email || !password || password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+    throw new Error("Provide an admin email and a password of at least 12 characters and at most 72 UTF-8 bytes.");
+  }
   return {
-    employeeId: ADMIN.employeeId,
-    name: ADMIN.name,
-    email: ADMIN.email.toLowerCase(),
-    passwordHash: bcrypt.hashSync(ADMIN.password, 12),
-    role: ADMIN.role,
-    active: ADMIN.active,
+    employeeId,
+    name,
+    email: email.toLowerCase(),
+    passwordHash: await bcrypt.hash(password, 12),
+    role: "ADMIN",
+    active: true,
   };
 }
 
@@ -33,13 +27,16 @@ export async function seedAdmin() {
     if (!MONGO_URI) {
       throw new Error("Missing MONGODB_URI. Configure your .env file first.");
     }
+    const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+    const password = process.env.SEED_ADMIN_PASSWORD;
+    if (!email || !password) throw new Error("Set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD before creating an admin.");
 
     console.log("Connecting to database...");
     await mongoose.connect(MONGO_URI);
     console.log("Connected.");
 
     const existingAdmin = await User.findOne({
-      email: ADMIN.email.toLowerCase(),
+      email,
     });
 
     if (existingAdmin) {
@@ -48,13 +45,12 @@ export async function seedAdmin() {
       return;
     }
 
-    const adminUser = buildAdminUser();
+    const adminUser = await buildAdminUser({ email, password });
     await User.create(adminUser);
 
     console.log("✅ Admin created successfully!");
     console.log("");
-    console.log("Email:", ADMIN.email);
-    console.log("Password:", ADMIN.password);
+    console.log("Email:", email);
 
     await mongoose.disconnect();
     console.log("Database disconnected.");

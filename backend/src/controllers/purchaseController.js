@@ -1,7 +1,8 @@
-import connectToDatabase, { supportsTransactions } from "../config/db.js";
+import connectToDatabase, { assertTransactionSupport } from "../config/db.js";
 import PurchaseOrder from "../models/PurchaseOrder.js";
 import Supplier from "../models/Supplier.js";
 import ProductVariant from "../models/ProductVariant.js";
+import Product from "../models/Product.js";
 import InventoryMovement from "../models/InventoryMovement.js";
 import Expense from "../models/Expense.js";
 import mongoose from "mongoose";
@@ -12,7 +13,11 @@ import mongoose from "mongoose";
 export const createSupplier = async (req, res) => {
   try {
     await connectToDatabase();
-    const supplier = await Supplier.create(req.body);
+    const { name, contactPerson, mobile, email, gstin, address } = req.body || {};
+    if (typeof name !== "string" || !name.trim() || name.trim().length > 160) {
+      return res.status(400).json({ success: false, message: "Supplier name must contain 1–160 characters." });
+    }
+    const supplier = await Supplier.create({ name: name.trim(), contactPerson, mobile, email, gstin, address });
     return res.status(201).json({ success: true, data: supplier });
   } catch (error) {
     console.error(error);
@@ -39,7 +44,15 @@ export const getSuppliers = async (req, res) => {
 export const updateSupplier = async (req, res) => {
   try {
     await connectToDatabase();
-    const supplier = await Supplier.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const allowed = ["name", "contactPerson", "mobile", "email", "gstin", "address", "status"];
+    const updates = Object.fromEntries(Object.entries(req.body || {}).filter(([key]) => allowed.includes(key)));
+    if (updates.name !== undefined && (typeof updates.name !== "string" || !updates.name.trim() || updates.name.trim().length > 160)) {
+      return res.status(400).json({ success: false, message: "Supplier name must contain 1–160 characters." });
+    }
+    if (updates.status !== undefined && !["ACTIVE", "INACTIVE"].includes(updates.status)) {
+      return res.status(400).json({ success: false, message: "Supplier status is invalid." });
+    }
+    const supplier = await Supplier.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true, runValidators: true });
     if (!supplier) return res.status(404).json({ success: false, message: "Supplier not found" });
     return res.json({ success: true, data: supplier });
   } catch (error) {
@@ -116,19 +129,73 @@ export const deletePurchaseOrder = async (req, res) => {
 export const createPurchaseOrder = async (req, res) => {
   try {
     await connectToDatabase();
-    const { supplierId, items, expectedDeliveryDate, notes } = req.body;
+    const { supplierId, items, expectedDeliveryDate, notes } = req.body || {};
+
+    if (!mongoose.isValidObjectId(supplierId) || !Array.isArray(items) || items.length < 1 || items.length > 200) {
+      return res.status(400).json({ success: false, message: "Choose a supplier and provide between 1 and 200 purchase lines." });
+    }
+    const normalizedItems = items.map((item) => ({
+      productId: String(item?.productId || ""),
+      variantId: String(item?.variantId || ""),
+      quantity: Number(item?.quantity),
+      costPricePaisa: Number(item?.costPricePaisa),
+    }));
+    if (normalizedItems.some((item) =>
+      !mongoose.isValidObjectId(item.productId) || !mongoose.isValidObjectId(item.variantId) ||
+      !Number.isSafeInteger(item.quantity) || item.quantity < 1 || item.quantity > 100000 ||
+      !Number.isSafeInteger(item.costPricePaisa) || item.costPricePaisa < 0 || item.costPricePaisa > 100000000000
+    )) {
+      return res.status(400).json({ success: false, message: "Each purchase line needs a valid product, variant, quantity, and cost." });
+    }
     
     const supplier = await Supplier.findById(supplierId).lean();
     if (!supplier) throw new Error("Supplier not found");
 
-    const totalAmountPaisa = items.reduce((sum, item) => sum + item.totalPaisa, 0);
+    const variantIds = normalizedItems.map((item) => item.variantId);
+    if (new Set(variantIds).size !== variantIds.length) {
+      return res.status(400).json({ success: false, message: "A variant can appear only once in a purchase order." });
+    }
+    const variants = await ProductVariant.find({ _id: { $in: variantIds }, status: "ACTIVE" }).lean();
+    const variantMap = new Map(variants.map((variant) => [variant._id.toString(), variant]));
+    if (variants.length !== normalizedItems.length) {
+      return res.status(400).json({ success: false, message: "One or more selected variants are unavailable." });
+    }
+    const validItems = normalizedItems.map((item) => {
+      const variant = variantMap.get(item.variantId);
+      if (variant.productId.toString() !== item.productId) {
+        const error = new Error("A purchase line does not match its selected product.");
+        error.status = 400;
+        throw error;
+      }
+      return {
+        productId: variant.productId,
+        variantId: variant._id,
+        productName: undefined,
+        sku: variant.sku,
+        quantity: item.quantity,
+        costPricePaisa: item.costPricePaisa,
+        totalPaisa: item.quantity * item.costPricePaisa,
+      };
+    });
+    const productIds = [...new Set(validItems.map((item) => item.productId.toString()))];
+    const products = await Product.find({ _id: { $in: productIds } }).select("name").lean();
+    const productNames = new Map(products.map((product) => [product._id.toString(), product.name]));
+    for (const item of validItems) item.productName = productNames.get(item.productId.toString()) || "Product";
+
+    const totalAmountPaisa = validItems.reduce((sum, item) => sum + item.totalPaisa, 0);
+    if (!Number.isSafeInteger(totalAmountPaisa)) {
+      return res.status(400).json({ success: false, message: "Purchase order total is outside the supported amount range." });
+    }
+    if (expectedDeliveryDate && !Number.isFinite(new Date(expectedDeliveryDate).getTime())) {
+      return res.status(400).json({ success: false, message: "Expected delivery date is invalid." });
+    }
     const poNumber = `PO/${new Date().getFullYear()}/${Date.now().toString().slice(-6)}`;
 
     const po = await PurchaseOrder.create({
       poNumber,
       supplierId,
       supplierSnapshot: { name: supplier.name, gstin: supplier.gstin },
-      items,
+      items: validItems,
       totalAmountPaisa,
       expectedDeliveryDate,
       notes,
@@ -138,7 +205,7 @@ export const createPurchaseOrder = async (req, res) => {
     return res.status(201).json({ success: true, data: po });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Could not create PO" });
+    return res.status(error.status || 500).json({ success: false, message: error.message || "Could not create PO" });
   }
 };
 
@@ -148,28 +215,22 @@ export const createPurchaseOrder = async (req, res) => {
 export const receivePurchaseOrder = async (req, res) => {
   try {
     await connectToDatabase();
+    assertTransactionSupport();
     const { id } = req.params;
     
-    let session = await mongoose.startSession();
-    const isStandalone = !supportsTransactions();
-    if (isStandalone) {
-      await session.endSession();
-      session = null;
-    }
-    
-    const runBlock = isStandalone ? (cb) => cb() : (cb, opts) => session.withTransaction(cb, opts);
+    const session = await mongoose.startSession();
 
     let updatedPo;
 
     try {
-      await runBlock(async () => {
-        const po = await PurchaseOrder.findById(id).session(isStandalone ? null : session);
+      await session.withTransaction(async () => {
+        const po = await PurchaseOrder.findById(id).session(session);
         if (!po) throw new Error("PO not found");
         if (po.status === "RECEIVED") throw new Error("PO already received");
 
         po.status = "RECEIVED";
         po.receivedAt = new Date();
-        await po.save({ session: isStandalone ? null : session });
+        await po.save({ session });
 
         // Update stock with Weighted Average Costing (WAC)
         const bulkOps = po.items.map(item => ({
@@ -207,7 +268,7 @@ export const receivePurchaseOrder = async (req, res) => {
           }
         }));
         if (bulkOps.length > 0) {
-          await ProductVariant.bulkWrite(bulkOps, { session: isStandalone ? null : session });
+          await ProductVariant.bulkWrite(bulkOps, { session });
         }
 
         // Log Inventory Movements
@@ -224,7 +285,7 @@ export const receivePurchaseOrder = async (req, res) => {
           performedBy: { id: req.user.id, name: req.user.name },
           occurredAt: po.receivedAt
         }));
-        await InventoryMovement.insertMany(movements, { session: isStandalone ? null : session });
+        await InventoryMovement.insertMany(movements, { session });
 
         // Create an Expense record
         await Expense.create([{
@@ -234,7 +295,7 @@ export const receivePurchaseOrder = async (req, res) => {
           paymentMethod: "OTHER",
           notes: `Supplier: ${po.supplierSnapshot.name}`,
           createdBy: req.user.id
-        }], { session: isStandalone ? null : session });
+        }], { session });
 
         updatedPo = po;
       });
@@ -247,6 +308,6 @@ export const receivePurchaseOrder = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Could not receive PO" });
+    return res.status(error.status || 500).json({ success: false, message: error.message || "Could not receive PO" });
   }
 };

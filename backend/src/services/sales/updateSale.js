@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import connectToDatabase, { supportsTransactions } from "../../config/db.js";
+import connectToDatabase, { assertTransactionSupport } from "../../config/db.js";
 import Product from "../../models/Product.js";
 import ProductVariant from "../../models/ProductVariant.js";
 import Customer from "../../models/Customer.js";
@@ -20,7 +20,7 @@ async function resolveCustomerForUpdate(input, user, session, now) {
   if (!input) return null;
   
   if (input.customerId) {
-    const cust = await Customer.findById(input.customerId).session(session);
+    const cust = await Customer.findOne({ _id: input.customerId, active: { $ne: false } }).session(session);
     if (!cust) throw new Error("The selected customer no longer exists.");
     return cust;
   }
@@ -29,7 +29,7 @@ async function resolveCustomerForUpdate(input, user, session, now) {
   const whatsappNumber = cleanPhone(input.whatsappNumber) || mobile;
   if (!mobile && !whatsappNumber) return null;
   
-  let cust = mobile ? await Customer.findOne({ mobile }).session(session) : null;
+  let cust = mobile ? await Customer.findOne({ mobile, active: { $ne: false } }).session(session) : null;
   if (cust) {
     const updates = {
       ...(input.name ? { name: input.name } : {}),
@@ -64,19 +64,13 @@ async function resolveCustomerForUpdate(input, user, session, now) {
 export async function updateSale(orderId, rawInput, user) {
   const input = saleInputSchema.parse(rawInput);
   await connectToDatabase();
+  assertTransactionSupport();
 
-  let session = await mongoose.startSession();
+  const session = await mongoose.startSession();
   let result;
 
   try {
-    const isStandalone = !supportsTransactions();
-    if (isStandalone) {
-      session.endSession();
-      session = undefined;
-    }
-    const runBlock = isStandalone ? (cb) => cb() : (cb, opts) => session.withTransaction(cb, opts);
-
-    await runBlock(async () => {
+    await session.withTransaction(async () => {
       const settings = await Settings.findOne().session(session);
       const globalTaxRate = settings?.taxRate ?? 0;
       
@@ -181,7 +175,7 @@ export async function updateSale(orderId, rawInput, user) {
         saleLines.push({
           productId: product._id,
           variantId: variant._id,
-          productName: requestedItem.overriddenName || product.name,
+          productName: product.name,
           brand: product.brandSnapshot,
           category: product.categorySnapshot,
           sku: variant.sku,
@@ -189,7 +183,9 @@ export async function updateSale(orderId, rawInput, user) {
           color: variant.color,
           size: variant.size,
           quantity: requestedItem.quantity,
-          unitCostPaisa: requestedItem.overriddenCostPaisa !== undefined ? requestedItem.overriddenCostPaisa : (variant.costPricePaisa || 0),
+          unitCostPaisa: requestedItem.overriddenCostPaisa !== undefined
+            ? requestedItem.overriddenCostPaisa
+            : (variant.costPricePaisa || 0),
           unitPricePaisa: requestedItem.overriddenPricePaisa || variant.sellingPricePaisa,
           taxRate: globalTaxRate,
         });

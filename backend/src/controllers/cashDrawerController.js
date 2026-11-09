@@ -21,9 +21,8 @@ export const getDrawerStatus = async (req, res) => {
 
       // Aggregate cash sales
       const salesAggregation = await Order.aggregate([
-        { $match: { completedAt: { $gte: startOfDay, $lte: endOfDay } } },
         { $unwind: "$payments" },
-        { $match: { "payments.method": "CASH" } },
+        { $match: { "payments.method": "CASH", "payments.paidAt": { $gte: startOfDay, $lte: endOfDay } } },
         { $group: { _id: null, totalCash: { $sum: "$payments.amountPaisa" } } }
       ]);
       const cashSales = salesAggregation[0]?.totalCash || 0;
@@ -63,6 +62,9 @@ export const openDrawer = async (req, res) => {
   try {
     await connectToDatabase();
     const { openingBalancePaisa } = req.body;
+    if (openingBalancePaisa !== undefined && (!Number.isSafeInteger(openingBalancePaisa) || openingBalancePaisa < 0)) {
+      return res.status(400).json({ success: false, message: "Opening balance must be a non-negative whole number of paisa." });
+    }
     
     const existingOpen = await CashDrawer.findOne({ status: "OPEN" });
     if (existingOpen) {
@@ -75,7 +77,7 @@ export const openDrawer = async (req, res) => {
 
     const drawer = await CashDrawer.create({
       date: today,
-      openingBalancePaisa: openingBalancePaisa || 0,
+      openingBalancePaisa: openingBalancePaisa ?? 0,
       openedBy: req.user.id
     });
 
@@ -93,6 +95,12 @@ export const closeDrawer = async (req, res) => {
   try {
     await connectToDatabase();
     const { actualClosingBalancePaisa, notes } = req.body;
+    if (!Number.isSafeInteger(actualClosingBalancePaisa) || actualClosingBalancePaisa < 0) {
+      return res.status(400).json({ success: false, message: "Closing balance must be a non-negative whole number of paisa." });
+    }
+    if (notes !== undefined && (typeof notes !== "string" || notes.length > 1000)) {
+      return res.status(400).json({ success: false, message: "Notes must be a string of at most 1000 characters." });
+    }
     
     const drawer = await CashDrawer.findOne({ status: "OPEN" }).sort({ date: -1 });
     if (!drawer) {

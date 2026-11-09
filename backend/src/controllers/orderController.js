@@ -84,59 +84,6 @@ export const getOrders = async (req, res) => {
   }
 };
 
-// @route   DELETE /api/orders/:id
-// @desc    Delete an order, restore stock, and revert customer stats
-// @access  Private (ADMIN/MANAGER only)
-export const deleteOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
-    }
-
-    await connectToDatabase();
-
-    const order = await Order.findById(id);
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
-    }
-
-    // Restore stock for each variant
-    if (order.items && order.items.length > 0) {
-      for (const item of order.items) {
-        if (item.variantId) {
-          await ProductVariant.findByIdAndUpdate(item.variantId, {
-            $inc: { stock: item.quantity },
-          });
-        }
-      }
-    }
-
-    // Revert customer lifetime stats (use statically imported Customer) with floor of 0
-    if (order.customerId) {
-      await Customer.findByIdAndUpdate(order.customerId, [
-        {
-          $set: {
-            "stats.totalOrders": { $max: [0, { $subtract: [{ $ifNull: ["$stats.totalOrders", 0] }, 1] }] },
-            "stats.totalSpentPaisa": { $max: [0, { $subtract: [{ $ifNull: ["$stats.totalSpentPaisa", 0] }, (order.totalPaisa || 0)] }] },
-            "stats.totalDuesPaisa": { $max: [0, { $subtract: [{ $ifNull: ["$stats.totalDuesPaisa", 0] }, (order.duePaisa || 0)] }] },
-          }
-        }
-      ]);
-    }
-
-    await Order.findByIdAndDelete(id);
-    await Invoice.deleteMany({ orderId: id });
-    await WhatsappMessage.deleteMany({ orderId: id });
-
-    return res.json({ success: true, message: "Order deleted and stock restored." });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: "Could not delete order." });
-  }
-};
-
 // @route   PUT /api/orders/:id
 // @desc    Edit an existing completed order (via updateSale service)
 // @access  Private

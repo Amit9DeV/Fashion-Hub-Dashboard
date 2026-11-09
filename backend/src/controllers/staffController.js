@@ -28,13 +28,20 @@ export const createStaff = async (req, res) => {
     }
 
     const { name, email, password, role = "CASHIER", phone } = req.body;
-    if (!name || !email || !password) {
+    if (typeof name !== "string" || !name.trim() || typeof email !== "string" || !email.trim() || !password) {
       return res.status(400).json({ success: false, message: "Name, email, and password are required." });
     }
+    if (name.trim().length > 100 || email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ success: false, message: "Enter a valid name and email address." });
+    }
+    if (typeof password !== "string" || password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+      return res.status(400).json({ success: false, message: "Password must be at least 12 characters and no more than 72 UTF-8 bytes." });
+    }
 
-    const safeRole = ["ADMIN", "MANAGER", "CASHIER"].includes(role?.toUpperCase())
-      ? role.toUpperCase()
-      : "CASHIER";
+    const safeRole = typeof role === "string" ? role.toUpperCase() : "CASHIER";
+    if (!["ADMIN", "MANAGER", "CASHIER"].includes(safeRole)) {
+      return res.status(400).json({ success: false, message: "Role must be ADMIN, MANAGER, or CASHIER." });
+    }
 
     await connectToDatabase();
     const existing = await User.findOne({ email: email.toLowerCase().trim() });
@@ -42,7 +49,7 @@ export const createStaff = async (req, res) => {
       return res.status(409).json({ success: false, message: "A user with this email already exists." });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
     const employeeId = `EMP-${Date.now().toString(36).toUpperCase()}`;
 
     const newStaff = await User.create({
@@ -80,16 +87,38 @@ export const updateStaff = async (req, res) => {
 
     await connectToDatabase();
     const updates = {};
-    if (name !== undefined) updates.name = name.trim();
-    if (role !== undefined) {
-      updates.role = ["ADMIN", "MANAGER", "CASHIER"].includes(role?.toUpperCase())
-        ? role.toUpperCase()
-        : "CASHIER";
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim() || name.trim().length > 100) {
+        return res.status(400).json({ success: false, message: "Name must contain 1–100 characters." });
+      }
+      updates.name = name.trim();
     }
-    if (phone !== undefined) updates.phone = phone.trim();
-    if (active !== undefined) updates.active = Boolean(active);
+    if (role !== undefined) {
+      if (typeof role !== "string" || !["ADMIN", "MANAGER", "CASHIER"].includes(role.toUpperCase())) {
+        return res.status(400).json({ success: false, message: "Role must be ADMIN, MANAGER, or CASHIER." });
+      }
+      updates.role = role.toUpperCase();
+    }
+    if (phone !== undefined) {
+      if (typeof phone !== "string" || phone.length > 30) return res.status(400).json({ success: false, message: "Phone must be a string of at most 30 characters." });
+      updates.phone = phone.trim();
+    }
+    if (active !== undefined) {
+      if (typeof active !== "boolean") return res.status(400).json({ success: false, message: "Active must be a boolean." });
+      updates.active = active;
+    }
+    const shouldRevokeSessions = role !== undefined || active !== undefined;
+    const current = await User.findById(id).select("role active").lean();
+    if (!current) return res.status(404).json({ success: false, message: "Staff member not found." });
+    const wouldRemainActiveAdmin = (updates.role ?? current.role) === "ADMIN" && (updates.active ?? current.active);
+    if (current.role === "ADMIN" && current.active && !wouldRemainActiveAdmin) {
+      const otherActiveAdmins = await User.countDocuments({ _id: { $ne: id }, role: "ADMIN", active: true });
+      if (!otherActiveAdmins) return res.status(409).json({ success: false, message: "At least one active admin account must remain." });
+    }
+    const update = { $set: updates };
+    if (shouldRevokeSessions) update.$inc = { sessionVersion: 1 };
 
-    const updated = await User.findByIdAndUpdate(id, { $set: updates }, { new: true }).lean();
+    const updated = await User.findByIdAndUpdate(id, update, { new: true, runValidators: true }).lean();
     if (!updated) {
       return res.status(404).json({ success: false, message: "Staff member not found." });
     }
@@ -119,7 +148,15 @@ export const deleteStaff = async (req, res) => {
     }
 
     await connectToDatabase();
-    const deleted = await User.findByIdAndDelete(id).lean();
+    const target = await User.findById(id).select("role active").lean();
+    if (!target) {
+      return res.status(404).json({ success: false, message: "Staff member not found." });
+    }
+    if (target.role === "ADMIN" && target.active) {
+      const otherActiveAdmins = await User.countDocuments({ _id: { $ne: id }, role: "ADMIN", active: true });
+      if (!otherActiveAdmins) return res.status(409).json({ success: false, message: "At least one active admin account must remain." });
+    }
+    const deleted = await User.findByIdAndUpdate(id, { $set: { active: false }, $inc: { sessionVersion: 1 } }, { new: true }).lean();
     if (!deleted) {
       return res.status(404).json({ success: false, message: "Staff member not found." });
     }

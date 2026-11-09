@@ -39,6 +39,24 @@ export const updateSettings = async (req, res) => {
     await connectToDatabase();
     
     const { storeName, tagline, gstin, phone, address, upiId, taxRate, invoiceFooter, invoicePreferences, printFormat, lowStockThreshold } = req.body;
+
+    const stringLimits = [[storeName, 120], [tagline, 200], [gstin, 30], [phone, 40], [address, 1000], [upiId, 120], [invoiceFooter, 500]];
+    if (stringLimits.some(([value, max]) => value !== undefined && (typeof value !== "string" || value.length > max))) {
+      return res.status(400).json({ success: false, message: "A store setting contains invalid text or exceeds its length limit." });
+    }
+    if (taxRate !== undefined && (typeof taxRate !== "number" || !Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100)) {
+      return res.status(400).json({ success: false, message: "Tax rate must be a number from 0 to 100." });
+    }
+    if (printFormat !== undefined && !["A4", "THERMAL_80MM"].includes(printFormat)) {
+      return res.status(400).json({ success: false, message: "Print format is invalid." });
+    }
+    if (lowStockThreshold !== undefined && (!Number.isSafeInteger(Number(lowStockThreshold)) || Number(lowStockThreshold) < 1 || Number(lowStockThreshold) > 100000)) {
+      return res.status(400).json({ success: false, message: "Low-stock threshold must be a whole number from 1 to 100000." });
+    }
+    const preferenceKeys = ["showStoreContact", "showGstin", "showCustomerDetails", "showTaxBreakdown", "showVariantInfo", "showTrustBadges", "showPolicyText"];
+    if (invoicePreferences !== undefined && (!invoicePreferences || typeof invoicePreferences !== "object" || Array.isArray(invoicePreferences) || Object.entries(invoicePreferences).some(([key, value]) => !preferenceKeys.includes(key) || typeof value !== "boolean"))) {
+      return res.status(400).json({ success: false, message: "Invoice preferences are invalid." });
+    }
     
     let settings = await Settings.findOne();
     if (!settings) {

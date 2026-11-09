@@ -87,8 +87,8 @@ export default function SettingsPage() {
       setPwMessage({ type: "error", text: "New passwords do not match." });
       return;
     }
-    if (pwForm.newPassword.length < 6) {
-      setPwMessage({ type: "error", text: "New password must be at least 6 characters." });
+    if (pwForm.newPassword.length < 12 || new TextEncoder().encode(pwForm.newPassword).length > 72) {
+      setPwMessage({ type: "error", text: "New password must be at least 12 characters and no more than 72 UTF-8 bytes." });
       return;
     }
     setPwSaving(true);
@@ -97,9 +97,8 @@ export default function SettingsPage() {
         currentPassword: pwForm.currentPassword,
         newPassword: pwForm.newPassword,
       });
-      setPwMessage({ type: "success", text: "Password changed successfully!" });
-      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      toast.success("Admin password changed!");
+      toast.success("Password changed. Sign in again with your new password.");
+      router.replace("/login?passwordChanged=1");
     } catch (error) {
       setPwMessage({ type: "error", text: error.message || "Failed to change password." });
       toast.error(error.message || "Password change failed");
@@ -532,7 +531,9 @@ export default function SettingsPage() {
               type="password"
               required
               autoComplete="new-password"
-              placeholder="Minimum 6 characters"
+              placeholder="Minimum 12 characters; maximum 72 bytes"
+              minLength={12}
+              maxLength={72}
               value={pwForm.newPassword}
               onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
             />

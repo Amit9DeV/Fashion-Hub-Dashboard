@@ -29,6 +29,7 @@ const customerSchema = new mongoose.Schema(
       lastPurchaseAt: Date,
     },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    active: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

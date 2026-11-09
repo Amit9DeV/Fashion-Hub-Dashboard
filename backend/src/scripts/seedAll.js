@@ -12,14 +12,17 @@ async function seed() {
   if (!process.env.MONGODB_URI) {
     throw new Error("Set MONGODB_URI in backend/.env before seeding.");
   }
-
-  const email = (process.env.SEED_ADMIN_EMAIL || "admin@fashionhub.local").trim().toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD || "FashionHub@123";
-  if (process.env.NODE_ENV === "production" && (!process.env.SEED_ADMIN_EMAIL || !process.env.SEED_ADMIN_PASSWORD)) {
-    throw new Error("Production seeding requires explicit SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD values.");
+  if (process.env.NODE_ENV === "production" && process.env.CONFIRM_PRODUCTION_SEED !== "true") {
+    throw new Error("Production seed is blocked unless CONFIRM_PRODUCTION_SEED=true is explicitly set.");
   }
-  if (password.length < 12) {
-    throw new Error("SEED_ADMIN_PASSWORD must be at least 12 characters.");
+
+  const email = (process.env.SEED_ADMIN_EMAIL || "").trim().toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD || "";
+  if (!email || !password) {
+    throw new Error("Set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD explicitly before seeding.");
+  }
+  if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+    throw new Error("SEED_ADMIN_PASSWORD must be at least 12 characters and no more than 72 UTF-8 bytes.");
   }
 
   await mongoose.connect(process.env.MONGODB_URI);

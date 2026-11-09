@@ -24,6 +24,9 @@ const CAT_LIST = ["Shirts", "T-Shirts", "Jeans", "Trousers", "Shoes", "Formal Sh
 
 async function seedData() {
   try {
+    if (process.env.NODE_ENV === "production" || process.env.ALLOW_DESTRUCTIVE_CATALOG_SEED !== "true") {
+      throw new Error("This legacy seed deletes catalogue records. Run only in a disposable non-production database with ALLOW_DESTRUCTIVE_CATALOG_SEED=true.");
+    }
     console.log('Connecting to DB...');
     await mongoose.connect(MONGO_URI);
     

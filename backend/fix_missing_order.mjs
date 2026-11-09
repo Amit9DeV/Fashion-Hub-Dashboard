@@ -2,10 +2,12 @@
  * Fix: Re-import the 1 skipped order (2026-08-26 with duplicate mobile error)
  * Also fix: make customer creation resilient to duplicate mobile key
  */
+import 'dotenv/config';
 import mongoose from 'mongoose';
 import fs from 'fs';
 
-const uri = "mongodb+srv://kumararyanbhai90_db_user:2IRWcVTxpF8GbLXe@cluster0.8jnejwp.mongodb.net/dashboard?appName=Cluster0";
+const uri = process.env.MONGODB_URI;
+if (!uri) throw new Error("Set MONGODB_URI in the environment before running this maintenance script.");
 await mongoose.connect(uri);
 console.log('✅ Connected\n');
 

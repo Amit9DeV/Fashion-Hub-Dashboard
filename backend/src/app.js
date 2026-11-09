@@ -16,12 +16,23 @@ for (const key of REQUIRED_ENV) {
     process.exit(1);
   }
 }
+if (process.env.AUTH_SECRET.length < 32) {
+  throw new Error("AUTH_SECRET must be at least 32 characters long.");
+}
+if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
+  throw new Error("FRONTEND_URL must be configured in production.");
+}
+const cashierDiscountLimit = Number(process.env.CASHIER_MAX_DISCOUNT_PERCENT ?? 0);
+if (!Number.isFinite(cashierDiscountLimit) || cashierDiscountLimit < 0 || cashierDiscountLimit > 100) {
+  throw new Error("CASHIER_MAX_DISCOUNT_PERCENT must be a number from 0 to 100.");
+}
 
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import mongoose from "mongoose";
 
 import { requestLogger } from "./middleware/logger.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -60,9 +71,7 @@ app.use(
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  "https://fashion-hub-dashboard.vercel.app",
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000", "http://127.0.0.1:3000"]),
 ]
   .filter(Boolean)
   .map((origin) => origin.replace(/\/$/, ""));
@@ -70,11 +79,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin(origin, callback) {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        /^https:\/\/fashion-hub-dashboard.*\.vercel\.app$/.test(origin)
-      ) {
+      if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       return callback(null, false);
@@ -110,7 +115,13 @@ app.head("/", (req, res) => {
   res.status(200).end();
 });
 app.get("/api/health", (req, res) => {
-  res.json({ success: true, message: "Backend is running", timestamp: new Date().toISOString() });
+  const { readyState } = mongoose.connection;
+  const ready = readyState === 1;
+  res.status(ready ? 200 : 503).json({
+    success: ready,
+    status: ready ? "ready" : "not_ready",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ─── Public auth & invoice routes ─────────────────────────────────────────────

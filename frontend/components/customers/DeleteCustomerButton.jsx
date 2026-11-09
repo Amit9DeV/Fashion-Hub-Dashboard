@@ -11,12 +11,12 @@ export default function DeleteCustomerButton({ customerId }) {
   const router = useRouter();
 
   async function handleDelete() {
-    if (!confirm("Are you sure you want to delete this customer? This will remove them from the system. (Their past orders will remain in the ledger but will no longer be linked).")) return;
+    if (!confirm("Archive this customer and remove their contact details? Historical sales records will be preserved.")) return;
 
     setDeleting(true);
     try {
       await api.customers.delete(customerId);
-      toast.success("Customer deleted successfully");
+      toast.success("Customer archived");
       router.refresh();
     } catch (err) {
       toast.error(err.message || "Failed to delete customer");
@@ -29,7 +29,7 @@ export default function DeleteCustomerButton({ customerId }) {
       onClick={handleDelete}
       disabled={deleting}
       className="text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors p-1"
-      title="Delete Customer"
+      title="Archive customer"
     >
       <Trash2 size={16} />
     </button>

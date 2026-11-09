@@ -11,6 +11,11 @@ async function clearDb() {
   try {
     const MONGO_URI = process.env.MONGODB_URI;
     if (!MONGO_URI) throw new Error('MONGODB_URI is not defined');
+    if (process.env.NODE_ENV === 'production') throw new Error('Refusing to drop a production database.');
+    const targetDatabase = new URL(MONGO_URI).pathname.replace(/^\//, '').split('/')[0];
+    if (!targetDatabase || process.env.CONFIRM_DROP_DATABASE !== targetDatabase) {
+      throw new Error('Set CONFIRM_DROP_DATABASE to the exact database name to confirm this destructive action.');
+    }
     
     console.log('Connecting to database to wipe...');
     await mongoose.connect(MONGO_URI);

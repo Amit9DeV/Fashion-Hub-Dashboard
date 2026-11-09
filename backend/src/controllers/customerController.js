@@ -1,7 +1,10 @@
-import connectToDatabase from "../config/db.js";
+import connectToDatabase, { assertTransactionSupport } from "../config/db.js";
 import Customer from "../models/Customer.js";
 import Order from "../models/Order.js";
 import AuditLog from "../models/AuditLog.js";
+import CustomerPayment from "../models/CustomerPayment.js";
+import mongoose from "mongoose";
+import { createHash } from "node:crypto";
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -16,7 +19,7 @@ export const searchCustomers = async (req, res) => {
     await connectToDatabase();
     const search = new RegExp(escapeRegExp(query), "i");
     const customers = await Customer.find(
-      query ? { $or: [{ name: search }, { mobile: search }, { whatsappNumber: search }] } : {}
+      query ? { active: { $ne: false }, $or: [{ name: search }, { mobile: search }, { whatsappNumber: search }] } : { active: { $ne: false } }
     )
       .sort({ "stats.lastPurchaseAt": -1 })
       .limit(10)
@@ -46,7 +49,7 @@ export const getAllCustomers = async (req, res) => {
     const skip = (page - 1) * limit;
     const search = query ? new RegExp(escapeRegExp(query), "i") : null;
 
-    let filter = {};
+    let filter = { active: { $ne: false } };
     if (search) {
       filter.$or = [{ name: search }, { mobile: search }, { whatsappNumber: search }];
     }
@@ -75,7 +78,7 @@ export const getAllCustomers = async (req, res) => {
 export const getCustomerById = async (req, res) => {
   try {
     await connectToDatabase();
-    const customer = await Customer.findById(req.params.id).lean();
+    const customer = await Customer.findOne({ _id: req.params.id, active: { $ne: false } }).lean();
     if (!customer)
       return res.status(404).json({ success: false, message: "Customer not found" });
 
@@ -104,7 +107,7 @@ export const createCustomer = async (req, res) => {
 
     // Check for duplicate mobile
     if (mobile) {
-      const existing = await Customer.findOne({ mobile });
+      const existing = await Customer.findOne({ mobile, active: { $ne: false } });
       if (existing) {
         return res.status(409).json({
           success: false,
@@ -185,19 +188,19 @@ export const deleteCustomer = async (req, res) => {
     if (!existing)
       return res.status(404).json({ success: false, message: "Customer not found" });
 
-    if (existing.stats?.totalDuesPaisa > 0 && req.query.force !== "true") {
+    if (existing.stats?.totalDuesPaisa > 0) {
       return res.status(400).json({
         success: false,
-        message: `Customer has outstanding balance of ₹${(existing.stats.totalDuesPaisa / 100).toFixed(2)}. Please settle dues first or confirm deletion.`,
+        message: `Customer has outstanding balance of ₹${(existing.stats.totalDuesPaisa / 100).toFixed(2)}. Settle dues before archiving.`,
       });
     }
 
-    const customer = await Customer.findByIdAndDelete(req.params.id);
+    await Customer.updateOne({ _id: req.params.id }, {
+      $set: { active: false, "consents.billingWhatsApp": false, "consents.marketingWhatsApp": false },
+      $unset: { mobile: "", whatsappNumber: "", email: "", gstin: "", address: "" },
+    });
 
-    // Nullify customerId on historical orders (preserve ledger, remove dangling ref)
-    await Order.updateMany({ customerId: req.params.id }, { $unset: { customerId: "" } });
-
-    return res.json({ success: true, message: "Customer deleted successfully" });
+    return res.json({ success: true, message: "Customer archived and contact details removed. Historical sales records were preserved." });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not delete customer." });
@@ -208,73 +211,106 @@ export const deleteCustomer = async (req, res) => {
 // @desc    Record dues payment for a customer and allocate across unpaid/partial orders
 // @access  Private
 export const settleCustomerDues = async (req, res) => {
+  let session;
   try {
     const { id } = req.params;
-    const { amountPaisa, method = "CASH", notes = "" } = req.body;
-
-    const parsedAmount = parseInt(amountPaisa, 10);
-    if (!parsedAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      return res.status(400).json({ success: false, message: "Valid positive payment amount in paisa is required." });
+    const { amountPaisa, method = "CASH", notes = "", idempotencyKey } = req.body || {};
+    if (!mongoose.isValidObjectId(id) || !Number.isSafeInteger(amountPaisa) || amountPaisa <= 0 || amountPaisa > 100000000000) {
+      return res.status(400).json({ success: false, message: "A valid customer and positive payment amount in paisa are required." });
     }
+    if (!["CASH", "UPI", "CARD", "OTHER"].includes(method)) {
+      return res.status(400).json({ success: false, message: "Payment method is invalid." });
+    }
+    if (typeof notes !== "string" || notes.length > 500) return res.status(400).json({ success: false, message: "Reference must be 500 characters or fewer." });
+    if (typeof idempotencyKey !== "string" || idempotencyKey.trim().length < 10 || idempotencyKey.length > 100) {
+      return res.status(400).json({ success: false, message: "A valid payment idempotency key is required." });
+    }
+    const requestHash = createHash("sha256").update(JSON.stringify({ customerId: id, amountPaisa, method, notes })).digest("hex");
 
     await connectToDatabase();
-    const customer = await Customer.findById(id);
-    if (!customer) {
-      return res.status(404).json({ success: false, message: "Customer not found." });
+    assertTransactionSupport();
+    const priorPayment = await CustomerPayment.findOne({ idempotencyKey }).lean();
+    if (priorPayment) {
+      if (priorPayment.requestHash !== requestHash) return res.status(409).json({ success: false, message: "This idempotency key was already used for a different payment." });
+      return res.json({ success: true, data: priorPayment, message: "Payment was already recorded." });
     }
 
-    const currentDues = customer.stats?.totalDuesPaisa || 0;
-    const newDues = Math.max(0, currentDues - parsedAmount);
+    session = await mongoose.startSession();
+    let payment;
+    let remainingDuesPaisa;
+    await session.withTransaction(async () => {
+      const customer = await Customer.findById(id).session(session);
+      if (!customer) {
+        const error = new Error("Customer not found."); error.status = 404; throw error;
+      }
+      const currentDues = customer.stats?.totalDuesPaisa || 0;
+      if (amountPaisa > currentDues) {
+        const error = new Error("Payment cannot exceed the customer's current outstanding balance."); error.status = 409; throw error;
+      }
 
-    let remainingToAllocate = parsedAmount;
-    // Find customer orders with duePaisa > 0, oldest first
-    const dueOrders = await Order.find({ customerId: id, duePaisa: { $gt: 0 } }).sort({ completedAt: 1 });
+      let remainingToAllocate = amountPaisa;
+      const dueOrders = await Order.find({ customerId: id, duePaisa: { $gt: 0 } }).sort({ completedAt: 1 }).session(session);
+      const allocations = [];
+      const paidAt = new Date();
+      for (const order of dueOrders) {
+        if (remainingToAllocate <= 0) break;
+        const allocated = Math.min(order.duePaisa, remainingToAllocate);
+        order.duePaisa -= allocated;
+        order.payments.push({ method, amountPaisa: allocated, reference: notes || "Customer dues settlement", paidAt });
+        order.paymentStatus = order.duePaisa === 0 ? "PAID" : "PARTIAL";
+        await order.save({ session });
+        allocations.push({ orderId: order._id, amountPaisa: allocated });
+        remainingToAllocate -= allocated;
+      }
+      if (remainingToAllocate !== 0) {
+        const error = new Error("Customer balance does not match the outstanding order balances. Reconcile the account before recording payment.");
+        error.status = 409; throw error;
+      }
 
-    const updatedOrders = [];
-    for (const order of dueOrders) {
-      if (remainingToAllocate <= 0) break;
-      const allocate = Math.min(order.duePaisa, remainingToAllocate);
-      order.duePaisa = Math.max(0, order.duePaisa - allocate);
-      order.payments = order.payments || [];
-      order.payments.push({
-        method: ["CASH", "UPI", "CARD", "OTHER"].includes(method) ? method : "CASH",
-        amountPaisa: allocate,
-        reference: notes ? `Dues Settlement: ${notes}` : "Dues Settlement",
-        paidAt: new Date(),
-      });
-      order.paymentStatus = order.duePaisa === 0 ? "PAID" : "PARTIAL";
-      await order.save();
-      updatedOrders.push(order);
-      remainingToAllocate -= allocate;
-    }
-
-    customer.stats = customer.stats || {};
-    customer.stats.totalDuesPaisa = newDues;
-    await customer.save();
-
-    await AuditLog.create({
-      action: "CUSTOMER_DUES_SETTLED",
-      entityType: "CUSTOMER",
-      entityId: customer._id,
-      actor: { id: req.user?.id, name: req.user?.name, role: req.user?.role },
-      metadata: {
-        amountPaisa: parsedAmount,
+      customer.stats.totalDuesPaisa = currentDues - amountPaisa;
+      await customer.save({ session });
+      [payment] = await CustomerPayment.create([{
+        customerId: customer._id,
+        amountPaisa,
         method,
-        notes,
-        previousDues: currentDues,
-        remainingDues: newDues,
-        ordersSettledCount: updatedOrders.length,
-      },
-      occurredAt: new Date(),
-    });
+        reference: notes,
+        allocations,
+        idempotencyKey,
+        requestHash,
+        receivedBy: { id: req.user.id, name: req.user.name, role: req.user.role },
+        receivedAt: paidAt,
+      }], { session });
+      remainingDuesPaisa = customer.stats.totalDuesPaisa;
+      await AuditLog.create([{
+        action: "CUSTOMER_DUES_SETTLED",
+        entityType: "CUSTOMER",
+        entityId: customer._id,
+        actor: { id: req.user.id, name: req.user.name, role: req.user.role },
+        metadata: { amountPaisa, method, notes, previousDues: currentDues, remainingDues: remainingDuesPaisa, ordersSettledCount: allocations.length, paymentId: payment._id },
+        occurredAt: paidAt,
+      }], { session });
+    }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
 
     return res.json({
       success: true,
-      message: `Dues payment of ₹${(parsedAmount / 100).toFixed(2)} recorded successfully.`,
-      data: { customer, settledPaisa: parsedAmount, remainingDuesPaisa: newDues },
+      message: `Dues payment of ₹${(amountPaisa / 100).toFixed(2)} recorded successfully.`,
+      data: { payment, settledPaisa: amountPaisa, remainingDuesPaisa },
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Could not record dues payment." });
+    if (error.code === 11000 && req.body?.idempotencyKey) {
+      const prior = await CustomerPayment.findOne({ idempotencyKey: req.body.idempotencyKey }).lean();
+      if (prior && prior.requestHash === createHash("sha256").update(JSON.stringify({
+        customerId: req.params.id,
+        amountPaisa: req.body.amountPaisa,
+        method: req.body.method || "CASH",
+        notes: req.body.notes || "",
+      })).digest("hex")) {
+        return res.json({ success: true, data: prior, message: "Payment was already recorded." });
+      }
+    }
+    return res.status(error.status || (error.code === 11000 ? 409 : 500)).json({ success: false, message: error.message || "Could not record dues payment." });
+  } finally {
+    if (session) await session.endSession();
   }
 };

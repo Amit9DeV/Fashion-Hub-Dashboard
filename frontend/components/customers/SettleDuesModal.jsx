@@ -18,6 +18,7 @@ export default function SettleDuesModal({ customer, onSuccess }) {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [idempotencyKey, setIdempotencyKey] = useState("");
 
   if (duesPaisa <= 0) return null;
 
@@ -26,6 +27,7 @@ export default function SettleDuesModal({ customer, onSuccess }) {
     setMethod("CASH");
     setNotes("");
     setError("");
+    setIdempotencyKey(crypto.randomUUID());
     setIsOpen(true);
   };
 
@@ -47,14 +49,18 @@ export default function SettleDuesModal({ customer, onSuccess }) {
     setError("");
 
     try {
+      const requestKey = idempotencyKey || crypto.randomUUID();
+      if (!idempotencyKey) setIdempotencyKey(requestKey);
       const res = await api.customers.settleDues(customer._id, {
         amountPaisa,
         method,
         notes,
+        idempotencyKey: requestKey,
       });
 
       toast.success(res.message || "Dues payment recorded successfully!");
       setIsOpen(false);
+      setIdempotencyKey("");
       router.refresh();
       if (onSuccess) onSuccess(res.data);
     } catch (err) {

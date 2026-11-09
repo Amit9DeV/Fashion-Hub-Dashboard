@@ -73,8 +73,8 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseAdded }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-lg bg-[#faf9f6] p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-150">
+      <div className="w-full max-w-md rounded-lg bg-[#faf9f6] p-6 shadow-xl relative max-h-[90vh] overflow-y-auto animate-modal-pop">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-[#8a847a] hover:text-[#c9963e]"

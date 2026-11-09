@@ -1,37 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
-import { api } from "@/src/services/api";
-import { toast } from "sonner";
+import { RotateCcw } from "lucide-react";
 
 export default function DeleteOrderButton({ orderId }) {
-  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
-  async function handleDelete() {
-    if (!confirm("Are you sure you want to delete this order? This will also delete the associated invoice and restore the stock levels for the variants sold. This action cannot be undone.")) return;
-
-    setDeleting(true);
-    try {
-      await api.orders.delete(orderId);
-      toast.success("Order deleted and stock restored");
-      router.refresh();
-    } catch (err) {
-      toast.error(err.message || "Failed to delete order");
-      setDeleting(false);
-    }
+  function handleReturn() {
+    router.push(`/returns?orderId=${encodeURIComponent(orderId)}`);
   }
 
   return (
     <button 
-      onClick={handleDelete}
-      disabled={deleting}
-      className="text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors p-1"
-      title="Delete Order (Restore Stock)"
+      onClick={handleReturn}
+      className="text-[#8a5a10] hover:text-[#5d3c0b] transition-colors p-1"
+      title="Record a return or exchange"
     >
-      <Trash2 size={16} />
+      <RotateCcw size={16} />
     </button>
   );
 }

@@ -98,6 +98,35 @@ export function AppTopbar({ user }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Close mobile drawer on route navigation
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll while mobile menu is open to prevent touch scroll conflicts & lag
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
+  // Close with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+        setNotifOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const alertCount = (notifData?.outOfStockCount || 0) + (notifData?.lowStockCount || 0) + (notifData?.failedWhatsappCount || 0);
 
   return (
@@ -110,11 +139,25 @@ export function AppTopbar({ user }) {
         {/* Left: mobile menu + page identity */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
-            className="lg:hidden p-1.5 -ml-1 rounded text-[#4b4842] hover:bg-[#eee9df] active:bg-[#e4ded3] transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle navigation menu"
+            className="lg:hidden p-2 -ml-1 rounded text-[#4b4842] hover:bg-[#eee9df] active:bg-[#e4ded3] active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            <div className="relative w-5 h-5 flex items-center justify-center">
+              <Menu
+                size={20}
+                className={`absolute transition-all duration-200 ease-out ${
+                  mobileMenuOpen ? "opacity-0 rotate-90 scale-75 pointer-events-none" : "opacity-100 rotate-0 scale-100"
+                }`}
+              />
+              <X
+                size={20}
+                className={`absolute transition-all duration-200 ease-out ${
+                  mobileMenuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75 pointer-events-none"
+                }`}
+              />
+            </div>
           </button>
           <div>
             <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', color: '#9b7740', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
@@ -194,7 +237,7 @@ export function AppTopbar({ user }) {
                 if (!notifOpen && !notifData) fetchNotifications();
               }}
               style={{ width: 34, height: 34, placeItems: 'center', borderRadius: 4, color: '#5f584e' }}
-              className="relative hidden sm:grid hover:bg-[#eee9df] transition-colors"
+              className="relative hidden sm:grid hover:bg-[#eee9df] active:scale-95 transition-all duration-150 cursor-pointer"
             >
               <Bell size={16} strokeWidth={1.6} />
               {alertCount > 0 && (
@@ -208,7 +251,7 @@ export function AppTopbar({ user }) {
             {notifOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                <div className="absolute right-0 mt-2 w-80 rounded-md border border-[#dfd8cc] bg-white shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 mt-2 w-80 rounded-md border border-[#dfd8cc] bg-white shadow-xl z-50 overflow-hidden animate-dropdown">
                   <div className="border-b border-[#f0ede7] bg-[#faf9f6] px-4 py-3 flex items-center justify-between">
                     <div>
                       <h4 className="font-semibold text-xs text-[#0b0b0b] uppercase tracking-wider">Store Alerts</h4>
@@ -341,61 +384,76 @@ export function AppTopbar({ user }) {
         </div>
       </header>
 
-      {/* Mobile menu drawer */}
-      {mobileMenuOpen && (
+      {/* Mobile menu drawer (smooth 60fps GPU slide-in/out and fade-in/out with zero lag) */}
+      <div
+        className={`fixed inset-0 z-50 lg:hidden flex transition-all duration-250 ease-out ${
+          mobileMenuOpen
+            ? "opacity-100 pointer-events-auto visible"
+            : "opacity-0 pointer-events-none invisible"
+        }`}
+        aria-hidden={!mobileMenuOpen}
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Dark backdrop overlay - no heavy blur filter to guarantee zero GPU lag */}
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs lg:hidden flex"
+          className={`fixed inset-0 bg-black/60 transition-opacity duration-250 ease-out ${
+            mobileMenuOpen ? "opacity-100" : "opacity-0"
+          }`}
           onClick={() => setMobileMenuOpen(false)}
+        />
+
+        {/* Drawer Panel */}
+        <div
+          style={{ width: 280, maxWidth: '85vw', background: '#0b0b0b' }}
+          className={`relative z-10 h-full flex flex-col shadow-2xl transition-transform duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
+            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            style={{ width: 280, maxWidth: '85vw', background: '#0b0b0b' }}
-            className="h-full flex flex-col shadow-2xl animate-in slide-in-from-left duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Drawer Header */}
-            <div className="flex items-center justify-between px-5 py-5 border-b border-[#1e1e1e]">
-              <BrandMark />
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-1 rounded text-[#9c9489] hover:text-white hover:bg-[#1a1a1a]"
-                aria-label="Close menu"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            
-            <div className="gold-rule mx-5" />
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between px-5 py-5 border-b border-[#1e1e1e]">
+            <BrandMark />
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-1.5 rounded text-[#9c9489] hover:text-white hover:bg-[#1a1a1a] active:scale-95 transition-all duration-150 cursor-pointer"
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          
+          <div className="gold-rule mx-5" />
 
-            {/* Navigation links */}
-            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-              {nav.filter((item) => can(user, item.permission)).map((item) => {
-                const Icon = item.icon;
-                const active = pathname === item.href || pathname.startsWith(item.href + '/');
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`nav-item ${active ? 'active' : ''}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Icon size={16} strokeWidth={1.6} style={{ flexShrink: 0 }} />
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
+          {/* Navigation links */}
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            {nav.filter((item) => can(user, item.permission)).map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href || pathname.startsWith(item.href + '/');
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`nav-item ${active ? 'active' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon size={16} strokeWidth={1.6} style={{ flexShrink: 0 }} />
+                  <span className="text-sm">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
 
-            {/* Drawer Footer */}
-            <div className="p-4 border-t border-[#1e1e1e] bg-[#111] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[#4caf7d]" />
-                <span className="text-xs text-[#9c9489]">Fashion Hub POS</span>
-              </div>
-              <SignOutButton />
+          {/* Drawer Footer */}
+          <div className="p-4 border-t border-[#1e1e1e] bg-[#111] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-[#4caf7d]" />
+              <span className="text-xs text-[#9c9489]">Fashion Hub POS</span>
             </div>
+            <SignOutButton />
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 }

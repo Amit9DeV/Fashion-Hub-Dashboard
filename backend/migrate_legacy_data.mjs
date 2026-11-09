@@ -6,10 +6,15 @@
  * Step 3: Re-imports all 63 historical orders with correct product references
  */
 
+import 'dotenv/config';
 import mongoose from 'mongoose';
 import fs from 'fs';
 
-const uri = "mongodb+srv://kumararyanbhai90_db_user:2IRWcVTxpF8GbLXe@cluster0.8jnejwp.mongodb.net/dashboard?appName=Cluster0";
+const uri = process.env.MONGODB_URI;
+if (!uri) throw new Error("Set MONGODB_URI in the environment before running this migration.");
+if (process.env.CONFIRM_LEGACY_IMPORT !== "true") {
+  throw new Error("This migration can delete imported orders. Set CONFIRM_LEGACY_IMPORT=true only after verifying a database backup.");
+}
 
 // ── Minimal schemas (strict:false to avoid needing all fields) ──
 const ProductSchema = new mongoose.Schema({}, { strict: false, collection: 'products' });

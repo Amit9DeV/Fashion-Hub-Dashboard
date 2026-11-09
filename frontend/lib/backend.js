@@ -2,15 +2,12 @@ export function apiBase() {
   const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
   const configured = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
 
-  // On Vercel, ignore localhost configurations which would crash server-side fetches
+  // A production frontend must be explicitly connected to its backend.
   if (isVercel && configured && (configured.includes("localhost") || configured.includes("127.0.0.1"))) {
-    return "https://fashion-hub-dashboard.onrender.com/api";
+    throw new Error("BACKEND_API_URL must not point to localhost in a Vercel deployment.");
   }
 
-  return (
-    configured ||
-    (process.env.NODE_ENV === "development"
-      ? "http://localhost:5000/api"
-      : "https://fashion-hub-dashboard.onrender.com/api")
-  );
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "development") return "http://localhost:5000/api";
+  throw new Error("BACKEND_API_URL must be configured for this deployment.");
 }

@@ -30,7 +30,7 @@ export const processSale = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({
+    return res.status(error.status || 400).json({
       success: false,
       message: error.message || "Could not complete the sale.",
     });
@@ -50,7 +50,7 @@ export const updateExistingSale = async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to update sale", error);
-    return res.status(400).json({
+    return res.status(error.status || 400).json({
       success: false,
       message: error.message || "Could not update the sale.",
     });

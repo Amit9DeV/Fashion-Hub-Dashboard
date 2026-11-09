@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import connectToDatabase from '../config/db.js';
+import User from '../models/User.js';
 
 const COOKIE_NAME = "fashion_hub_session";
 
@@ -17,12 +19,13 @@ function getPrimarySecret() {
   return secret;
 }
 
-const IS_PROD =
-  process.env.NODE_ENV === "production" ||
-  process.env.RENDER === "true" ||
-  Boolean(process.env.RENDER_EXTERNAL_URL);
+function isProduction() {
+  return process.env.NODE_ENV === "production" ||
+    process.env.RENDER === "true" ||
+    Boolean(process.env.RENDER_EXTERNAL_URL);
+}
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const token =
     req.cookies[COOKIE_NAME] ||
     req.headers.authorization?.split(" ")[1];
@@ -42,13 +45,17 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ success: false, message: "Invalid session" });
   }
 
-  req.user = {
-    id: payload.sub,
-    name: payload.name,
-    email: payload.email,
-    role: payload.role,
-  };
-  next();
+  try {
+    await connectToDatabase();
+    const user = await User.findById(payload.sub).select("name email role active sessionVersion").lean();
+    if (!user || !user.active || (payload.sessionVersion ?? 0) !== (user.sessionVersion ?? 0)) {
+      return res.status(401).json({ success: false, message: "Session is no longer valid. Please sign in again." });
+    }
+    req.user = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 }
 
 export function requireRole(...roles) {
@@ -68,6 +75,7 @@ export function createSession(res, user) {
       name: user.name,
       email: user.email,
       role: user.role,
+      sessionVersion: user.sessionVersion || 0,
     },
     secret,
     { expiresIn: "12h" }
@@ -75,7 +83,7 @@ export function createSession(res, user) {
 
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: IS_PROD,
+    secure: isProduction(),
     sameSite: "lax",
     path: "/",
     maxAge: 12 * 60 * 60 * 1000,
@@ -87,7 +95,7 @@ export function createSession(res, user) {
 export function clearSession(res) {
   res.cookie(COOKIE_NAME, "", {
     httpOnly: true,
-    secure: IS_PROD,
+    secure: isProduction(),
     sameSite: "lax",
     path: "/",
     maxAge: 0,

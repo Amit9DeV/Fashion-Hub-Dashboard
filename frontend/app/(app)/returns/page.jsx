@@ -51,6 +51,7 @@ export default function ReturnsPage() {
   const [historySearch, setHistorySearch] = useState("");
   const [viewInvoiceId, setViewInvoiceId] = useState(null);
   const [exchangeIdempotencyKey, setExchangeIdempotencyKey] = useState("");
+  const [returnIdempotencyKey, setReturnIdempotencyKey] = useState("");
 
   const fetchHistory = async () => {
     try {
@@ -74,6 +75,7 @@ export default function ReturnsPage() {
     setExchangeCart([]);
     setReason("");
     setExchangeIdempotencyKey("");
+    setReturnIdempotencyKey("");
 
     try {
       const data = await api.orders.search(q);
@@ -221,15 +223,19 @@ export default function ReturnsPage() {
     }
 
     setProcessing(true);
+    const idempotencyKey = returnIdempotencyKey || crypto.randomUUID();
+    if (!returnIdempotencyKey) setReturnIdempotencyKey(idempotencyKey);
     try {
       await api.returns.process({
         orderId: order._id,
+        idempotencyKey,
         reason,
         items: itemsToReturn,
       });
       toast.success("Return processed successfully!");
       setOrder(null);
       setReturnItems({});
+      setReturnIdempotencyKey("");
       setQuery("");
       fetchHistory();
     } catch (err) {
@@ -281,7 +287,6 @@ export default function ReturnsPage() {
             quantity: item.quantity,
             overriddenPricePaisa: item.sellingPricePaisa,
             overriddenMrpPaisa: item.mrpPaisa,
-            overriddenName: item.productName,
           })),
           discountPaisa: 0,
           payments,

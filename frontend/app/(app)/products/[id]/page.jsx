@@ -155,10 +155,10 @@ export default function ProductDetailPage(props) {
   }
 
   async function handleDeleteProduct() {
-    if (!confirm("Are you sure you want to delete this product? All variants will also be deleted. This cannot be undone.")) return;
+    if (!confirm("Archive this product and its variants? Historical stock and sales records will be preserved.")) return;
     try {
       await api.products.delete(product._id);
-      toast.success("Product deleted successfully");
+      toast.success("Product archived");
       router.push("/products");
     } catch (err) {
       toast.error(err.message || "Failed to delete product");
@@ -166,14 +166,14 @@ export default function ProductDetailPage(props) {
   }
 
   async function handleDeleteVariant(variantId) {
-    if (!confirm("Are you sure you want to delete this variant? This cannot be undone.")) return;
+    if (!confirm("Archive this variant? Historical stock and sales records will be preserved.")) return;
     try {
       await api.products.deleteVariant(product._id, variantId);
       setProduct(prev => ({
         ...prev,
-        variants: prev.variants.filter(v => v._id !== variantId)
+        variants: prev.variants.map(v => v._id === variantId ? { ...v, status: "INACTIVE" } : v)
       }));
-      toast.success("Variant deleted successfully");
+      toast.success("Variant archived");
     } catch (err) {
       toast.error(err.message || "Failed to delete variant");
     }

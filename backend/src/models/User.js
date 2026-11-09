@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["ADMIN", "MANAGER", "CASHIER"], default: "CASHIER", required: true },
     phone: { type: String, trim: true },
     active: { type: Boolean, default: true },
+    sessionVersion: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

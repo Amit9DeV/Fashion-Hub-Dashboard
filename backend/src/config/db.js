@@ -7,11 +7,9 @@ const cached = globalForMongoose._mongooseCache || { conn: null, promise: null }
 export default async function connectToDatabase() {
   if (cached.conn) return cached.conn;
 
-  const uri = process.env.MONGODB_URI || "mongodb+srv://kumararyanbhai90_db_user:2IRWcVTxpF8GbLXe@cluster0.8jnejwp.mongodb.net/dashboard?appName=Cluster0";
+  const uri = process.env.MONGODB_URI;
   if (!uri) {
-    throw new Error(
-      "Missing MONGODB_URI. Copy .env.example to .env and configure MongoDB.",
-    );
+    throw new Error("Missing MONGODB_URI. Configure a private MongoDB connection string.");
   }
 
   if (!cached.promise) {
@@ -39,5 +37,15 @@ export default async function connectToDatabase() {
 // Atlas SRV URLs usually omit an explicit `replicaSet` query parameter.
 export function supportsTransactions() {
   const topologyType = mongoose.connection.client?.topology?.description?.type;
-  return topologyType !== "Single";
+  return ["ReplicaSetWithPrimary", "Sharded"].includes(topologyType);
+}
+
+export function assertTransactionSupport() {
+  if (!supportsTransactions()) {
+    const error = new Error(
+      "This operation requires MongoDB transactions. Configure MongoDB Atlas or a replica set before processing inventory, sales, returns, or payments."
+    );
+    error.status = 503;
+    throw error;
+  }
 }

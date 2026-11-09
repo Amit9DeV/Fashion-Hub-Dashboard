@@ -29,6 +29,7 @@ const returnSchema = new mongoose.Schema(
     cashRefundPaisa: { type: Number, min: 0 },
     exchangeCreditPaisa: { type: Number, min: 0, default: 0 },
     idempotencyKey: { type: String, trim: true, unique: true, sparse: true },
+    requestHash: { type: String, minlength: 64, maxlength: 64 },
     reason: { type: String, trim: true },
     staffSnapshot: {
       id: { type: String },

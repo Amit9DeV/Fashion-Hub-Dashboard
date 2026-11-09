@@ -141,9 +141,9 @@ export function AddProductModal({ isOpen, onClose, onProductAdded, initialQuery 
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-5" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-5 animate-in fade-in duration-150" onClick={onClose}>
       <div 
-        className="w-full max-w-lg rounded-md bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-lg rounded-md bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b bg-[#faf9f6] px-5 py-4">

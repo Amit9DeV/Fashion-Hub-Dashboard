@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import connectToDatabase, { supportsTransactions } from "../config/db.js";
+import connectToDatabase, { assertTransactionSupport } from "../config/db.js";
 import Product from "../models/Product.js";
 import ProductVariant from "../models/ProductVariant.js";
 import Brand from "../models/Brand.js";
@@ -92,7 +92,7 @@ export const getProducts = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res
-      .status(500)
+      .status(error.status || 500)
       .json({ success: false, message: "Could not search products." });
   }
 };
@@ -155,7 +155,7 @@ export const getAllProducts = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res
-      .status(500)
+      .status(error.status || 500)
       .json({ success: false, message: "Could not fetch products." });
   }
 };
@@ -191,14 +191,9 @@ export const createProduct = async (req, res) => {
   let session;
   try {
     await connectToDatabase();
+    assertTransactionSupport();
     session = await mongoose.startSession();
-    const useTransaction = supportsTransactions();
-    if (!useTransaction) {
-      await session.endSession();
-      session = undefined;
-    } else {
-      session.startTransaction();
-    }
+    session.startTransaction();
 
     const { name, brandId, categoryId, description, variants, images } = req.body;
 
@@ -274,7 +269,7 @@ export const createProduct = async (req, res) => {
       await session.endSession();
     }
     console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Could not create product." });
+    return res.status(error.status || 500).json({ success: false, message: error.message || "Could not create product." });
   }
 };
 
@@ -332,14 +327,9 @@ export const addVariant = async (req, res) => {
   let session;
   try {
     await connectToDatabase();
+    assertTransactionSupport();
     session = await mongoose.startSession();
-    const useTransaction = supportsTransactions();
-    if (!useTransaction) {
-      await session.endSession();
-      session = undefined;
-    } else {
-      session.startTransaction();
-    }
+    session.startTransaction();
 
     const product = await Product.findById(req.params.id).session(session);
     if (!product) {
@@ -398,7 +388,7 @@ export const addVariant = async (req, res) => {
       await session.endSession();
     }
     console.error(error);
-    return res.status(500).json({ success: false, message: "Could not add variant." });
+    return res.status(error.status || 500).json({ success: false, message: error.message || "Could not add variant." });
   }
 };
 
@@ -589,28 +579,11 @@ export const deleteProduct = async (req, res) => {
     if (!product)
       return res.status(404).json({ success: false, message: "Product not found" });
 
-    // Safety check: block deletion if product appears in any historical order
-    const variants = await ProductVariant.find({ productId: product._id }, "_id").lean();
-    const variantIds = variants.map((v) => v._id);
-    if (variantIds.length > 0) {
-      const Order = (await import("../models/Order.js")).default;
-      const orderCount = await Order.countDocuments({ "items.variantId": { $in: variantIds } });
-      if (orderCount > 0) {
-        // Soft-delete instead of hard delete to preserve ledger integrity
-        await Product.findByIdAndUpdate(product._id, { status: "INACTIVE" });
-        await ProductVariant.updateMany({ productId: product._id }, { status: "INACTIVE" });
-        return res.json({
-          success: true,
-          message: `Product has ${orderCount} historical order(s). It has been deactivated instead of deleted to preserve ledger integrity.`,
-        });
-      }
-    }
+    // Archive instead of deleting catalogue and movement history.
+    await Product.updateOne({ _id: product._id }, { $set: { status: "INACTIVE" } });
+    await ProductVariant.updateMany({ productId: product._id }, { $set: { status: "INACTIVE" } });
 
-    // Safe to hard-delete (no order history)
-    await ProductVariant.deleteMany({ productId: product._id });
-    await Product.findByIdAndDelete(product._id);
-
-    return res.json({ success: true, message: "Product and variants deleted successfully." });
+    return res.json({ success: true, message: "Product and variants archived. Historical inventory and sales records were preserved." });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Could not delete product." });
@@ -634,26 +607,13 @@ export const deleteVariant = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Variant not found" });
 
-    // Check if this variant appears in any historical order — preserve ledger integrity
-    const Order = (await import("../models/Order.js")).default;
-    const orderCount = await Order.countDocuments({ "items.variantId": variant._id });
-
-    if (orderCount > 0) {
-      // Soft-delete: mark as INACTIVE instead of hard deleting
-      await ProductVariant.findByIdAndUpdate(variant._id, { status: "INACTIVE" });
-      return res.json({
-        success: true,
-        message: `Variant has ${orderCount} historical order(s). It has been deactivated instead of deleted to preserve ledger integrity.`,
-        softDeleted: true,
-      });
-    }
-
-    // Safe to hard-delete (no order history)
-    await variant.deleteOne();
+    // Archive instead of deleting stock and movement history.
+    await ProductVariant.updateOne({ _id: variant._id }, { $set: { status: "INACTIVE" } });
 
     return res.json({
       success: true,
-      message: "Variant deleted successfully.",
+      message: "Variant archived. Historical inventory and sales records were preserved.",
+      softDeleted: true,
     });
   } catch (error) {
     console.error(error);

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
-import connectToDatabase, { supportsTransactions } from "../../config/db.js";
+import connectToDatabase, { assertTransactionSupport } from "../../config/db.js";
 import Product from "../../models/Product.js";
 import ProductVariant from "../../models/ProductVariant.js";
 import Customer from "../../models/Customer.js";
@@ -22,10 +22,9 @@ export const saleInputSchema = z.object({
     productId: objectId,
     variantId: objectId,
     quantity: z.number().int().positive().max(99),
-    overriddenPricePaisa: z.number().int().positive().optional(),
-    overriddenMrpPaisa: z.number().int().positive().optional(),
-    overriddenCostPaisa: z.number().int().nonnegative().optional(),
-    overriddenName: z.string().trim().max(200).optional(),
+    overriddenPricePaisa: z.number().int().positive().max(100000000000).optional(),
+    overriddenMrpPaisa: z.number().int().positive().max(100000000000).optional(),
+    overriddenCostPaisa: z.number().int().nonnegative().max(100000000000).optional(),
   })).min(1).max(100),
   customer: z.object({
     customerId: objectId.optional(),
@@ -35,10 +34,10 @@ export const saleInputSchema = z.object({
     billingWhatsAppConsent: z.boolean().optional(),
     marketingWhatsAppConsent: z.boolean().optional(),
   }).optional().nullable(),
-  discountPaisa: z.number().int().nonnegative().default(0),
+  discountPaisa: z.number().int().nonnegative().max(100000000000).default(0),
   payments: z.array(z.object({
     method: z.enum(["CASH", "UPI", "CARD", "OTHER"]),
-    amountPaisa: z.number().int().positive(),
+    amountPaisa: z.number().int().positive().max(100000000000),
     reference: z.string().trim().max(100).optional(),
   })).max(4).default([]),
   notes: z.string().trim().max(1000).optional(),
@@ -70,7 +69,7 @@ async function resolveCustomer(input, user, session, now) {
 
   let customer = null;
   if (input.customerId) {
-    customer = await Customer.findById(input.customerId).session(session);
+    customer = await Customer.findOne({ _id: input.customerId, active: { $ne: false } }).session(session);
     if (!customer) throw new Error("The selected customer no longer exists.");
     return customer;
   }
@@ -79,7 +78,7 @@ async function resolveCustomer(input, user, session, now) {
   const whatsappNumber = cleanPhone(input.whatsappNumber) || mobile;
   if (!input.name && !mobile && !whatsappNumber) return null;
 
-  customer = mobile ? await Customer.findOne({ mobile }).session(session) : null;
+  customer = mobile ? await Customer.findOne({ mobile, active: { $ne: false } }).session(session) : null;
   if (customer) {
     const updates = {
       ...(input.name ? { name: input.name } : {}),
@@ -111,13 +110,36 @@ async function resolveCustomer(input, user, session, now) {
   return created;
 }
 
-export async function completeSale(rawInput, user) {
+export async function completeSale(rawInput, user, { session: externalSession } = {}) {
   const input = saleInputSchema.parse(rawInput);
+  if (input.completedAt && !Number.isFinite(new Date(input.completedAt).getTime())) {
+    const error = new Error("Sale date is invalid.");
+    error.status = 400;
+    throw error;
+  }
+  if (user.role === "CASHIER" && input.completedAt) {
+    const requestedDay = new Date(input.completedAt);
+    const currentDay = new Date();
+    if (requestedDay.getFullYear() !== currentDay.getFullYear() || requestedDay.getMonth() !== currentDay.getMonth() || requestedDay.getDate() !== currentDay.getDate()) {
+      const error = new Error("Only managers and admins can backdate a sale.");
+      error.status = 403;
+      throw error;
+    }
+  }
+  const idempotencyHash = createHash("sha256")
+    .update(JSON.stringify({ ...input, idempotencyKey: undefined }))
+    .digest("hex");
   await connectToDatabase();
+  assertTransactionSupport();
   
   // Idempotency check: if an order with this key already exists, return it immediately to prevent double-charging.
   const existingOrder = await Order.findOne({ idempotencyKey: input.idempotencyKey }).lean();
   if (existingOrder) {
+    if (existingOrder.idempotencyHash && existingOrder.idempotencyHash !== idempotencyHash) {
+      const error = new Error("This idempotency key was already used for a different sale.");
+      error.status = 409;
+      throw error;
+    }
     const existingInvoice = await Invoice.findOne({ orderId: existingOrder._id }).lean();
     return {
       orderId: existingOrder._id.toString(),
@@ -129,18 +151,12 @@ export async function completeSale(rawInput, user) {
     };
   }
 
-  let session = await mongoose.startSession();
+  const ownsSession = !externalSession;
+  const session = externalSession || await mongoose.startSession();
   let result;
 
   try {
-    const isStandalone = !supportsTransactions();
-    if (isStandalone) {
-      session.endSession();
-      session = undefined;
-    }
-    const runBlock = isStandalone ? (cb) => cb() : (cb, opts) => session.withTransaction(cb, opts);
-
-    await runBlock(async () => {
+    const execute = async () => {
       const now = input.completedAt ? new Date(input.completedAt) : new Date();
       const settings = await Settings.findOne().session(session);
       const globalTaxRate = settings?.taxRate ?? 0;
@@ -170,10 +186,22 @@ export async function completeSale(rawInput, user) {
           throw new Error(`${product.name} (${variant.color || ""} ${variant.size || ""}) has only ${variant.stock} item(s) available.`);
         }
 
+        const requestedPrice = requestedItem.overriddenPricePaisa || variant.sellingPricePaisa;
+        if (variant.mrpPaisa && requestedPrice > variant.mrpPaisa) {
+          const error = new Error(`Price for ${variant.sku} cannot exceed its MRP.`);
+          error.status = 400;
+          throw error;
+        }
+        if (user.role === "CASHIER" && requestedPrice > variant.sellingPricePaisa) {
+          const error = new Error(`Cashiers cannot raise ${variant.sku} above its current selling price.`);
+          error.status = 403;
+          throw error;
+        }
+
         saleLines.push({
           productId: product._id,
           variantId: variant._id,
-          productName: requestedItem.overriddenName || product.name,
+          productName: product.name,
           brand: product.brandSnapshot,
           category: product.categorySnapshot,
           sku: variant.sku,
@@ -181,11 +209,32 @@ export async function completeSale(rawInput, user) {
           color: variant.color,
           size: variant.size,
           quantity: requestedItem.quantity,
-          unitCostPaisa: requestedItem.overriddenCostPaisa !== undefined ? requestedItem.overriddenCostPaisa : (variant.costPricePaisa || 0),
-          unitPricePaisa: requestedItem.overriddenPricePaisa || variant.sellingPricePaisa,
+          unitCostPaisa: variant.costPricePaisa || 0,
+          unitPricePaisa: requestedPrice,
           taxRate: product.taxRate ?? globalTaxRate,
           hsn: product.hsn || "",
         });
+      }
+
+      if (user.role === "CASHIER") {
+        const limitPercent = Number(process.env.CASHIER_MAX_DISCOUNT_PERCENT || 0);
+        if (!Number.isFinite(limitPercent) || limitPercent < 0 || limitPercent > 100) {
+          throw new Error("CASHIER_MAX_DISCOUNT_PERCENT must be a number from 0 to 100.");
+        }
+        const listSubtotalPaisa = saleLines.reduce((sum, line) => {
+          const variant = variantMap.get(line.variantId.toString());
+          return sum + (variant.sellingPricePaisa * line.quantity);
+        }, 0);
+        const itemDiscountPaisa = saleLines.reduce((sum, line) => {
+          const variant = variantMap.get(line.variantId.toString());
+          return sum + Math.max(0, variant.sellingPricePaisa - line.unitPricePaisa) * line.quantity;
+        }, 0);
+        const maximumDiscountPaisa = Math.floor(listSubtotalPaisa * limitPercent / 100);
+        if (itemDiscountPaisa + input.discountPaisa > maximumDiscountPaisa) {
+          const error = new Error("This discount exceeds the cashier limit. Ask a manager to complete the sale.");
+          error.status = 403;
+          throw error;
+        }
       }
 
       const totals = calculateSale(saleLines, input.discountPaisa);
@@ -248,6 +297,7 @@ export async function completeSale(rawInput, user) {
         paymentStatus,
         staffSnapshot: { id: user.id, name: user.name, role: user.role },
         idempotencyKey: input.idempotencyKey,
+        idempotencyHash,
         notes: input.notes,
         completedAt: now,
       }], { session });
@@ -341,14 +391,37 @@ export async function completeSale(rawInput, user) {
         totalPaisa: totals.totalPaisa,
         whatsappMessageId,
       };
-    }, {
+    };
+    if (ownsSession) await session.withTransaction(execute, {
       readConcern: { level: "snapshot" },
       writeConcern: { w: "majority" },
     });
+    else await execute();
 
     return result;
+  } catch (error) {
+    if (ownsSession && error?.code === 11000) {
+      const winningOrder = await Order.findOne({ idempotencyKey: input.idempotencyKey }).lean();
+      if (winningOrder) {
+        if (winningOrder.idempotencyHash && winningOrder.idempotencyHash !== idempotencyHash) {
+          const conflict = new Error("This idempotency key was already used for a different sale.");
+          conflict.status = 409;
+          throw conflict;
+        }
+        const invoice = await Invoice.findOne({ orderId: winningOrder._id }).lean();
+        return {
+          orderId: winningOrder._id.toString(),
+          invoiceId: invoice?._id.toString() || winningOrder._id.toString(),
+          invoiceNumber: winningOrder.invoiceNumber,
+          totalPaisa: winningOrder.totalPaisa,
+          whatsappMessageId: null,
+          postSaleWarning: "Returned the completed sale for this idempotency key.",
+        };
+      }
+    }
+    throw error;
   } finally {
-    if (session) {
+    if (ownsSession && session) {
       await session.endSession();
     }
   }

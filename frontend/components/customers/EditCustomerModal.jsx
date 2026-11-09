@@ -69,8 +69,8 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdate 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto animate-modal-pop">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Edit Customer</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-black">

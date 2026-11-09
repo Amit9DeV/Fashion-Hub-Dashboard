@@ -4,12 +4,12 @@ Premium fashion-retail POS foundation built with Next.js App Router, JavaScript,
 
 ## Start locally
 
-1. Copy `.env.example` to `.env.local`. Set `BACKEND_API_URL` to the Express API, and set `AUTH_SECRET` to the same unique value used by the backend. A MongoDB replica set or Atlas cluster is recommended for atomic multi-document sales; standalone MongoDB uses best-effort writes.
+1. Copy `.env.example` to `.env.local`. Set `BACKEND_API_URL` to the Express API, and set `AUTH_SECRET` to the same unique value used by the backend. MongoDB Atlas or a replica set is required for sales, returns, stock reservations, dues payments, and purchase receipts.
 2. Run `npm install`.
-3. Run `npm run seed` to create the first admin and master data. Set `SEED_DEMO_CATALOG=true` only if you also want a disposable sample product.
+3. Set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (at least 12 characters and no more than 72 UTF-8 bytes) in `backend/.env`, then run `npm run seed` to create the first admin and master data. Set `SEED_DEMO_CATALOG=true` only if you also want a disposable sample product.
 4. Run `npm run dev`, then sign in at `http://localhost:3000/login`.
 
-Local seed sign-in: `admin@fashionhub.local` / `FashionHub@123` (change it before using real store data). Production seed requires explicit `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` values.
+There are no default seed credentials. Production seed additionally requires `CONFIRM_PRODUCTION_SEED=true`.
 
 ## First implemented slice
 
@@ -19,6 +19,6 @@ Local seed sign-in: `admin@fashionhub.local` / `FashionHub@123` (change it befor
 - Server-side calculation with integer paisa amounts
 - Atomic completed-sale transaction: order, payment snapshot, stock decrement, inventory movements, invoice, customer metrics, and audit entry are committed together
 - Completed orders are deliberately immutable; future returns/exchanges create new records and movements instead of editing a sale
-- Placeholder PDF renderer and resilient WhatsApp delivery queue. WhatsApp/PDF delivery issues are recorded after the sale and never roll it back.
+- PDF invoice generation and a WhatsApp delivery queue. WhatsApp/PDF delivery issues are recorded after the sale and never roll it back.
 
-The detailed invoice presentation remains intentionally isolated in `services/invoice/InvoiceTemplate.js` for the supplied invoice design phase.
+The app records payment methods and amounts; card and UPI authorization and settlement must be performed by a configured terminal/provider and reconciled separately.

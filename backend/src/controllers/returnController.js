@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import connectToDatabase, { supportsTransactions } from "../config/db.js";
+import connectToDatabase, { assertTransactionSupport } from "../config/db.js";
 import Return from "../models/Return.js";
 import Order from "../models/Order.js";
-import crypto from "crypto";
+import { createHash, randomBytes } from "node:crypto";
 import ProductVariant from "../models/ProductVariant.js";
 import InventoryMovement from "../models/InventoryMovement.js";
 import Customer from "../models/Customer.js";
@@ -10,29 +10,50 @@ import { completeSale, saleInputSchema } from "../services/sales/completeSale.js
 
 // @desc    Core return logic (shared between processReturn and processExchange)
 // @access  Internal
-export const executeReturn = async (input, user) => {
+export const executeReturn = async (input, user, { session: externalSession } = {}) => {
   await connectToDatabase();
+  assertTransactionSupport();
+
+  const invalid = (message) => {
+    const error = new Error(message);
+    error.status = 400;
+    return error;
+  };
+  if (!mongoose.isValidObjectId(input?.orderId)) throw invalid("A valid order is required to process this return.");
+  if (typeof input?.idempotencyKey !== "string" || input.idempotencyKey.trim().length < 10 || input.idempotencyKey.length > 100) {
+    throw invalid("A valid idempotency key is required to process this return.");
+  }
+  if (!Array.isArray(input.items) || input.items.length < 1 || input.items.length > 100) {
+    throw invalid("Select between 1 and 100 return lines.");
+  }
+  if (input.items.some((item) => !mongoose.isValidObjectId(item?.variantId) || !Number.isSafeInteger(item?.quantity) || item.quantity < 1 || item.quantity > 99)) {
+    throw invalid("Each return line needs a valid variant and a whole quantity from 1 to 99.");
+  }
+  if (new Set(input.items.map((item) => item.variantId.toString())).size !== input.items.length) {
+    throw invalid("A variant can appear only once in a return request.");
+  }
+  const requestHash = createHash("sha256")
+    .update(JSON.stringify({ ...input, idempotencyKey: undefined }))
+    .digest("hex");
 
   if (input.idempotencyKey) {
     const existingReturn = await Return.findOne({ idempotencyKey: input.idempotencyKey });
-    if (existingReturn) return existingReturn;
+    if (existingReturn) {
+      if (existingReturn.requestHash && existingReturn.requestHash !== requestHash) {
+        const error = new Error("This idempotency key was already used for a different return.");
+        error.status = 409;
+        throw error;
+      }
+      return existingReturn;
+    }
   }
 
-  const isStandalone = !supportsTransactions();
-  let session = await mongoose.startSession();
+  const ownsSession = !externalSession;
+  const session = externalSession || await mongoose.startSession();
   let result;
 
   try {
-    if (isStandalone) {
-      session.endSession();
-      session = undefined;
-    }
-
-    const runBlock = isStandalone
-      ? (cb) => cb()
-      : (cb, opts) => session.withTransaction(cb, opts);
-
-    await runBlock(async () => {
+    const execute = async () => {
       const { orderId, reason, items } = input;
 
       if (!orderId || !items || !items.length) {
@@ -42,6 +63,11 @@ export const executeReturn = async (input, user) => {
       const order = await Order.findById(orderId).session(session);
       if (!order) {
         throw new Error("Order not found");
+      }
+      if ((order.duePaisa || 0) > 0) {
+        const error = new Error("Settle the outstanding order balance before processing a refund or exchange.");
+        error.status = 409;
+        throw error;
       }
 
       // Fetch all previous returns for this order to enforce partial-return limits
@@ -80,8 +106,9 @@ export const executeReturn = async (input, user) => {
         }
 
         // Proportional unit refund
-        const unitRefundPaisa = Math.floor(orderItem.totalPaisa / orderItem.quantity);
-        const refundPaisa = unitRefundPaisa * returnReq.quantity;
+        const refundPaisa =
+          Math.floor(orderItem.totalPaisa * (prevReturned + returnReq.quantity) / orderItem.quantity) -
+          Math.floor(orderItem.totalPaisa * prevReturned / orderItem.quantity);
 
         returnItems.push({
           productId: orderItem.productId,
@@ -123,7 +150,7 @@ export const executeReturn = async (input, user) => {
       }
 
       const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, "");
-      const randomSuffix = crypto.randomBytes(2).toString("hex").toUpperCase();
+      const randomSuffix = randomBytes(2).toString("hex").toUpperCase();
       const returnNumber = `RTN-${dateStr}-${randomSuffix}`;
 
       const newReturn = new Return({
@@ -136,6 +163,7 @@ export const executeReturn = async (input, user) => {
         totalRefundPaisa,
         cashRefundPaisa: totalRefundPaisa,
         idempotencyKey: input.idempotencyKey,
+        requestHash,
         reason,
         staffSnapshot: { id: user.id, name: user.name, role: user.role },
       });
@@ -170,12 +198,27 @@ export const executeReturn = async (input, user) => {
       }
 
       result = newReturn;
-    }, {
+    };
+    if (ownsSession) await session.withTransaction(execute, {
       readConcern: { level: "snapshot" },
       writeConcern: { w: "majority" },
     });
+    else await execute();
+  } catch (error) {
+    if (ownsSession && error?.code === 11000) {
+      const existing = await Return.findOne({ idempotencyKey: input.idempotencyKey });
+      if (existing) {
+        if (existing.requestHash && existing.requestHash !== requestHash) {
+          const conflict = new Error("This idempotency key was already used for a different return.");
+          conflict.status = 409;
+          throw conflict;
+        }
+        return existing;
+      }
+    }
+    throw error;
   } finally {
-    if (session) await session.endSession();
+    if (ownsSession && session) await session.endSession();
   }
   return result;
 };
@@ -192,7 +235,7 @@ export const processReturn = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({
+    return res.status(error.status || 400).json({
       success: false,
       message: error.message || "Could not process return.",
     });
@@ -224,28 +267,51 @@ export const processExchange = async (req, res) => {
     // payloads cannot restock an item without issuing the replacement invoice.
     const validatedSalePayload = saleInputSchema.parse(salePayload);
 
-    const returnResult = await executeReturn(returnPayload, req.user);
-    const refundCredit = returnResult.totalRefundPaisa;
-    const replacementTotalPaisa = validatedSalePayload.items.reduce(
-      (sum, item) => sum + (item.overriddenPricePaisa || 0) * item.quantity,
-      0
-    );
-    const exchangeCreditPaisa = Math.min(refundCredit, replacementTotalPaisa);
-    returnResult.exchangeCreditPaisa = exchangeCreditPaisa;
-    returnResult.cashRefundPaisa = refundCredit - exchangeCreditPaisa;
-    await returnResult.save();
+    await connectToDatabase();
+    assertTransactionSupport();
+    const session = await mongoose.startSession();
+    let returnResult;
+    let saleResult;
+    try {
+      await session.withTransaction(async () => {
+        returnResult = await executeReturn(returnPayload, req.user, { session });
+        const refundCredit = returnResult.totalRefundPaisa;
+        const requestedVariantIds = [...new Set(validatedSalePayload.items.map((item) => item.variantId))];
+        const replacementVariants = await ProductVariant.find({
+          _id: { $in: requestedVariantIds },
+          status: "ACTIVE",
+        }).session(session).lean();
+        const replacementVariantById = new Map(replacementVariants.map((variant) => [variant._id.toString(), variant]));
+        const replacementSubtotalPaisa = validatedSalePayload.items.reduce((sum, item) => {
+          const variant = replacementVariantById.get(item.variantId);
+          if (!variant || variant.productId.toString() !== item.productId) {
+            const error = new Error("One of the replacement items is unavailable.");
+            error.status = 400;
+            throw error;
+          }
+          const unitPricePaisa = item.overriddenPricePaisa ?? variant.sellingPricePaisa;
+          return sum + unitPricePaisa * item.quantity;
+        }, 0);
+        const replacementTotalPaisa = Math.max(0, replacementSubtotalPaisa - validatedSalePayload.discountPaisa);
+        const exchangeCreditPaisa = Math.min(refundCredit, replacementTotalPaisa);
+        returnResult.exchangeCreditPaisa = exchangeCreditPaisa;
+        returnResult.cashRefundPaisa = refundCredit - exchangeCreditPaisa;
+        await returnResult.save({ session });
 
-    if (exchangeCreditPaisa > 0) {
-      validatedSalePayload.payments = validatedSalePayload.payments || [];
-      validatedSalePayload.payments.push({
-        method: "OTHER",
-        amountPaisa: exchangeCreditPaisa,
-        reference: `Exchange Credit (RTN: ${returnResult.returnNumber})`,
-      });
-      validatedSalePayload.notes = `Exchange for Order ${returnPayload.orderId}. ` + (validatedSalePayload.notes || "");
+        if (exchangeCreditPaisa > 0) {
+          validatedSalePayload.payments = validatedSalePayload.payments || [];
+          validatedSalePayload.payments.push({
+            method: "OTHER",
+            amountPaisa: exchangeCreditPaisa,
+            reference: `Exchange Credit (RTN: ${returnResult.returnNumber})`,
+          });
+          validatedSalePayload.notes = `Exchange for Order ${returnPayload.orderId}. ` + (validatedSalePayload.notes || "");
+        }
+        saleResult = await completeSale(validatedSalePayload, req.user, { session });
+      }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+    } finally {
+      await session.endSession();
     }
-
-    const saleResult = await completeSale(validatedSalePayload, req.user);
 
     return res.status(201).json({
       success: true,
@@ -254,7 +320,7 @@ export const processExchange = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({
+    return res.status(error.status || 400).json({
       success: false,
       message: error.message || "Could not process exchange.",
     });
